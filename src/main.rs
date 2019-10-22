@@ -5,6 +5,7 @@ use structopt::StructOpt;
 mod ast;
 mod lexer;
 mod parser;
+mod transforms;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "verinject")]
