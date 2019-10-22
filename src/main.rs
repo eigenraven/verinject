@@ -4,6 +4,7 @@ use structopt::StructOpt;
 
 mod ast;
 mod lexer;
+mod parser;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "verinject")]
@@ -55,14 +56,20 @@ fn main() -> std::io::Result<()> {
     };
     let lexed = lexer::lex_source(&input_file)
         .map_err(|s| std::io::Error::new(ErrorKind::InvalidInput, s))?;
-    let mut pline = 0;
+    // print lexer
+    /*let mut pline = 0;
     for t in &lexed {
-        while pline != t.location.line {
+        while pline != t.location.unwrap().line {
             pline += 1;
             println!();
         }
         print!("{:?}({}) ", t.kind, t.instance);
     }
-    println!();
+    println!();*/
+
+    let parsed =
+        parser::parse(&lexed).map_err(|s| std::io::Error::new(ErrorKind::InvalidInput, s))?;
+    // print parser
+    println!("{:#?}", parsed);
     Ok(())
 }

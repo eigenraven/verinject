@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::fmt::{Display, Error, Formatter};
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default, Hash)]
 pub struct SourceLocation {
     pub index: usize,
@@ -7,10 +10,12 @@ pub struct SourceLocation {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum TokenKind {
+    Whitespace,
     Identifier,
     Number,
     Symbol,
     StringLiteral,
+    Hash,
     LParen,
     RParen,
     LBracket,
@@ -18,7 +23,9 @@ pub enum TokenKind {
     LBrace,
     RBrace,
     Dot,
+    Comma,
     Colon,
+    Semicolon,
     AssignSeq,
     AssignConc,
     // block headers (always, etc.)
@@ -33,8 +40,8 @@ pub enum TokenKind {
     // types
     KWire,
     KLogic, // also reg
-    KIn,
-    KOut,
+    KInput,
+    KOutput,
     KInOut,
     KRef,
     // modports
@@ -52,11 +59,19 @@ pub enum TokenKind {
     KEndModule,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 pub struct Token<'s> {
     pub kind: TokenKind,
-    pub location: SourceLocation,
-    pub instance: &'s str,
+    /// None for generated tokens
+    pub location: Option<SourceLocation>,
+    pub instance: Cow<'s, str>,
+}
+
+/// Printing tokens back into source form
+impl Display for Token<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        f.write_str(&self.instance)
+    }
 }
 
 pub fn lex_source(source: &str) -> Result<Vec<Token>, String> {
@@ -65,8 +80,13 @@ pub fn lex_source(source: &str) -> Result<Vec<Token>, String> {
         remaining_source: source,
         loc: SourceLocation::default(),
     };
-    l_whitespace(&mut state)?;
-    while !state.remaining_source.is_empty() {
+    loop {
+        if let Some(t) = l_whitespace(&mut state)? {
+            v.push(t);
+        }
+        if state.remaining_source.is_empty() {
+            break;
+        }
         if let Some(t) = l_number(&mut state)? {
             v.push(t);
         } else if let Some(t) = l_identifier_or_keyword(&mut state)? {
@@ -76,7 +96,6 @@ pub fn lex_source(source: &str) -> Result<Vec<Token>, String> {
         } else if let Some(t) = l_symbol(&mut state)? {
             v.push(t);
         }
-        l_whitespace(&mut state)?;
     }
     Ok(v)
 }
@@ -89,7 +108,9 @@ struct LexerState<'s> {
 
 type LexResult<'s> = Result<Option<Token<'s>>, String>;
 
-fn l_whitespace(state: &mut LexerState) -> Result<(), String> {
+fn l_whitespace<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
+    let orig_src = state.remaining_source;
+    let orig_loc = state.loc;
     while !state.remaining_source.is_empty() {
         let src = state.remaining_source;
         if src.starts_with("//") {
@@ -122,10 +143,19 @@ fn l_whitespace(state: &mut LexerState) -> Result<(), String> {
             }
             state.remaining_source = &src[1..];
         } else {
-            return Ok(());
+            break;
         }
     }
-    Ok(())
+    if state.loc.index != orig_loc.index {
+        let len = state.loc.index - orig_loc.index;
+        Ok(Some(Token {
+            kind: TokenKind::Whitespace,
+            instance: Cow::from(&orig_src[0..len]),
+            location: Some(orig_loc),
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 fn l_string<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
@@ -141,8 +171,8 @@ fn l_string<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     state.remaining_source = &src[len + 2..];
     Ok(Some(Token {
         kind: TokenKind::StringLiteral,
-        location,
-        instance: sstr,
+        location: Some(location),
+        instance: Cow::from(sstr),
     }))
 }
 
@@ -162,8 +192,8 @@ fn l_identifier_or_keyword<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         state.remaining_source = &src[1 + len..];
         return Ok(Some(Token {
             kind: TokenKind::Identifier,
-            location,
-            instance: id,
+            location: Some(location),
+            instance: Cow::from(id),
         }));
     }
     if !(src.chars().nth(0).unwrap().is_ascii_alphabetic() || src.chars().nth(0).unwrap() == '_') {
@@ -180,8 +210,8 @@ fn l_identifier_or_keyword<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     state.remaining_source = &src[len..];
     Ok(Some(Token {
         kind: keyword_kind(id),
-        location,
-        instance: id,
+        location: Some(location),
+        instance: Cow::from(id),
     }))
 }
 
@@ -201,8 +231,8 @@ fn l_number<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     state.remaining_source = &src[len..];
     Ok(Some(Token {
         kind: TokenKind::Number,
-        location,
-        instance: nstr,
+        location: Some(location),
+        instance: Cow::from(nstr),
     }))
 }
 
@@ -220,8 +250,8 @@ fn keyword_kind(id: &str) -> TokenKind {
         //
         "wire" => KWire,
         "reg" | "logic" => KLogic,
-        "in" => KIn,
-        "out" => KOut,
+        "input" => KInput,
+        "output" => KOutput,
         "inout" => KInOut,
         "ref" => KRef,
         //
@@ -252,6 +282,7 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         return Ok(None);
     }
     let t = match state.remaining_source.chars().nth(0).unwrap() {
+        '#' => Some(TokenKind::Hash),
         '(' => Some(TokenKind::LParen),
         ')' => Some(TokenKind::RParen),
         '[' => Some(TokenKind::LBracket),
@@ -259,7 +290,9 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         '{' => Some(TokenKind::LBrace),
         '}' => Some(TokenKind::RBrace),
         '.' => Some(TokenKind::Dot),
+        ',' => Some(TokenKind::Comma),
         ':' => Some(TokenKind::Colon),
+        ';' => Some(TokenKind::Semicolon),
         _ => None,
     };
     if let Some(kind) = t {
@@ -270,8 +303,8 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         state.loc.column += 1;
         return Ok(Some(Token {
             kind,
-            instance,
-            location,
+            instance: Cow::from(instance),
+            location: Some(location),
         }));
     }
     let symlen = state
@@ -292,7 +325,7 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     }
     Ok(Some(Token {
         kind,
-        instance: symstr,
-        location,
+        instance: Cow::from(symstr),
+        location: Some(location),
     }))
 }
