@@ -153,7 +153,7 @@ fn parse_varnetdecl<'s>(
             .ok_or_else(|| "Expected variable/net declaration, got end of file".to_owned())?;
     }
     let verilog_type = match next.kind {
-        TokenKind::KLogic => {
+        TokenKind::KLogic(_) => {
             remaining = &remaining[1..];
             space = p_skip_whitespace(&mut remaining);
             next = remaining

@@ -39,7 +39,7 @@ pub enum TokenKind {
     KNegedge,
     // types
     KWire,
-    KLogic, // also reg
+    KLogic(bool), // also reg, arg: is logic(true) or reg(false)
     KInput,
     KOutput,
     KInOut,
@@ -249,7 +249,8 @@ fn keyword_kind(id: &str) -> TokenKind {
         "negedge" => KNegedge,
         //
         "wire" => KWire,
-        "reg" | "logic" => KLogic,
+        "reg" => KLogic(false),
+        "logic" => KLogic(true),
         "input" => KInput,
         "output" => KOutput,
         "inout" => KInOut,

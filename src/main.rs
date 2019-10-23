@@ -1,17 +1,22 @@
+#![deny(unused_must_use)]
+
 use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 mod ast;
 mod lexer;
 mod parser;
 mod transforms;
+mod xmlast;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "verinject")]
 pub struct Options {
-    #[structopt(name = "FILE", parse(from_os_str))]
+    #[structopt(name = "Verilog file", parse(from_os_str))]
     input_file: PathBuf,
+    #[structopt(name = "Verilator XML file", parse(from_os_str))]
+    input_xml: PathBuf,
     #[structopt(name = "output", short, long)]
     output_file: Option<PathBuf>,
 }
@@ -36,25 +41,27 @@ impl Options {
     }
 }
 
-fn main() -> std::io::Result<()> {
-    let options = Options::read_cmd();
-    let input_file = match std::fs::read_to_string(&options.input_file) {
-        Ok(f) => f,
+fn read_file(path: &Path) -> std::io::Result<String> {
+    match std::fs::read_to_string(path) {
+        Ok(f) => Ok(f),
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
-                eprintln!("Could not find file `{}`", options.input_file.display());
-                return Err(e);
+                eprintln!("Could not find file `{}`", path.display());
+                Err(e)
             }
             _ => {
-                eprintln!(
-                    "Could not read file `{}`: {:?}",
-                    options.input_file.display(),
-                    e
-                );
-                return Err(e);
+                eprintln!("Could not read file `{}`: {:?}", path.display(), e);
+                Err(e)
             }
         },
-    };
+    }
+}
+
+fn main() -> std::io::Result<()> {
+    let options = Options::read_cmd();
+    let input_file = read_file(&options.input_file)?;
+    let xml_file = read_file(&options.input_xml)?;
+    let xml = xmlast::parse_xml_metadata(&xml_file)?;
     let lexed = lexer::lex_source(&input_file)
         .map_err(|s| std::io::Error::new(ErrorKind::InvalidInput, s))?;
     // print lexer
