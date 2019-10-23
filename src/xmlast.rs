@@ -84,6 +84,9 @@ fn parse_top_module(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
         }
         xmodule = Some(xmod);
     }
+    if xmodule.is_none() {
+        xmodule = xnetlist.children().find(|e| e.name() == "module");
+    }
     let xmodule = xmodule.ok_or_else(|| xerror("No top-level module found"))?;
 
     parse_m_vars(xmodule, meta)?;
@@ -98,7 +101,7 @@ fn parse_m_vars(xmodule: &Element, meta: &mut XmlMetadata) -> Result<()> {
         }
         let name = xvar
             .attr("origName")
-            .or(xvar.attr("name"))
+            .or_else(|| xvar.attr("name"))
             .expect("XML Var with no name")
             .to_owned();
         let xname = xvar.attr("name").expect("XML Var with no name").to_owned();

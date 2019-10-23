@@ -1,8 +1,6 @@
 use crate::lexer::Token;
 use crate::xmlast::XmlMetadata;
 
-pub mod print;
-
 pub trait VerilogTransform {
     fn transform(&self, toks: &mut Vec<Token>, xml_meta: &XmlMetadata) -> Result<(), String>;
 
