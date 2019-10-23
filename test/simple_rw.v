@@ -14,4 +14,4 @@ end
 always @(posedge clk)
   val_r <= val_next;
 
-endmodule;
+endmodule
