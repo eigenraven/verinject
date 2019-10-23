@@ -10,6 +10,7 @@ pub struct SourceLocation {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum TokenKind {
+    ArbitraryInjected,
     Whitespace,
     Identifier,
     Number,
@@ -65,6 +66,16 @@ pub struct Token<'s> {
     /// None for generated tokens
     pub location: Option<SourceLocation>,
     pub instance: Cow<'s, str>,
+}
+
+impl Token<'_> {
+    pub fn inject(s: String) -> Self {
+        Self {
+            kind: TokenKind::ArbitraryInjected,
+            location: None,
+            instance: Cow::from(s),
+        }
+    }
 }
 
 /// Printing tokens back into source form

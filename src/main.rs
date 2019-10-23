@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
+use crate::transforms::inject_ff_errors::ff_error_injection;
 
 mod ast;
 mod lexer;
@@ -63,7 +64,7 @@ fn main() -> std::io::Result<()> {
     let input_file = read_file(&options.input_file)?;
     let xml_file = read_file(&options.input_xml)?;
     let xml = xmlast::parse_xml_metadata(&xml_file)?;
-    let mut token_stream = lexer::lex_source(&input_file)
+    let token_stream = lexer::lex_source(&input_file)
         .map_err(|s| std::io::Error::new(ErrorKind::InvalidInput, s))?;
     // print lexer
     /*let mut pline = 0;
@@ -77,12 +78,13 @@ fn main() -> std::io::Result<()> {
     println!();*/
 
     // transform
-
+    let tf_stream = ff_error_injection(&token_stream, &xml)
+        .map_err(|s| std::io::Error::new(ErrorKind::InvalidInput, s))?;
 
     // print out
     {
         let mut of = std::io::BufWriter::new(std::fs::File::create(options.output_file.as_ref().unwrap())?);
-        for tok in token_stream {
+        for tok in tf_stream {
             write!(of, "{}", tok)?;
         }
         of.flush()?;
