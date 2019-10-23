@@ -10,4 +10,4 @@ assign val = val_r;
 always @(posedge clk)
   val_r <= dat;
 
-endmodule;
+endmodule

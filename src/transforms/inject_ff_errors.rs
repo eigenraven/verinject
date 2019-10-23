@@ -1,15 +1,27 @@
 use crate::lexer::Token;
-use crate::xmlast::XmlMetadata;
+use crate::xmlast::{XmlMetadata, XmlVarUsage};
 use crate::lexer::TokenKind as TK;
+use crate::ast::VerilogType;
 
-pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &XmlMetadata) -> Result<Vec<Token<'s>>, String> {
+fn modified_ff(name: &str) -> String {
+    format!("verinject_modified__{}", name)
+}
+
+pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata) -> Result<Vec<Token<'s>>, String> {
     let mut r: Vec<Token<'s>> = Vec::new();
 
     let mut in_module = false;
+    let mut in_assignment = false;
     loop {
         if toks.is_empty() {break;}
         let tok = &toks[0];
         toks = &toks[1..];
+
+        if tok.kind == TK::Semicolon {
+            in_assignment = false;
+        } else if let TK::AssignSeq | TK::AssignConc = tok.kind {
+            in_assignment = true;
+        }
 
         match tok.kind {
             TK::KModule => {
@@ -19,10 +31,45 @@ pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &XmlMetadata) ->
                 in_module = true;
                 r.push(tok.clone());
                 inject_modargs(&mut toks, xml_meta, &mut r)?;
+                // put all created registers
+                r.push(Token::inject("\n".to_owned()));
+                for (_, var) in xml_meta.variables.iter() {
+                    let var = var.borrow();
+                    if var.usage != XmlVarUsage::Clocked {
+                        continue;
+                    }
+                    // create a verinject_modified__ff for each ff
+                    let mname = modified_ff(&var.name);
+                    r.push(var.xtype.create_var(VerilogType::Reg, &mname));
+                    r.push(Token::inject(";\n".to_owned()));
+                    r.push(Token::inject(format!(
+                        r#"verinject_ff_injector u_verinject__inj__{vname} (
+  .state(verinject__injector_state),
+  .unmodified({vname}),
+  .modified({mname})
+);
+"#, vname=&var.name, mname=&mname
+                    )));
+                }
             }
             TK::KEndModule => {
                 in_module = false;
                 r.push(tok.clone());
+            }
+            TK::Identifier => {
+                let id: &str = &tok.instance;
+                let mut no_print = false;
+                if in_assignment {
+                    if let Some(xvar) = xml_meta.variables.get(id) {
+                        if xvar.borrow().usage == XmlVarUsage::Clocked {
+                            no_print = true;
+                            r.push(Token::inject(modified_ff(id)));
+                        }
+                    }
+                }
+                if !no_print {
+                    r.push(tok.clone());
+                }
             }
             _ => {
                 r.push(tok.clone());

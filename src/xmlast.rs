@@ -1,10 +1,11 @@
-use crate::ast::VerilogIoQualifier;
+use crate::ast::{VerilogIoQualifier, VerilogType};
 use minidom::Element;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind, Result};
 use std::rc::Rc;
 use std::str::FromStr;
+use crate::lexer::Token;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum XmlType {
@@ -17,6 +18,21 @@ pub enum XmlType {
         right: String,
     },
     UnpackArray {},
+}
+
+impl XmlType {
+    pub fn create_var<'s>(&self, vtype: VerilogType, name: &str) -> Token<'s> {
+        let vt = if vtype == VerilogType::Reg {"reg"} else {"wire"};
+        match self {
+            XmlType::Basic {..} => {
+                Token::inject(format!("{v} {name}", v=vt, name=name))
+            }
+            XmlType::BasicRange {left, right, ..} => {
+                Token::inject(format!("{v} [{l}:{r}] {name}", v=vt, l=left, r=right, name=name))
+            }
+            _ => unimplemented!()
+        }
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

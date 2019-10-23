@@ -7,4 +7,4 @@ module simple_ff2(
 always @(posedge clk)
   val_r <= dat;
 
-endmodule;
+endmodule
