@@ -12,16 +12,35 @@ pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata)
 
     let mut in_module = false;
     let mut in_assignment = false;
+    let mut in_instance = false;
     loop {
         if toks.is_empty() {break;}
         let tok = &toks[0];
         toks = &toks[1..];
 
+        //eprintln!("Tok: {:?}", tok);
+
         if tok.kind == TK::Semicolon {
             in_assignment = false;
+            in_instance = false;
         } else if let TK::AssignSeq | TK::AssignConc = tok.kind {
             in_assignment = true;
+        } else if tok.kind == TK::Identifier {
+            if toks.iter().filter(|t| t.kind != TK::Whitespace).next().map_or(false, |t| t.kind == TK::Identifier) {
+                // module instantiation
+                in_instance = true;
+            }
         }
+
+        if in_instance {
+            if tok.kind == TK::LParen {
+                in_assignment = true;
+            } else if tok.kind == TK::Dot {
+                in_assignment = false; // ensure that .port(val) only changes into .port(val_inj)
+            }
+        }
+
+        //eprintln!("instance: {:?} assignment: {:?}", in_instance, in_assignment);
 
         match tok.kind {
             TK::KModule => {
