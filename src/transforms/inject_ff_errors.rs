@@ -1,20 +1,25 @@
-use crate::lexer::Token;
-use crate::xmlast::{XmlMetadata, XmlVarUsage};
-use crate::lexer::TokenKind as TK;
 use crate::ast::VerilogType;
+use crate::lexer::Token;
+use crate::lexer::TokenKind as TK;
+use crate::xmlast::{XmlMetadata, XmlVarUsage};
 
 fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
 }
 
-pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata) -> Result<Vec<Token<'s>>, String> {
+pub fn ff_error_injection<'s>(
+    mut toks: &[Token<'s>],
+    xml_meta: &'s XmlMetadata,
+) -> Result<Vec<Token<'s>>, String> {
     let mut r: Vec<Token<'s>> = Vec::new();
 
     let mut in_module = false;
     let mut in_assignment = false;
     let mut in_instance = false;
     loop {
-        if toks.is_empty() {break;}
+        if toks.is_empty() {
+            break;
+        }
         let tok = &toks[0];
         toks = &toks[1..];
 
@@ -26,7 +31,12 @@ pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata)
         } else if let TK::AssignSeq | TK::AssignConc = tok.kind {
             in_assignment = true;
         } else if tok.kind == TK::Identifier {
-            if toks.iter().filter(|t| t.kind != TK::Whitespace).next().map_or(false, |t| t.kind == TK::Identifier) {
+            if toks
+                .iter()
+                .filter(|t| t.kind != TK::Whitespace)
+                .next()
+                .map_or(false, |t| t.kind == TK::Identifier)
+            {
                 // module instantiation
                 in_instance = true;
             }
@@ -59,15 +69,16 @@ pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata)
                     }
                     // create a verinject_modified__ff for each ff
                     let mname = modified_ff(&var.name);
+                    let (left, right) = var.xtype.bit_range();
                     r.push(var.xtype.create_var(VerilogType::Reg, &mname));
                     r.push(Token::inject(";\n".to_owned()));
                     r.push(Token::inject(format!(
-                        r#"verinject_ff_injector u_verinject__inj__{vname} (
-  .state(verinject__injector_state),
+                        r#"verinject_ff_injector u_verinject__inj__{vname} #(.LEFT({left}), .RIGHT({right}) (
+//  .state(verinject__injector_state),
   .unmodified({vname}),
   .modified({mname})
 );
-"#, vname=&var.name, mname=&mname
+"#, vname=&var.name, mname=&mname, left=left, right=right
                     )));
                 }
             }
@@ -98,7 +109,11 @@ pub fn ff_error_injection<'s>(mut toks: &[Token<'s>], xml_meta: &'s XmlMetadata)
     Ok(r)
 }
 
-fn consume_until<'s>(toks: &mut &[Token<'s>], kind: TK, r: &mut Vec<Token<'s>>) -> Result<(), String> {
+fn consume_until<'s>(
+    toks: &mut &[Token<'s>],
+    kind: TK,
+    r: &mut Vec<Token<'s>>,
+) -> Result<(), String> {
     while !toks.is_empty() && toks[0].kind != kind {
         r.push(toks[0].clone());
         *toks = &toks[1..];
@@ -109,23 +124,36 @@ fn consume_until<'s>(toks: &mut &[Token<'s>], kind: TK, r: &mut Vec<Token<'s>>) 
     Ok(())
 }
 
-fn consume_including<'s>(toks: &mut &[Token<'s>], kind: TK, r: &mut Vec<Token<'s>>) -> Result<(), String> {
+fn consume_including<'s>(
+    toks: &mut &[Token<'s>],
+    kind: TK,
+    r: &mut Vec<Token<'s>>,
+) -> Result<(), String> {
     consume_until(toks, kind, r)?;
     r.push(toks[0].clone());
     *toks = &toks[1..];
     Ok(())
 }
 
-fn inject_modargs<'s>(toks: &mut &[Token<'s>], xml_meta: &XmlMetadata, r: &mut Vec<Token<'s>>) -> Result<(), String> {
+fn inject_modargs<'s>(
+    toks: &mut &[Token<'s>],
+    xml_meta: &XmlMetadata,
+    r: &mut Vec<Token<'s>>,
+) -> Result<(), String> {
     while !toks.is_empty() && toks[0].kind != TK::LParen {
-        if toks[0].kind == TK::Hash { // parameter syntax #()
+        if toks[0].kind == TK::Hash {
+            // parameter syntax #()
             consume_including(toks, TK::Hash, r)?;
             consume_including(toks, TK::LParen, r)?;
             let mut parcount = 1i32;
             // eat balanced parens
             while !toks.is_empty() && parcount > 0 {
-                if toks[0].kind == TK::LParen {parcount += 1;}
-                if toks[0].kind == TK::RParen {parcount -= 1;}
+                if toks[0].kind == TK::LParen {
+                    parcount += 1;
+                }
+                if toks[0].kind == TK::RParen {
+                    parcount -= 1;
+                }
                 r.push(toks[0].clone());
                 *toks = &toks[1..];
             }
@@ -155,10 +183,10 @@ fn inject_modargs<'s>(toks: &mut &[Token<'s>], xml_meta: &XmlMetadata, r: &mut V
     }
     // ) is tok[0], put additional args here
 
-    r.push(Token::inject(format!(
+    /*r.push(Token::inject(format!(
         "{}input [31:0] verinject__injector_state\n",
         if num_args > 0 {", "} else {""}
-    )));
+    )));*/
 
     // put the )
     r.push(toks[0].clone());

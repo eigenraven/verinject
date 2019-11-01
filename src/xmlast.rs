@@ -1,11 +1,11 @@
 use crate::ast::{VerilogIoQualifier, VerilogType};
+use crate::lexer::Token;
 use minidom::Element;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind, Result};
 use std::rc::Rc;
 use std::str::FromStr;
-use crate::lexer::Token;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum XmlType {
@@ -17,20 +17,44 @@ pub enum XmlType {
         left: String,
         right: String,
     },
-    UnpackArray {},
+    UnpackArray {
+        name: String,
+        left_bits: String,
+        right_bits: String,
+        left_arr: String,
+        right_arr: String,
+    },
 }
 
 impl XmlType {
     pub fn create_var<'s>(&self, vtype: VerilogType, name: &str) -> Token<'s> {
-        let vt = if vtype == VerilogType::Reg {"reg"} else {"wire"};
+        let vt = if vtype == VerilogType::Reg {
+            "reg"
+        } else {
+            "wire"
+        };
         match self {
-            XmlType::Basic {..} => {
-                Token::inject(format!("{v} {name}", v=vt, name=name))
-            }
-            XmlType::BasicRange {left, right, ..} => {
-                Token::inject(format!("{v} [{l}:{r}] {name}", v=vt, l=left, r=right, name=name))
-            }
-            _ => unimplemented!()
+            XmlType::Basic { .. } => Token::inject(format!("{v} {name}", v = vt, name = name)),
+            XmlType::BasicRange { left, right, .. } => Token::inject(format!(
+                "{v} [{l}:{r}] {name}",
+                v = vt,
+                l = left,
+                r = right,
+                name = name
+            )),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn bit_range(&self) -> (&str, &str) {
+        match self {
+            XmlType::Basic { .. } => ("0", "0"),
+            XmlType::BasicRange { left, right, .. } => (&left, &right),
+            XmlType::UnpackArray {
+                left_bits,
+                right_bits,
+                ..
+            } => (&left_bits, &right_bits),
         }
     }
 }
@@ -231,7 +255,14 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
             "unpackarraydtype" => {
                 let id = xtype.attr("id").expect("Malformed xml");
                 let id = i32::from_str(id).expect("Malformed xml");
-                let tt_type = XmlType::UnpackArray {};
+                let name = xtype.attr("name").expect("Malformed xml").into();
+                let tt_type = XmlType::UnpackArray {
+                    name,
+                    left_arr: "0".to_owned(),
+                    right_arr: "0".to_owned(),
+                    left_bits: "0".to_owned(),
+                    right_bits: "0".to_owned(),
+                };
                 meta.types.insert(id, Rc::new(tt_type));
             }
             _ => {

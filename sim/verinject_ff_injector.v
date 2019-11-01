@@ -5,6 +5,9 @@ module verinject_ff_injector
   output [LEFT:RIGHT] modified
 );
 
-assign modified = unmodified;
+always @(modified)
+begin : fault_injection
+    
+end
 
 endmodule

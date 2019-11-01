@@ -1,10 +1,10 @@
 #![deny(unused_must_use)]
 
+use crate::transforms::inject_ff_errors::ff_error_injection;
 use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use crate::transforms::inject_ff_errors::ff_error_injection;
 
 mod ast;
 mod lexer;
@@ -83,7 +83,9 @@ fn main() -> std::io::Result<()> {
 
     // print out
     {
-        let mut of = std::io::BufWriter::new(std::fs::File::create(options.output_file.as_ref().unwrap())?);
+        let mut of = std::io::BufWriter::new(std::fs::File::create(
+            options.output_file.as_ref().unwrap(),
+        )?);
         for tok in tf_stream {
             write!(of, "{}", tok)?;
         }
