@@ -1,5 +1,5 @@
-use crate::ast::{VerilogIoQualifier, VerilogType};
 use crate::lexer::Token;
+use crate::lexer::{VerilogIoQualifier, VerilogType};
 use minidom::Element;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -66,6 +66,7 @@ pub enum XmlVarUsage {
     Combinatorial,
 }
 
+#[derive(Clone)]
 pub struct XmlVariable {
     pub name: String,
     pub dir: VerilogIoQualifier,
@@ -73,12 +74,21 @@ pub struct XmlVariable {
     pub usage: XmlVarUsage,
 }
 
+#[derive(Clone)]
+pub struct XmlModule {
+    pub is_top: bool,
+    pub path: String,
+    pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub previsit_number: i32,
+    pub postvisit_number: i32,
+}
+
 #[derive(Default)]
 pub struct XmlMetadata {
     pub types: HashMap<i32, Rc<XmlType>>,
     pub top_module: String,
-    pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
-    pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub modules: HashMap<String, Rc<RefCell<XmlModule>>>,
 }
 
 pub fn parse_xml_metadata(xml_str: &str) -> Result<XmlMetadata> {
@@ -92,7 +102,16 @@ pub fn parse_xml_metadata(xml_str: &str) -> Result<XmlMetadata> {
     }
 
     parse_types(&xml, &mut meta)?;
-    parse_top_module(&xml, &mut meta)?;
+    parse_module_list(&xml, &mut meta)?;
+    debug_assert!(meta
+        .modules
+        .iter()
+        .all(|(_, e)| e.borrow().previsit_number >= 0));
+    debug_assert!(meta
+        .modules
+        .iter()
+        .all(|(_, e)| e.borrow().postvisit_number >= 0));
+    parse_module_nets(&xml, &mut meta)?;
     Ok(meta)
 }
 
@@ -104,38 +123,90 @@ fn xserror(msg: String) -> Error {
     Error::new(ErrorKind::InvalidInput, msg)
 }
 
-fn parse_top_module(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
+fn parse_module_list(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
+    let xcells = xml
+        .children()
+        .find(|p| p.name() == "cells")
+        .ok_or_else(|| xerror("Missing <cells>"))?;
+    // DFS over cells
+    modules_dfs(xml, xcells.children().next().unwrap(), meta, 0).map(|_| ())
+}
+
+fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i32) -> Result<i32> {
+    let mname = cell
+        .attr("submodname")
+        .ok_or_else(|| xerror("Missing cells/cell:submodname"))?;
+    if !meta.modules.contains_key(mname) {
+        let xfiles = root
+            .children()
+            .find(|p| p.name() == "files")
+            .ok_or_else(|| xerror("Missing <files>"))?;
+        let mfile = {
+            let mfl = cell
+                .attr("fl")
+                .ok_or_else(|| xerror("Missing cells/cell:fl"))?;
+            let mfstr = mfl
+                .split_at(mfl.find(|c: char| c.is_ascii_digit()).unwrap())
+                .0;
+            xfiles
+                .children()
+                .find(|c| c.attr("id") == Some(mfstr))
+                .expect("Unknown path to one of modules")
+                .attr("filename")
+                .unwrap()
+                .to_owned()
+        };
+        let xm = XmlModule {
+            is_top: number == 0,
+            path: mfile,
+            variables: Default::default(),
+            variables_by_xml: Default::default(),
+            previsit_number: number,
+            postvisit_number: -1,
+        };
+        meta.modules
+            .insert(mname.to_owned(), Rc::new(RefCell::new(xm)));
+    }
+    // keep track of ordering
+    // increases for each new visited child
+    let mut new_number = number;
+    for child in cell.children() {
+        if child.name() != "cell" {
+            continue;
+        }
+        new_number = modules_dfs(root, child, meta, new_number + 1)?;
+    }
+    let mut xmodule = meta.modules.get_mut(mname).unwrap().borrow_mut();
+    xmodule.postvisit_number = new_number;
+    debug_assert!(xmodule.postvisit_number >= xmodule.previsit_number);
+    Ok(new_number)
+}
+
+fn parse_module_nets(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
     let xnetlist = xml
         .children()
         .find(|p| p.name() == "netlist")
         .ok_or_else(|| xerror("Missing <netlist>"))?;
-    let mut xmodule = None;
-    for xmod in xnetlist.children() {
-        if xmod.name() != "module" {
+    for mnode in xnetlist.children() {
+        if mnode.name() != "module" {
             continue;
         }
-        if xmod.attr("topModule") != Some("1") {
-            continue;
+        let mname = mnode
+            .attr("origName")
+            .ok_or_else(|| xerror("Missing netlist/module:origName"))?;
+        let xmodule_rc = meta.modules.get(mname).unwrap().clone();
+        let mut xmodule = (&xmodule_rc as &RefCell<XmlModule>).borrow_mut();
+        if mnode.attr("topModule") == Some("1") || meta.modules.len() == 1 {
+            xmodule.is_top = true;
         }
-        if xmodule.is_some() {
-            return Err(xerror(
-                "Verinject supports only one top-level module per file",
-            ));
-        }
-        xmodule = Some(xmod);
+        parse_m_vars(&mut xmodule, mnode, meta)?;
+        explore_usages(&mut xmodule, XmlVarUsage::Unused, mnode, meta)?;
     }
-    if xmodule.is_none() {
-        xmodule = xnetlist.children().find(|e| e.name() == "module");
-    }
-    let xmodule = xmodule.ok_or_else(|| xerror("No top-level module found"))?;
-
-    parse_m_vars(xmodule, meta)?;
-    explore_usages(XmlVarUsage::Unused, xmodule, meta)?;
     Ok(())
 }
 
-fn parse_m_vars(xmodule: &Element, meta: &mut XmlMetadata) -> Result<()> {
-    for xvar in xmodule.children() {
+fn parse_m_vars(xmodule: &mut XmlModule, mnode: &Element, meta: &mut XmlMetadata) -> Result<()> {
+    for xvar in mnode.children() {
         if xvar.name() != "var" {
             continue;
         }
@@ -165,18 +236,23 @@ fn parse_m_vars(xmodule: &Element, meta: &mut XmlMetadata) -> Result<()> {
             usage: XmlVarUsage::Unused,
         };
         let vrc = Rc::new(RefCell::new(var));
-        meta.variables_by_xml.insert(xname, vrc.clone());
-        meta.variables.insert(name, vrc);
+        xmodule.variables_by_xml.insert(xname, vrc.clone());
+        xmodule.variables.insert(name, vrc);
     }
     Ok(())
 }
 
-fn explore_usages(block_kind: XmlVarUsage, elem: &Element, meta: &mut XmlMetadata) -> Result<()> {
+fn explore_usages(
+    xmodule: &mut XmlModule,
+    block_kind: XmlVarUsage,
+    elem: &Element,
+    meta: &mut XmlMetadata,
+) -> Result<()> {
     match elem.name() {
         "always" => {
             let always_kind = parse_sentree_kind(elem);
             for child in elem.children() {
-                explore_usages(always_kind, child, meta)?;
+                explore_usages(xmodule, always_kind, child, meta)?;
             }
         }
         "sentree" | "senitem" => {}
@@ -186,7 +262,7 @@ fn explore_usages(block_kind: XmlVarUsage, elem: &Element, meta: &mut XmlMetadat
                 return Err(xerror("Invalid XML assign tag"));
             }
             let xname = xref.attr("name").expect("Xml varref with no name");
-            let xvar = meta
+            let xvar = xmodule
                 .variables_by_xml
                 .get(xname)
                 .expect("Xml varref with unknown variable");
@@ -204,7 +280,7 @@ fn explore_usages(block_kind: XmlVarUsage, elem: &Element, meta: &mut XmlMetadat
         }
         _ => {
             for child in elem.children() {
-                explore_usages(block_kind, child, meta)?;
+                explore_usages(xmodule, block_kind, child, meta)?;
             }
         }
     }

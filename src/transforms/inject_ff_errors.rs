@@ -1,7 +1,7 @@
-use crate::ast::VerilogType;
 use crate::lexer::Token;
 use crate::lexer::TokenKind as TK;
-use crate::xmlast::{XmlMetadata, XmlVarUsage};
+use crate::lexer::VerilogType;
+use crate::xmlast::{XmlMetadata, XmlModule, XmlVarUsage};
 
 fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
@@ -10,6 +10,7 @@ fn modified_ff(name: &str) -> String {
 pub fn ff_error_injection<'s>(
     mut toks: &[Token<'s>],
     xml_meta: &'s XmlMetadata,
+    xml_module: &'s XmlModule,
 ) -> Result<Vec<Token<'s>>, String> {
     let mut r: Vec<Token<'s>> = Vec::new();
 
@@ -46,7 +47,7 @@ pub fn ff_error_injection<'s>(
             if tok.kind == TK::LParen {
                 in_assignment = true;
             } else if tok.kind == TK::Dot {
-                in_assignment = false; // ensure that .port(val) only changes into .port(val_inj)
+                in_assignment = false; // ensure that .port(port) changes into .port(port_inj)
             }
         }
 
@@ -62,7 +63,7 @@ pub fn ff_error_injection<'s>(
                 inject_modargs(&mut toks, xml_meta, &mut r)?;
                 // put all created registers
                 r.push(Token::inject("\n".to_owned()));
-                for (_, var) in xml_meta.variables.iter() {
+                for (_, var) in xml_module.variables.iter() {
                     let var = var.borrow();
                     if var.usage != XmlVarUsage::Clocked {
                         continue;
@@ -74,7 +75,7 @@ pub fn ff_error_injection<'s>(
                     r.push(Token::inject(";\n".to_owned()));
                     r.push(Token::inject(format!(
                         r#"verinject_ff_injector u_verinject__inj__{vname} #(.LEFT({left}), .RIGHT({right}) (
-//  .state(verinject__injector_state),
+  .state(verinject__injector_state),
   .unmodified({vname}),
   .modified({mname})
 );
@@ -90,7 +91,7 @@ pub fn ff_error_injection<'s>(
                 let id: &str = &tok.instance;
                 let mut no_print = false;
                 if in_assignment {
-                    if let Some(xvar) = xml_meta.variables.get(id) {
+                    if let Some(xvar) = xml_module.variables.get(id) {
                         if xvar.borrow().usage == XmlVarUsage::Clocked {
                             no_print = true;
                             r.push(Token::inject(modified_ff(id)));
@@ -183,10 +184,10 @@ fn inject_modargs<'s>(
     }
     // ) is tok[0], put additional args here
 
-    /*r.push(Token::inject(format!(
+    r.push(Token::inject(format!(
         "{}input [31:0] verinject__injector_state\n",
-        if num_args > 0 {", "} else {""}
-    )));*/
+        if num_args > 0 { ", " } else { "" }
+    )));
 
     // put the )
     r.push(toks[0].clone());

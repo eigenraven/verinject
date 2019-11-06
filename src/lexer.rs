@@ -60,6 +60,20 @@ pub enum TokenKind {
     KEndModule,
 }
 
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+pub enum VerilogType {
+    Wire,
+    Reg,
+}
+
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+pub enum VerilogIoQualifier {
+    None,
+    Input,
+    Output,
+    InOut,
+}
+
 #[derive(Clone, Debug, Hash)]
 pub struct Token<'s> {
     pub kind: TokenKind,
