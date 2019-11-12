@@ -120,13 +120,12 @@ pub trait RtlTransform {
             let (param_toks, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
             assert_eq!(param_toks.last().unwrap().kind, TK::RParen);
             self.push_tokens(&param_toks[..param_toks.len()-1], params);
-            self.on_post_module_parameter(params)?;
+            self.on_post_module_parameters(params)?;
             params.output.push(param_toks.last().unwrap().clone());
-            toks = next_toks;
+            toks = self.push_while(next_toks, TK::Whitespace, params);
         } else {
             self.on_no_module_parameters(params)?;
         }
-        let mut toks = self.push_while(toks, TK::Whitespace, params);
         assert_eq!(toks[0].kind, TK::LParen);
         let (port_toks, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).expect("Broken module definition");
         assert_eq!(port_toks.last().unwrap().kind, TK::RParen);
@@ -152,14 +151,81 @@ pub trait RtlTransform {
                 .take(2)
                 .eq([TK::Identifier, TK::Identifier].iter())
             {
-                let modname = &toks[0];
-                self.on_module_name(modname, params, true)?;
-                toks = self.push_until(&toks[1..], TK::Identifier, params);
-                let instid = &toks[0];
-                params.output.push(instid.clone());
-                toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                let (itoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
+                self.parse_instance(itoks, params)?;
+                params.output.push(sc.clone());
+                toks = next_toks;
+                continue;
+            }
+            // assign statements
+            if [TK::KAssign, TK::KWire, TK::KLogic(false), TK::KLogic(true)].iter().any(|k| toks[0].kind == *k) {
+                let (atoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
+                self.parse_assign(atoks, params)?;
+                params.output.push(sc.clone());
+                toks = next_toks;
+                continue;
             }
         }
+        Ok(())
+    }
+
+    fn parse_instance<'s>(&mut self, mut toks: &[Token<'s>],
+                          params: &mut ParserParams<'_, 's>) -> PResult {
+        let modname = &toks[0];
+        let instid = toks.iter().skip(1).filter(|t| t.kind == TK::Identifier).next().unwrap();
+        self.on_pre_instance(modname, instid, params)?;
+
+        self.on_module_name(modname, params, true)?;
+        toks = self.push_until(&toks[1..], TK::Identifier, params);
+        params.output.push(instid.clone());
+        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+
+        if toks[0].kind == TK::Hash {
+            // has parameters
+            let (param_toks, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
+            assert_eq!(param_toks.last().unwrap().kind, TK::RParen);
+            self.push_tokens(&param_toks[..param_toks.len()-1], params);
+            self.on_post_instance_parameters(params)?;
+            params.output.push(param_toks.last().unwrap().clone());
+            toks = self.push_while(next_toks, TK::Whitespace, params);
+        } else {
+            self.on_no_instance_parameters(params)?;
+        }
+        assert_eq!(toks[0].kind, TK::LParen);
+        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+        // Unsupported: non-dotted instances (mod u_mod(a,b,c);)
+        loop {
+            assert_eq!(toks[0].kind, TK::Dot);
+            params.output.push(toks[0].clone());
+            toks = self.push_until(toks, TK::Identifier, params);
+            toks = self.push_until(toks, TK::LParen, params);
+            let (argtoks, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
+            for tok in argtoks {
+                match tok.kind {
+                    TK::Identifier => {
+                        self.on_instance_port_assignment(tok, params)?;
+                    }
+                    _ => {
+                        params.output.push(tok.clone());
+                    }
+                }
+            }
+            toks = self.push_while(next_toks, TK::Whitespace, params);
+            if toks[0].kind == TK::RParen {
+                break;
+            } else {
+                toks = self.push_while(toks, TK::Comma, params);
+            }
+        }
+        assert_eq!(toks[0].kind, TK::RParen);
+        self.on_post_instance_ports(params)?;
+        self.push_tokens(toks, params);
+        Ok(())
+    }
+
+    fn parse_assign<'s>(&mut self, mut toks: &[Token<'s>],
+                          params: &mut ParserParams<'_, 's>) -> PResult {
+
         Ok(())
     }
 
@@ -173,7 +239,7 @@ pub trait RtlTransform {
     }
 
     // module abc #(parameter a = 1, parameter b = 2 .HERE.) ...
-    fn on_post_module_parameter<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+    fn on_post_module_parameters<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
         Ok(())
     }
 
@@ -183,6 +249,26 @@ pub trait RtlTransform {
     }
 
     fn on_pre_instance<'s>(&mut self, modname: &Token<'s>, id: &Token<'s>, params: &mut ParserParams<'_, 's>) -> PResult {
+        Ok(())
+    }
+
+    fn on_no_instance_parameters<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        Ok(())
+    }
+
+    // module abc #(parameter a = 1, parameter b = 2 .HERE.) ...
+    fn on_post_instance_parameters<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        Ok(())
+    }
+
+    // abc u_abc ( .a(*a*) );
+    fn on_instance_port_assignment<'s>(&mut self, id: &Token<'s>, params: &mut ParserParams<'_, 's>) -> PResult {
+        params.output.push(id.clone());
+        Ok(())
+    }
+
+    // abc u_abc ( .a(a) .HERE. );
+    fn on_post_instance_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
         Ok(())
     }
 }
