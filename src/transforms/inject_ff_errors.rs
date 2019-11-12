@@ -7,6 +7,10 @@ fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
 }
 
+fn modified_modname(name: &str) -> String {
+    format!("{}__injected", name)
+}
+
 pub fn ff_error_injection<'s>(
     mut toks: &[Token<'s>],
     xml_meta: &'s XmlMetadata,
@@ -17,6 +21,7 @@ pub fn ff_error_injection<'s>(
     let mut in_module = false;
     let mut in_assignment = false;
     let mut in_instance = false;
+    let mut rename_module_id = false;
     loop {
         if toks.is_empty() {
             break;
@@ -40,6 +45,7 @@ pub fn ff_error_injection<'s>(
             {
                 // module instantiation
                 in_instance = true;
+                rename_module_id = true;
             }
         }
 
@@ -48,6 +54,17 @@ pub fn ff_error_injection<'s>(
                 in_assignment = true;
             } else if tok.kind == TK::Dot {
                 in_assignment = false; // ensure that .port(port) changes into .port(port_inj)
+            }
+            if tok.kind == TK::RParen {
+                if toks
+                    .iter()
+                    .filter(|t| t.kind != TK::Whitespace)
+                    .next()
+                    .map_or(false, |t| t.kind == TK::Semicolon)
+                {
+                    // end of instance : connect the verinject_state port
+                    r.push(Token::inject(", .verinject__injector_state(verinject__injector_state)".to_owned()));
+                }
             }
         }
 
@@ -71,15 +88,17 @@ pub fn ff_error_injection<'s>(
                     // create a verinject_modified__ff for each ff
                     let mname = modified_ff(&var.name);
                     let (left, right) = var.xtype.bit_range();
+                    let dstart = "1";
                     r.push(var.xtype.create_var(VerilogType::Reg, &mname));
                     r.push(Token::inject(";\n".to_owned()));
                     r.push(Token::inject(format!(
-                        r#"verinject_ff_injector u_verinject__inj__{vname} #(.LEFT({left}), .RIGHT({right}) (
-  .state(verinject__injector_state),
+                        r#"verinject_ff_injector u_verinject__inj__{vname}
+  #(.LEFT({left}), .RIGHT({right}), .D_START({dstart}))
+( .verinject__injector_state(verinject__injector_state),
   .unmodified({vname}),
   .modified({mname})
 );
-"#, vname=&var.name, mname=&mname, left=left, right=right
+"#, vname=&var.name, mname=&mname, left=left, right=right, dstart = dstart
                     )));
                 }
             }
@@ -98,7 +117,10 @@ pub fn ff_error_injection<'s>(
                         }
                     }
                 }
-                if !no_print {
+                if rename_module_id {
+                    rename_module_id = false;
+                    r.push(Token::inject(modified_modname(id)));
+                } else if !no_print {
                     r.push(tok.clone());
                 }
             }
@@ -141,6 +163,16 @@ fn inject_modargs<'s>(
     xml_meta: &XmlMetadata,
     r: &mut Vec<Token<'s>>,
 ) -> Result<(), String> {
+    // find module name
+    while !toks.is_empty() && toks[0].kind != TK::Identifier {
+        r.push(toks[0].clone());
+        *toks = &toks[1..];
+    }
+    if toks.is_empty() {
+        return Err("Could not find module name declaration".to_owned());
+    }
+    r.push(Token::inject(modified_modname(&toks[0].instance)));
+    *toks = &toks[1..];
     while !toks.is_empty() && toks[0].kind != TK::LParen {
         if toks[0].kind == TK::Hash {
             // parameter syntax #()

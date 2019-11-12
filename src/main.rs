@@ -74,7 +74,7 @@ fn main() -> std::io::Result<()> {
                 return Err(std::io::Error::new(ErrorKind::NotFound, String::new()));
             }
             opath.set_file_name(format!(
-                "{}_injected.{}",
+                "{}__injected.{}",
                 mname,
                 input_path.extension().unwrap().to_str().unwrap()
             ));
