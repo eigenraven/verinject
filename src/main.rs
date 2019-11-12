@@ -17,7 +17,11 @@ mod xmlast;
 pub struct Options {
     #[structopt(name = "Verilator XML path", parse(from_os_str))]
     input_xml: PathBuf,
-    #[structopt(name = "Output folder for modified modules", short = "o", long = "output")]
+    #[structopt(
+        name = "Output folder for modified modules",
+        short = "o",
+        long = "output"
+    )]
     output_folder: Option<PathBuf>,
 }
 

@@ -1,7 +1,7 @@
 use crate::lexer::Token;
 use crate::lexer::VerilogType;
+use crate::transforms::{PResult, ParserParams, RtlTransform};
 use crate::xmlast::{XmlMetadata, XmlModule, XmlVarUsage};
-use crate::transforms::{RtlTransform, ParserParams, PResult};
 
 fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
@@ -17,8 +17,15 @@ struct FFErrorInjectionTransform {
 }
 
 impl RtlTransform for FFErrorInjectionTransform {
-    fn on_module_name<'s>(&mut self, id: &Token<'s>, params: &mut ParserParams<'_, 's>, _instance: bool) -> PResult {
-        params.output.push(Token::inject(modified_modname(&id.instance)));
+    fn on_module_name<'s>(
+        &mut self,
+        id: &Token<'s>,
+        params: &mut ParserParams<'_, 's>,
+        _instance: bool,
+    ) -> PResult {
+        params
+            .output
+            .push(Token::inject(modified_modname(&id.instance)));
         Ok(())
     }
 
@@ -34,7 +41,9 @@ impl RtlTransform for FFErrorInjectionTransform {
             let mname = modified_ff(&var.name);
             let (left, right) = var.xtype.bit_range();
             let pstart = "1";
-            params.output.push(var.xtype.create_var(VerilogType::Reg, &mname));
+            params
+                .output
+                .push(var.xtype.create_var(VerilogType::Reg, &mname));
             params.output.push(Token::inject(";\n".to_owned()));
             params.output.push(Token::inject(format!(
                 r#"verinject_ff_injector u_verinject__inj__{vname}
@@ -43,22 +52,37 @@ impl RtlTransform for FFErrorInjectionTransform {
   .unmodified({vname}),
   .modified({mname})
 );
-"#, vname=&var.name, mname=&mname, left=left, right=right, pstart = pstart
+"#,
+                vname = &var.name,
+                mname = &mname,
+                left = left,
+                right = right,
+                pstart = pstart
             )));
         }
         Ok(())
     }
 
     fn on_post_instance_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
-        params.output.push(Token::inject(", .verinject__injector_state(verinject__injector_state)".to_owned()));
+        params.output.push(Token::inject(
+            ", .verinject__injector_state(verinject__injector_state)".to_owned(),
+        ));
         Ok(())
     }
 
-    fn on_instance_port_assignment<'s>(&mut self, id: &Token<'s>, params: &mut ParserParams<'_, 's>) -> PResult {
+    fn on_instance_port_assignment<'s>(
+        &mut self,
+        id: &Token<'s>,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
         self.on_assignment_right_name(id, params)
     }
 
-    fn on_assignment_right_name<'s>(&mut self, id_tok: &Token<'s>, params: &mut ParserParams<'_, 's>) -> PResult {
+    fn on_assignment_right_name<'s>(
+        &mut self,
+        id_tok: &Token<'s>,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
         let id = &id_tok.instance as &str;
         let mut no_print = false;
         if let Some(xvar) = params.xml_module.variables.get(id) {
@@ -75,8 +99,8 @@ impl RtlTransform for FFErrorInjectionTransform {
 
     fn on_post_module_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
         params.output.push(Token::inject(
-            ", input [31:0] verinject__injector_state\n"
-                .to_owned()));
+            ", input [31:0] verinject__injector_state\n".to_owned(),
+        ));
         Ok(())
     }
 }
