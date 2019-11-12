@@ -1,8 +1,8 @@
 #!/bin/zsh
 mkdir test_out
 mkdir obj_dir
-rm -f test_out/*
-rm -f obj_dir/*
+#rm -f test_out/*
+#rm -f obj_dir/*
 
 cargo build
 

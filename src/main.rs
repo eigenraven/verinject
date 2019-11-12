@@ -17,7 +17,7 @@ mod xmlast;
 pub struct Options {
     #[structopt(name = "Verilator XML path", parse(from_os_str))]
     input_xml: PathBuf,
-    #[structopt(name = "Output folder for modified modules", short, long)]
+    #[structopt(name = "Output folder for modified modules", short = "o", long = "output")]
     output_folder: Option<PathBuf>,
 }
 
@@ -73,7 +73,7 @@ fn main() -> std::io::Result<()> {
                 eprintln!("Given output path is not a directory!");
                 return Err(std::io::Error::new(ErrorKind::NotFound, String::new()));
             }
-            opath.set_file_name(format!(
+            opath.push(format!(
                 "{}__injected.{}",
                 mname,
                 input_path.extension().unwrap().to_str().unwrap()

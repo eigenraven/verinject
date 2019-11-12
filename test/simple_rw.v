@@ -1,4 +1,4 @@
-module simple_ff2(
+module simple_rw(
   input clk, input dat, output val);
 
 reg val_r; // this is a flip-flop

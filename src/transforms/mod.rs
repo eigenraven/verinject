@@ -21,7 +21,7 @@ pub trait RtlTransform {
         xml_module: &'s XmlModule,
     ) -> Result<Vec<Token<'s>>, String> {
         let mut v = Vec::new();
-        self.parse_module(toks, &mut ParserParams {
+        self.parse_verilog(toks, &mut ParserParams {
             output: &mut v,
             xml_meta,
             xml_module
@@ -37,7 +37,7 @@ pub trait RtlTransform {
         }
         let left = &toks[..idx];
         let mid = &toks[idx];
-        let right = &toks[idx..];
+        let right = &toks[idx+1..];
         Some((left, mid, right))
     }
 
@@ -87,8 +87,7 @@ pub trait RtlTransform {
     fn parse_verilog<'s>(&mut self, mut toks: &[Token<'s>],
                         params: &mut ParserParams<'_, 's>) -> PResult {
         while !toks.is_empty() {
-            let tok = &toks[0];
-            match tok.kind {
+            match toks[0].kind {
                 TK::KModule => {
                     if let Some((mtoks, mend, nexttoks)) = Self::token_split(toks, TK::KEndModule) {
                         self.parse_module(mtoks, params)?;
@@ -99,7 +98,7 @@ pub trait RtlTransform {
                     }
                 }
                 _ => {
-                    params.output.push(tok.clone());
+                    params.output.push(toks[0].clone());
                     toks = &toks[1..];
                 }
             }
@@ -236,6 +235,7 @@ pub trait RtlTransform {
             } else {
                 toks = self.push_while(toks, TK::Comma, params);
             }
+            toks = self.push_while(toks, TK::Whitespace, params);
         }
         assert_eq!(toks[0].kind, TK::RParen);
         self.on_post_instance_ports(params)?;

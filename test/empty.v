@@ -1,4 +1,4 @@
 
-module empty();
+module empty(input a);
 
 endmodule
