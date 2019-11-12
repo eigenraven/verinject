@@ -26,6 +26,8 @@ pub enum TokenKind {
     Dot,
     Comma,
     Colon,
+    At, // @
+    Star,
     Semicolon,
     AssignSeq,
     AssignConc,
@@ -319,6 +321,8 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         ',' => Some(TokenKind::Comma),
         ':' => Some(TokenKind::Colon),
         ';' => Some(TokenKind::Semicolon),
+        '@' => Some(TokenKind::At),
+        '*' => Some(TokenKind::Star),
         _ => None,
     };
     if let Some(kind) = t {

@@ -159,13 +159,32 @@ pub trait RtlTransform {
                 continue;
             }
             // assign statements
-            if [TK::KAssign, TK::KWire, TK::KLogic(false), TK::KLogic(true)].iter().any(|k| toks[0].kind == *k) {
+            if [TK::KAssign, TK::KWire, TK::KLogic(false), TK::KLogic(true), TK::Identifier].iter().any(|k| toks[0].kind == *k) {
                 let (atoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
                 self.parse_assign_or_decl(atoks, params)?;
                 params.output.push(sc.clone());
                 toks = next_toks;
                 continue;
             }
+            // always blocks with arguments (not always_comb) - skip their sensitivity lists
+            if [TK::KAlwaysLatch, TK::KAlwaysFF, TK::KAlways].iter().any(|k| toks[0].kind == *k) {
+                let (atoks, at, next_toks) = Self::token_split(toks, TK::At).unwrap();
+                self.push_tokens(atoks);
+                params.output.push(at.clone());
+                toks = self.push_while(next_toks, TK::Whitespace, params);
+                if toks[0].kind == TK::LParen {
+                    let (sense, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen);
+                    self.push_tokens(sense, params);
+                    toks = next_toks;
+                } else if toks[0].kind == TK::Star {
+                    params.output.push(toks[0].clone());
+                    toks = &toks[1..];
+                }
+                continue;
+            }
+            // just pass through anything else
+            params.output.push(toks[0].clone());
+            toks = &toks[1..];
         }
         Ok(())
     }
