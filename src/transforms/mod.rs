@@ -10,7 +10,7 @@ pub struct ParserParams<'v, 's> {
     xml_module: &'s XmlModule,
 }
 
-type PResult = Result<(), String>;
+pub type PResult = Result<(), String>;
 
 #[allow(unused_variables)]
 pub trait RtlTransform {
@@ -38,7 +38,7 @@ pub trait RtlTransform {
         let left = &toks[..idx];
         let mid = &toks[idx];
         let right = &toks[idx..];
-        return Some((left, mid, right));
+        Some((left, mid, right))
     }
 
     /// splits p (a (b)) S c d into (p (a (b)), c d)
@@ -60,7 +60,7 @@ pub trait RtlTransform {
         if balance != 0 {
             return None;
         }
-        return Some(toks.split_at(last_paren+1));
+        Some(toks.split_at(last_paren+1))
     }
 
     fn push_until<'s, 't>(&mut self, toks: &'t [Token<'s>], stop_at: TokenKind,
@@ -169,11 +169,11 @@ pub trait RtlTransform {
             // always blocks with arguments (not always_comb) - skip their sensitivity lists
             if [TK::KAlwaysLatch, TK::KAlwaysFF, TK::KAlways].iter().any(|k| toks[0].kind == *k) {
                 let (atoks, at, next_toks) = Self::token_split(toks, TK::At).unwrap();
-                self.push_tokens(atoks);
+                self.push_tokens(atoks, params);
                 params.output.push(at.clone());
                 toks = self.push_while(next_toks, TK::Whitespace, params);
                 if toks[0].kind == TK::LParen {
-                    let (sense, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen);
+                    let (sense, next_toks) = Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
                     self.push_tokens(sense, params);
                     toks = next_toks;
                 } else if toks[0].kind == TK::Star {
@@ -192,7 +192,7 @@ pub trait RtlTransform {
     fn parse_instance<'s>(&mut self, mut toks: &[Token<'s>],
                           params: &mut ParserParams<'_, 's>) -> PResult {
         let modname = &toks[0];
-        let instid = toks.iter().skip(1).filter(|t| t.kind == TK::Identifier).next().unwrap();
+        let instid = toks.iter().skip(1).find(|t| t.kind == TK::Identifier).unwrap();
         self.on_pre_instance(modname, instid, params)?;
 
         self.on_module_name(modname, params, true)?;
