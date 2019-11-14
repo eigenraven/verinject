@@ -14,15 +14,15 @@ pub enum XmlType {
     },
     BasicRange {
         name: String,
-        left: String,
-        right: String,
+        left: i32,
+        right: i32,
     },
     UnpackArray {
         name: String,
-        left_bits: String,
-        right_bits: String,
-        left_arr: String,
-        right_arr: String,
+        left_bits: i32,
+        right_bits: i32,
+        left_arr: i32,
+        right_arr: i32,
     },
 }
 
@@ -46,15 +46,24 @@ impl XmlType {
         }
     }
 
-    pub fn bit_range(&self) -> (&str, &str) {
+    pub fn bit_range(&self) -> (i32, i32) {
         match self {
-            XmlType::Basic { .. } => ("0", "0"),
-            XmlType::BasicRange { left, right, .. } => (&left, &right),
+            XmlType::Basic { .. } => (0, 0),
+            XmlType::BasicRange { left, right, .. } => (*left, *right),
             XmlType::UnpackArray {
                 left_bits,
                 right_bits,
                 ..
-            } => (&left_bits, &right_bits),
+            } => (*left_bits, *right_bits),
+        }
+    }
+
+    pub fn bit_count(&self) -> i32 {
+        let (l, r) = self.bit_range();
+        if l < r {
+            r - l + 1
+        } else {
+            l - r + 1
         }
     }
 }
@@ -80,8 +89,11 @@ pub struct XmlModule {
     pub path: String,
     pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
     pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub children: Vec<String>,
     pub previsit_number: i32,
     pub postvisit_number: i32,
+    pub own_bits_used: i32,
+    pub bits_used: i32,
 }
 
 #[derive(Default)]
@@ -112,6 +124,7 @@ pub fn parse_xml_metadata(xml_str: &str) -> Result<XmlMetadata> {
         .iter()
         .all(|(_, e)| e.borrow().postvisit_number >= 0));
     parse_module_nets(&xml, &mut meta)?;
+    calculate_module_params(&meta);
     Ok(meta)
 }
 
@@ -129,7 +142,8 @@ fn parse_module_list(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
         .find(|p| p.name() == "cells")
         .ok_or_else(|| xerror("Missing <cells>"))?;
     // DFS over cells
-    modules_dfs(xml, xcells.children().next().unwrap(), meta, 0).map(|_| ())
+    modules_dfs(xml, xcells.children().next().unwrap(), meta, 0).map(|_| ())?;
+    Ok(())
 }
 
 fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i32) -> Result<i32> {
@@ -156,14 +170,27 @@ fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i
                 .unwrap()
                 .to_owned()
         };
-        let xm = XmlModule {
+        let mut xm = XmlModule {
             is_top: number == 0,
             path: mfile,
             variables: Default::default(),
             variables_by_xml: Default::default(),
+            children: Vec::new(),
             previsit_number: number,
             postvisit_number: -1,
+            own_bits_used: -1,
+            bits_used: -1,
         };
+        for child in cell.children() {
+            if child.name() != "cell" {
+                continue;
+            }
+            xm.children
+                .push(child.attr("submodname").unwrap().to_owned());
+        }
+        if xm.is_top {
+            meta.top_module = mname.to_owned();
+        }
         meta.modules
             .insert(mname.to_owned(), Rc::new(RefCell::new(xm)));
     }
@@ -317,10 +344,10 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
                 let id = i32::from_str(id).expect("Malformed xml");
                 let name = xtype.attr("name").expect("Malformed xml").into();
                 let tt_type = if let Some(left) = xtype.attr("left") {
-                    let right = xtype.attr("right").expect("Malformed xml").into();
+                    let right = xtype.attr("right").expect("Malformed xml").parse().unwrap();
                     XmlType::BasicRange {
                         name,
-                        left: left.into(),
+                        left: left.parse().unwrap(),
                         right,
                     }
                 } else {
@@ -334,10 +361,10 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
                 let name = xtype.attr("name").expect("Malformed xml").into();
                 let tt_type = XmlType::UnpackArray {
                     name,
-                    left_arr: "0".to_owned(),
-                    right_arr: "0".to_owned(),
-                    left_bits: "0".to_owned(),
-                    right_bits: "0".to_owned(),
+                    left_arr: 0,
+                    right_arr: 0,
+                    left_bits: 0,
+                    right_bits: 0,
                 };
                 meta.types.insert(id, Rc::new(tt_type));
             }
@@ -347,4 +374,38 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn calculate_module_params(meta: &XmlMetadata) {
+    let top = meta.modules.get(&meta.top_module).unwrap();
+    visit_calc_bits(meta, top);
+}
+
+fn visit_calc_bits(meta: &XmlMetadata, module: &RefCell<XmlModule>) -> i32 {
+    let module_r = module
+        .try_borrow()
+        .expect("Module graph contains a cycle - unsupported");
+    if module_r.bits_used >= 0 {
+        return module_r.bits_used;
+    }
+    let own_bits: i32 = if module_r.own_bits_used >= 0 {
+        module_r.own_bits_used
+    } else {
+        module_r
+            .variables
+            .values()
+            .map(|v| v.borrow().xtype.bit_count())
+            .sum()
+    };
+    let mut other_bits = 0;
+    for child_name in module_r.children.iter() {
+        let child = meta.modules.get(child_name).unwrap();
+        other_bits += visit_calc_bits(meta, child);
+    }
+    drop(module_r);
+    let total_bits = own_bits + other_bits;
+    let mut module_w = module.borrow_mut();
+    module_w.own_bits_used = own_bits;
+    module_w.bits_used = total_bits;
+    total_bits
 }

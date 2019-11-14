@@ -13,7 +13,8 @@ fn modified_modname(name: &str) -> String {
 
 #[derive(Default)]
 struct FFErrorInjectionTransform {
-    //
+    dfs_order: i32,
+    next_dfs_order: i32,
 }
 
 impl RtlTransform for FFErrorInjectionTransform {
@@ -21,11 +22,43 @@ impl RtlTransform for FFErrorInjectionTransform {
         &mut self,
         id: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
-        _instance: bool,
+        instance: bool,
     ) -> PResult {
         params
             .output
             .push(Token::inject(modified_modname(&id.instance)));
+        if instance {
+            let m = params.xml_meta.modules.get(&id.instance as &str).unwrap();
+            let m = m.borrow();
+            self.next_dfs_order = self.dfs_order + m.bits_used;
+        }
+        Ok(())
+    }
+
+    fn on_no_module_parameters<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        params.output.push(Token::inject(String::from(
+            "#(parameter VERINJECT_DSTART = 0)",
+        )));
+        Ok(())
+    }
+
+    fn on_post_module_parameters<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        params.output.push(Token::inject(String::from(
+            ", parameter VERINJECT_DSTART = 0",
+        )));
+        Ok(())
+    }
+
+    fn on_post_module_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        params.output.push(Token::inject(
+            ", input [31:0] verinject__injector_state\n".to_owned(),
+        ));
         Ok(())
     }
 
@@ -40,7 +73,8 @@ impl RtlTransform for FFErrorInjectionTransform {
             // create a verinject_modified__ff for each ff
             let mname = modified_ff(&var.name);
             let (left, right) = var.xtype.bit_range();
-            let pstart = "1";
+            let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
+            self.dfs_order += var.xtype.bit_count();
             params
                 .output
                 .push(var.xtype.create_var(VerilogType::Reg, &mname));
@@ -63,10 +97,27 @@ impl RtlTransform for FFErrorInjectionTransform {
         Ok(())
     }
 
-    fn on_post_instance_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
-        params.output.push(Token::inject(
-            ", .verinject__injector_state(verinject__injector_state)".to_owned(),
-        ));
+    fn on_no_instance_parameters<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        params.output.push(Token::inject(format!(
+            "#(.VERINJECT_DSTART({dstart}))",
+            dstart = self.dfs_order
+        )));
+        self.dfs_order = self.next_dfs_order;
+        Ok(())
+    }
+
+    fn on_post_instance_parameters<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        params.output.push(Token::inject(format!(
+            ", .VERINJECT_DSTART({dstart})",
+            dstart = self.dfs_order
+        )));
+        self.dfs_order = self.next_dfs_order;
         Ok(())
     }
 
@@ -76,6 +127,13 @@ impl RtlTransform for FFErrorInjectionTransform {
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
         self.on_assignment_right_name(id, params)
+    }
+
+    fn on_post_instance_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        params.output.push(Token::inject(
+            ", .verinject__injector_state(verinject__injector_state)".to_owned(),
+        ));
+        Ok(())
     }
 
     fn on_assignment_right_name<'s>(
@@ -94,13 +152,6 @@ impl RtlTransform for FFErrorInjectionTransform {
         if !no_print {
             params.output.push(id_tok.clone());
         }
-        Ok(())
-    }
-
-    fn on_post_module_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
-        params.output.push(Token::inject(
-            ", input [31:0] verinject__injector_state\n".to_owned(),
-        ));
         Ok(())
     }
 }

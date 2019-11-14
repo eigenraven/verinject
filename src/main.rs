@@ -23,6 +23,8 @@ pub struct Options {
         long = "output"
     )]
     output_folder: Option<PathBuf>,
+    #[structopt(name = "Print extra information", short = "v", long = "verbose")]
+    verbose: bool,
 }
 
 impl Options {
@@ -82,6 +84,9 @@ fn main() -> std::io::Result<()> {
                 mname,
                 input_path.extension().unwrap().to_str().unwrap()
             ));
+            if options.verbose {
+                eprintln!("Writing output to {}", opath.display());
+            }
             let mut of = std::io::BufWriter::new(std::fs::File::create(&opath)?);
             for tok in tf_stream {
                 write!(of, "{}", tok)?;

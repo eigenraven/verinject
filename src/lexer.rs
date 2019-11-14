@@ -63,6 +63,7 @@ pub enum TokenKind {
 }
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+#[allow(dead_code)]
 pub enum VerilogType {
     Wire,
     Reg,

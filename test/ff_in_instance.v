@@ -1,4 +1,4 @@
-module simple_ff(
+module ff_in_instance(
   input clk,
   input dat,
   output val
