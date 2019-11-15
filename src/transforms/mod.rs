@@ -265,12 +265,13 @@ pub trait RtlTransform {
             self.on_no_instance_parameters(params)?;
         }
         assert_eq!(toks[0].kind, TK::LParen);
+        params.output.push(toks[0].clone());
         toks = self.push_while(&toks[1..], TK::Whitespace, params);
         // Unsupported: non-dotted instances (mod u_mod(a,b,c);)
         loop {
             assert_eq!(toks[0].kind, TK::Dot);
             params.output.push(toks[0].clone());
-            toks = self.push_until(toks, TK::Identifier, params);
+            toks = self.push_until(&toks[1..], TK::Identifier, params);
             toks = self.push_until(toks, TK::LParen, params);
             let (argtoks, next_toks) =
                 Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
