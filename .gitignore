@@ -10,3 +10,6 @@ Cargo.lock
 **/*.rs.bk
 
 obj_dir
+*.vcd
+*.vvp
+**/injected/
