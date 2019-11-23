@@ -361,10 +361,7 @@ pub trait RtlTransform {
         Ok(())
     }
 
-    fn on_end_module<'s>(
-        &mut self,
-        params: &mut ParserParams<'_, 's>
-    ) -> PResult {
+    fn on_end_module<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
         Ok(())
     }
 

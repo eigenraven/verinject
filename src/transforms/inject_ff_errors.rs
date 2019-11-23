@@ -18,7 +18,11 @@ struct FFErrorInjectionTransform {
 }
 
 impl FFErrorInjectionTransform {
-    fn impl_regwire_injections<'s>(&mut self, params: &mut ParserParams<'_, 's>, at_end: bool) -> PResult {
+    fn impl_regwire_injections<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>,
+        at_end: bool,
+    ) -> PResult {
         // put all created registers
         params.output.push(Token::inject("\n".to_owned()));
         for (_, var) in params.xml_module.variables.iter() {
