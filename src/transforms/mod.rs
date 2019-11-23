@@ -256,7 +256,7 @@ pub trait RtlTransform {
             self.on_no_instance_parameters(params)?;
         }
 
-        toks = self.push_until(&toks[1..], TK::Identifier, params);
+        toks = self.push_until(&toks[0..], TK::Identifier, params);
         let instid = &toks[0];
         params.output.push(instid.clone());
         toks = self.push_while(&toks[1..], TK::Whitespace, params);
