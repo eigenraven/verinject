@@ -111,6 +111,7 @@ pub trait RtlTransform {
                 TK::KModule => {
                     if let Some((mtoks, mend, nexttoks)) = Self::token_split(toks, TK::KEndModule) {
                         self.parse_module(mtoks, params)?;
+                        self.on_end_module(params)?;
                         params.output.push(mend.clone());
                         toks = nexttoks;
                     } else {
@@ -240,18 +241,8 @@ pub trait RtlTransform {
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
         let modname = &toks[0];
-        let instid = toks
-            .iter()
-            .skip(1)
-            .find(|t| t.kind == TK::Identifier)
-            .unwrap();
-        self.on_pre_instance(modname, instid, params)?;
-
         self.on_module_name(modname, params, true)?;
-        toks = self.push_until(&toks[1..], TK::Identifier, params);
-        params.output.push(instid.clone());
         toks = self.push_while(&toks[1..], TK::Whitespace, params);
-
         if toks[0].kind == TK::Hash {
             // has parameters
             let (param_toks, next_toks) =
@@ -264,6 +255,12 @@ pub trait RtlTransform {
         } else {
             self.on_no_instance_parameters(params)?;
         }
+
+        toks = self.push_until(&toks[1..], TK::Identifier, params);
+        let instid = &toks[0];
+        params.output.push(instid.clone());
+        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+
         assert_eq!(toks[0].kind, TK::LParen);
         params.output.push(toks[0].clone());
         toks = self.push_while(&toks[1..], TK::Whitespace, params);
@@ -364,6 +361,13 @@ pub trait RtlTransform {
         Ok(())
     }
 
+    fn on_end_module<'s>(
+        &mut self,
+        params: &mut ParserParams<'_, 's>
+    ) -> PResult {
+        Ok(())
+    }
+
     fn on_no_module_parameters<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
         Ok(())
     }
@@ -380,15 +384,6 @@ pub trait RtlTransform {
 
     // module abc #() (); .HERE. always... endmodule
     fn on_module_start<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
-        Ok(())
-    }
-
-    fn on_pre_instance<'s>(
-        &mut self,
-        modname: &Token<'s>,
-        id: &Token<'s>,
-        params: &mut ParserParams<'_, 's>,
-    ) -> PResult {
         Ok(())
     }
 

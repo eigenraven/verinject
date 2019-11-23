@@ -17,6 +17,46 @@ struct FFErrorInjectionTransform {
     next_dfs_order: i32,
 }
 
+impl FFErrorInjectionTransform {
+    fn impl_regwire_injections<'s>(&mut self, params: &mut ParserParams<'_, 's>, at_end: bool) -> PResult {
+        // put all created registers
+        params.output.push(Token::inject("\n".to_owned()));
+        for (_, var) in params.xml_module.variables.iter() {
+            let var = var.borrow();
+            if var.usage != XmlVarUsage::Clocked {
+                continue;
+            }
+            // create a verinject_modified__ff for each ff
+            let mname = modified_ff(&var.name);
+            let (left, right) = var.xtype.bit_range();
+            if !at_end {
+                params
+                    .output
+                    .push(var.xtype.create_var(VerilogType::Wire, &mname));
+                params.output.push(Token::inject(";\n".to_owned()));
+            } else {
+                let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
+                self.dfs_order += var.xtype.bit_count();
+                params.output.push(Token::inject(format!(
+                    r#"verinject_ff_injector #(.LEFT({left}), .RIGHT({right}), .P_START({pstart}))
+ u_verinject__inj__{vname}
+( .verinject__injector_state(verinject__injector_state),
+  .unmodified({vname}),
+  .modified({mname})
+);
+"#,
+                    vname = &var.name,
+                    mname = &mname,
+                    left = left,
+                    right = right,
+                    pstart = pstart
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+
 impl RtlTransform for FFErrorInjectionTransform {
     fn on_module_name<'s>(
         &mut self,
@@ -63,38 +103,11 @@ impl RtlTransform for FFErrorInjectionTransform {
     }
 
     fn on_module_start<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
-        // put all created registers
-        params.output.push(Token::inject("\n".to_owned()));
-        for (_, var) in params.xml_module.variables.iter() {
-            let var = var.borrow();
-            if var.usage != XmlVarUsage::Clocked {
-                continue;
-            }
-            // create a verinject_modified__ff for each ff
-            let mname = modified_ff(&var.name);
-            let (left, right) = var.xtype.bit_range();
-            let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
-            self.dfs_order += var.xtype.bit_count();
-            params
-                .output
-                .push(var.xtype.create_var(VerilogType::Reg, &mname));
-            params.output.push(Token::inject(";\n".to_owned()));
-            params.output.push(Token::inject(format!(
-                r#"verinject_ff_injector u_verinject__inj__{vname}
-  #(.LEFT({left}), .RIGHT({right}), .P_START({pstart}))
-( .verinject__injector_state(verinject__injector_state),
-  .unmodified({vname}),
-  .modified({mname})
-);
-"#,
-                vname = &var.name,
-                mname = &mname,
-                left = left,
-                right = right,
-                pstart = pstart
-            )));
-        }
-        Ok(())
+        self.impl_regwire_injections(params, false)
+    }
+
+    fn on_end_module<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> Result<(), String> {
+        self.impl_regwire_injections(params, true)
     }
 
     fn on_no_instance_parameters<'s>(
