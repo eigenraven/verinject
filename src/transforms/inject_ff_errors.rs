@@ -32,7 +32,7 @@ impl FFErrorInjectionTransform {
             }
             // create a verinject_modified__ff for each ff
             let mname = modified_ff(&var.name);
-            let (left, right) = var.xtype.bit_range();
+            let (left, right) = var.xtype.word_range();
             if !at_end {
                 params
                     .output

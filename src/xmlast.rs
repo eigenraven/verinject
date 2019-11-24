@@ -17,13 +17,23 @@ pub enum XmlType {
         left: i32,
         right: i32,
     },
-    UnpackArray {
+    MemoryArray1D {
         name: String,
+        /// Size of a single word in the array
         left_bits: i32,
         right_bits: i32,
+        /// Determines number of blocks in the array
         left_arr: i32,
         right_arr: i32,
     },
+}
+
+fn abs_diff(l: i32, r: i32) -> i32 {
+    if l < r {
+        r - l + 1
+    } else {
+        l - r + 1
+    }
 }
 
 impl XmlType {
@@ -46,11 +56,11 @@ impl XmlType {
         }
     }
 
-    pub fn bit_range(&self) -> (i32, i32) {
+    pub fn word_range(&self) -> (i32, i32) {
         match self {
             XmlType::Basic { .. } => (0, 0),
             XmlType::BasicRange { left, right, .. } => (*left, *right),
-            XmlType::UnpackArray {
+            XmlType::MemoryArray1D {
                 left_bits,
                 right_bits,
                 ..
@@ -58,13 +68,29 @@ impl XmlType {
         }
     }
 
-    pub fn bit_count(&self) -> i32 {
-        let (l, r) = self.bit_range();
-        if l < r {
-            r - l + 1
-        } else {
-            l - r + 1
+    pub fn mem1_range(&self) -> (i32, i32) {
+        match self {
+            XmlType::Basic { .. } | XmlType::BasicRange { .. } => (0, 0),
+            XmlType::MemoryArray1D {
+                left_arr,
+                right_arr,
+                ..
+            } => (*left_arr, *right_arr),
         }
+    }
+
+    pub fn word_bit_count(&self) -> i32 {
+        let (l, r) = self.word_range();
+        abs_diff(l, r)
+    }
+
+    pub fn mem1_word_count(&self) -> i32 {
+        let (l, r) = self.mem1_range();
+        abs_diff(l, r)
+    }
+
+    pub fn bit_count(&self) -> i32 {
+        self.word_bit_count() * self.mem1_word_count()
     }
 }
 
@@ -101,6 +127,31 @@ pub struct XmlMetadata {
     pub types: HashMap<i32, Rc<XmlType>>,
     pub top_module: String,
     pub modules: HashMap<String, Rc<RefCell<XmlModule>>>,
+}
+
+fn parse_verilog_num(mut vnum: &str) -> Option<i32> {
+    // ignore width specifier
+    if let Some(pos) = vnum.find('\'') {
+        vnum = &vnum[pos + 1..];
+    }
+    // ignore signedness
+    if vnum.starts_with('s') {
+        vnum = &vnum[1..];
+    }
+    let mut base = match vnum.chars().next().unwrap() {
+        'h' | 'H' => 16,
+        'o' | 'O' => 8,
+        'b' | 'B' => 2,
+        'd' | 'D' => 10,
+        _ => 0,
+    };
+    if base != 0 {
+        vnum = &vnum[1..];
+    } else {
+        base = 10;
+    }
+    let vnum = vnum.replace('_', "");
+    i32::from_str_radix(&vnum, base).ok()
 }
 
 pub fn parse_xml_metadata(xml_str: &str) -> Result<XmlMetadata> {
@@ -337,6 +388,7 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
         .children()
         .find(|p| p.name() == "typetable")
         .ok_or_else(|| xerror("Missing <typetable>"))?;
+    let mut array_types = Vec::new();
     for xtype in xtypetable.children() {
         match xtype.name() {
             "basicdtype" => {
@@ -356,22 +408,37 @@ fn parse_types(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
                 meta.types.insert(id, Rc::new(tt_type));
             }
             "unpackarraydtype" => {
-                let id = xtype.attr("id").expect("Malformed xml");
-                let id = i32::from_str(id).expect("Malformed xml");
-                let name = xtype.attr("name").expect("Malformed xml").into();
-                let tt_type = XmlType::UnpackArray {
-                    name,
-                    left_arr: 0,
-                    right_arr: 0,
-                    left_bits: 0,
-                    right_bits: 0,
-                };
-                meta.types.insert(id, Rc::new(tt_type));
+                array_types.push(xtype);
             }
             _ => {
                 return Err(xserror(format!("Unsupported XML type: {}", xtype.name())));
             }
         }
+    }
+    for xtype in array_types.into_iter() {
+        assert_eq!(xtype.name(), "unpackarraydtype");
+        let id_str = xtype.attr("id").expect("Malformed xml");
+        let id = i32::from_str(id_str).expect("Malformed xml");
+        let subtypeid = i32::from_str(xtype.attr("sub_dtype_id").unwrap()).expect("Malformed xml");
+        let word_type = meta.types.get(&subtypeid).unwrap();
+        let word_range = word_type.word_range();
+        if xtype.children().count() != 1 {
+            return Err(xerror("Multi-dimensional arrays not currently supported"));
+        }
+        let xarange = xtype.children().next().unwrap();
+        assert_eq!(xarange.children().count(), 2);
+        let xaleft = xarange.children().next().unwrap().attr("name").unwrap();
+        let xaright = xarange.children().nth(1).unwrap().attr("name").unwrap();
+        let aleft = parse_verilog_num(xaleft).expect("Can't parse <const> integer");
+        let aright = parse_verilog_num(xaright).expect("Can't parse <const> integer");
+        let tt_type = XmlType::MemoryArray1D {
+            name: id_str.to_owned(),
+            left_arr: aleft,
+            right_arr: aright,
+            left_bits: word_range.0,
+            right_bits: word_range.1,
+        };
+        meta.types.insert(id, Rc::new(tt_type));
     }
     Ok(())
 }
