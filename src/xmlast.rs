@@ -114,6 +114,8 @@ pub struct XmlVariable {
     pub dir: VerilogIoQualifier,
     pub xtype: Rc<XmlType>,
     pub usage: XmlVarUsage,
+    pub read_count: u32,
+    pub write_count: u32,
 }
 
 #[derive(Clone)]
@@ -319,6 +321,8 @@ fn parse_m_vars(xmodule: &mut XmlModule, mnode: &Element, meta: &mut XmlMetadata
             xtype,
             dir,
             usage: XmlVarUsage::Unused,
+            read_count: 0,
+            write_count: 0,
         };
         let vrc = Rc::new(RefCell::new(var));
         xmodule.variables_by_xml.insert(xname, vrc.clone());
@@ -352,6 +356,7 @@ fn explore_usages(
                 .get(xname)
                 .expect("Xml varref with unknown variable");
             let mut var = xvar.borrow_mut();
+            var.write_count += 1;
             if var.usage != XmlVarUsage::Unused && var.usage != block_kind {
                 return Err(xserror(format!(
                     "Variable {} assigned to in both clocked and combinatorial blocks",
@@ -359,9 +364,17 @@ fn explore_usages(
                 )));
             }
             var.usage = block_kind;
+            drop(var);
+            explore_usages(xmodule, block_kind, elem.children().next().unwrap(), meta)?;
         }
-        "instance" => {
-            // todo
+        "varref" => {
+            let xname = elem.attr("name").expect("Xml varref with no name");
+            let xvar = xmodule
+                .variables_by_xml
+                .get(xname)
+                .expect("Xml varref with unknown variable");
+            let mut var = xvar.borrow_mut();
+            var.read_count += 1;
         }
         _ => {
             for child in elem.children() {
