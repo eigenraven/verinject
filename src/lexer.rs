@@ -40,6 +40,11 @@ pub enum TokenKind {
     KAssign,
     KPosedge,
     KNegedge,
+    KIf,
+    KCase,
+    KCasex,
+    KCasez,
+    KFor,
     // types
     KWire,
     KLogic(bool), // also reg, arg: is logic(true) or reg(false)
@@ -275,6 +280,11 @@ fn keyword_kind(id: &str) -> TokenKind {
         "assign" => KAssign,
         "posedge" => KPosedge,
         "negedge" => KNegedge,
+        "case" => KCase,
+        "casex" => KCasex,
+        "casez" => KCasez,
+        "if" => KIf,
+        "for" => KFor,
         //
         "wire" => KWire,
         "reg" => KLogic(false),

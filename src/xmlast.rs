@@ -287,7 +287,7 @@ fn parse_module_nets(xml: &Element, meta: &mut XmlMetadata) -> Result<()> {
             xmodule.is_top = true;
         }
         parse_m_vars(&mut xmodule, mnode, meta)?;
-        explore_usages(&mut xmodule, XmlVarUsage::Unused, mnode, meta)?;
+        explore_usages(&mut xmodule, XmlVarUsage::Unused, mnode, false, meta)?;
     }
     Ok(())
 }
@@ -335,37 +335,32 @@ fn explore_usages(
     xmodule: &mut XmlModule,
     block_kind: XmlVarUsage,
     elem: &Element,
+    varref_write: bool,
     meta: &mut XmlMetadata,
 ) -> Result<()> {
     match elem.name() {
         "always" => {
             let always_kind = parse_sentree_kind(elem);
             for child in elem.children() {
-                explore_usages(xmodule, always_kind, child, meta)?;
+                explore_usages(xmodule, always_kind, child, varref_write, meta)?;
             }
         }
         "sentree" | "senitem" => {}
         "assigndly" | "assign" => {
-            let xref = elem.children().last().unwrap();
-            if xref.name() != "varref" {
-                return Err(xerror("Invalid XML assign tag"));
-            }
-            let xname = xref.attr("name").expect("Xml varref with no name");
-            let xvar = xmodule
-                .variables_by_xml
-                .get(xname)
-                .expect("Xml varref with unknown variable");
-            let mut var = xvar.borrow_mut();
-            var.write_count += 1;
-            if var.usage != XmlVarUsage::Unused && var.usage != block_kind {
-                return Err(xserror(format!(
-                    "Variable {} assigned to in both clocked and combinatorial blocks",
-                    xname
-                )));
-            }
-            var.usage = block_kind;
-            drop(var);
-            explore_usages(xmodule, block_kind, elem.children().next().unwrap(), meta)?;
+            explore_usages(
+                xmodule,
+                block_kind,
+                elem.children().last().unwrap(),
+                true,
+                meta,
+            )?;
+            explore_usages(
+                xmodule,
+                block_kind,
+                elem.children().next().unwrap(),
+                false,
+                meta,
+            )?;
         }
         "varref" => {
             let xname = elem.attr("name").expect("Xml varref with no name");
@@ -374,11 +369,22 @@ fn explore_usages(
                 .get(xname)
                 .expect("Xml varref with unknown variable");
             let mut var = xvar.borrow_mut();
-            var.read_count += 1;
+            if varref_write {
+                var.write_count += 1;
+                if var.usage != XmlVarUsage::Unused && var.usage != block_kind {
+                    return Err(xserror(format!(
+                        "Variable {} assigned to in both clocked and combinatorial blocks",
+                        xname
+                    )));
+                }
+                var.usage = block_kind;
+            } else {
+                var.read_count += 1;
+            }
         }
         _ => {
             for child in elem.children() {
-                explore_usages(xmodule, block_kind, child, meta)?;
+                explore_usages(xmodule, block_kind, child, varref_write, meta)?;
             }
         }
     }

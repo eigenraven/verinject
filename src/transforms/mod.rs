@@ -191,19 +191,26 @@ pub trait RtlTransform {
                 toks = next_toks;
                 continue;
             }
-            // assign statements
-            if [
-                TK::KAssign,
-                TK::KWire,
-                TK::KLogic(false),
-                TK::KLogic(true),
-                TK::Identifier,
-            ]
-            .iter()
-            .any(|k| toks[0].kind == *k)
+            // if/case(xz)/... ()
+            if [TK::KCase, TK::KCasez, TK::KCasex, TK::KFor, TK::KIf]
+                .iter()
+                .any(|k| toks[0].kind == *k)
+            {
+                params.output.push(toks[0].clone());
+                toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                let (args, next_toks) =
+                    Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
+                self.on_expression_read_toks(args, params)?;
+                toks = next_toks;
+                continue;
+            }
+            // variable declarations
+            if [TK::KWire, TK::KLogic(false), TK::KLogic(true)]
+                .iter()
+                .any(|k| toks[0].kind == *k)
             {
                 let (atoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
-                self.parse_assign_or_decl(atoks, params)?;
+                self.parse_var_decl(atoks, params)?;
                 params.output.push(sc.clone());
                 toks = next_toks;
                 continue;
@@ -228,9 +235,7 @@ pub trait RtlTransform {
                 }
                 continue;
             }
-            // just pass through anything else
-            params.output.push(toks[0].clone());
-            toks = &toks[1..];
+            toks = self.parse_generic_statement(toks, params)?;
         }
         Ok(())
     }
@@ -296,24 +301,13 @@ pub trait RtlTransform {
         Ok(())
     }
 
-    fn parse_assign_or_decl<'s>(
+    fn parse_var_decl<'s>(
         &mut self,
         mut toks: &[Token<'s>],
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
-        let is_decl = [TK::KWire, TK::KLogic(false), TK::KLogic(true)]
-            .iter()
-            .any(|k| toks[0].kind == *k);
-        let is_assign = toks
-            .iter()
-            .any(|t| t.kind == TK::AssignConc || t.kind == TK::AssignSeq);
-        if [TK::KAssign, TK::KWire, TK::KLogic(false), TK::KLogic(true)]
-            .iter()
-            .any(|k| toks[0].kind == *k)
-        {
-            params.output.push(toks[0].clone());
-            toks = self.push_while(&toks[1..], TK::Whitespace, params);
-        }
+        params.output.push(toks[0].clone());
+        toks = self.push_while(&toks[1..], TK::Whitespace, params);
         if toks[0].kind == TK::LBracket {
             let (vtoks, next_toks) =
                 Self::token_split_balanced_parens(toks, TK::LBracket, TK::RBracket).unwrap();
@@ -322,33 +316,43 @@ pub trait RtlTransform {
         }
         assert_eq!(toks[0].kind, TK::Identifier);
         let assignee_id = &toks[0];
-        if is_decl {
-            self.on_declaration_name(assignee_id, params)?;
-        } else {
-            self.on_assignment_left_name(assignee_id, params)?;
-        }
+        self.on_declaration_name(assignee_id, params)?;
         toks = &toks[1..];
-        if is_assign {
-            let idx_op = toks
-                .iter()
-                .take_while(|t| t.kind != TK::AssignSeq && t.kind != TK::AssignConc)
-                .count();
-            let (pre_op, toks) = toks.split_at(idx_op);
-            self.push_tokens(pre_op, params);
-            for tok in toks {
-                match tok.kind {
-                    TK::Identifier => {
-                        self.on_assignment_right_name(tok, params)?;
-                    }
-                    _ => {
-                        params.output.push(tok.clone());
-                    }
-                }
-            }
-        } else {
-            self.push_tokens(toks, params);
-        }
+        self.on_expression_read_toks(toks, params)?;
         Ok(())
+    }
+
+    fn parse_generic_statement<'s, 't>(
+        &mut self,
+        mut toks: &'t [Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<&'t [Token<'s>], String> {
+        let mut endpos = toks
+            .iter()
+            .take_while(|t| t.kind != TK::Semicolon && t.kind != TK::KEnd)
+            .count();
+        if endpos < toks.len() - 1 {
+            endpos += 1;
+        }
+        let stmttoks = &toks[..endpos];
+        let assigncnt = stmttoks
+            .iter()
+            .take_while(|t| t.kind != TK::AssignConc || t.kind != TK::AssignSeq)
+            .count();
+        let assigncnt = if assigncnt == stmttoks.len() {
+            0
+        } else {
+            assigncnt
+        };
+        let (preassign, postassign) = stmttoks.split_at(assigncnt);
+        if !preassign.is_empty() {
+            self.on_assignment_left_side(preassign, params)?;
+        }
+        if !postassign.is_empty() {
+            self.on_expression_read_toks(postassign, params)?;
+        }
+        toks = &toks[endpos..];
+        Ok(toks)
     }
 
     fn on_module_name<'s>(
@@ -428,13 +432,121 @@ pub trait RtlTransform {
         Ok(())
     }
 
+    fn on_expression_read_toks<'s>(
+        &mut self,
+        toks: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        for tok in toks {
+            match tok.kind {
+                TK::Identifier => {
+                    self.on_assignment_right_name(tok, params)?;
+                }
+                _ => {
+                    params.output.push(tok.clone());
+                }
+            }
+        }
+        Ok(())
+    }
+
     // (assign/nothing) *a* = b;
-    fn on_assignment_left_name<'s>(
+    fn on_assignment_left_side<'s>(
+        &mut self,
+        mut toks: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        while !toks.is_empty() {
+            let tok = &toks[0];
+            match tok.kind {
+                TK::Identifier => {
+                    let is_slice = toks
+                        .iter()
+                        .filter(|t| t.kind != TK::Whitespace)
+                        .next()
+                        .map_or(false, |k| k.kind == TK::LBracket);
+                    if is_slice {
+                        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                        let (slice_toks, next_toks) =
+                            Self::token_split_balanced_parens(toks, TK::LBracket, TK::RBracket)
+                                .unwrap();
+                        let mut bcnt = 0;
+                        let mut colonpos = -1;
+                        for (i, t) in slice_toks.iter().enumerate() {
+                            match t.kind {
+                                TK::LBracket => {
+                                    bcnt += 1;
+                                }
+                                TK::RBracket => {
+                                    bcnt -= 1;
+                                }
+                                TK::Colon => {
+                                    if bcnt == 0 {
+                                        colonpos = i as i32;
+                                        break;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        if colonpos < 0 {
+                            self.on_assignment_left_index(tok, slice_toks, params)?;
+                        } else {
+                            let (lsl, rsl) = slice_toks.split_at(colonpos as usize);
+                            self.on_assignment_left_slice(tok, lsl, rsl, params)?;
+                        }
+                        toks = next_toks;
+                    } else {
+                        self.on_assignment_left_simple_id(tok, params)?;
+                        toks = &toks[1..];
+                    }
+                }
+                TK::LBracket => {
+                    let (slice_toks, next_toks) =
+                        Self::token_split_balanced_parens(toks, TK::LBracket, TK::RBracket)
+                            .unwrap();
+                    self.on_expression_read_toks(slice_toks, params)?;
+                    toks = next_toks;
+                }
+                _ => {
+                    params.output.push(tok.clone());
+                    toks = &toks[1..];
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn on_assignment_left_simple_id<'s>(
         &mut self,
         id: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
         params.output.push(id.clone());
+        Ok(())
+    }
+
+    fn on_assignment_left_index<'s>(
+        &mut self,
+        id: &Token<'s>,
+        index: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        self.on_assignment_left_simple_id(id, params)?;
+        self.push_tokens(index, params);
+        Ok(())
+    }
+
+    fn on_assignment_left_slice<'s>(
+        &mut self,
+        id: &Token<'s>,
+        slice_left: &[Token<'s>],
+        slice_right: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        self.on_assignment_left_simple_id(id, params)?;
+        self.push_tokens(slice_left, params);
+        self.push_tokens(slice_right, params);
         Ok(())
     }
 

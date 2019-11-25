@@ -245,7 +245,7 @@ impl RtlTransform for FFErrorInjectionTransform {
         Ok(())
     }
 
-    fn on_assignment_left_name<'s>(
+    fn on_assignment_left_simple_id<'s>(
         &mut self,
         id_tok: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
