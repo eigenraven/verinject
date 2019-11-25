@@ -19,12 +19,12 @@ module register_file(
 
 logic [31:0] memory [0:31];
 
-always_ff @(posedge clk) begin : rfile_write
+always_ff @(posedge clk) begin
     if (in_write_enable && in_write_number != 0)
         memory[in_write_number] <= in_write_value;
-end : rfile_write
+end
 
-always_comb begin : rfile_read
+always_comb begin
     out_reg_value_1 = memory[in_reg_number_1];
     out_reg_value_2 = memory[in_reg_number_2];
 
@@ -41,8 +41,8 @@ always_comb begin : rfile_read
         out_reg_value_1 = 0;
     if (in_reg_number_2 == 0)
         out_reg_value_2 = 0;
-end : rfile_read
+end
 
-endmodule : register_file
+endmodule
 
 `default_nettype wire

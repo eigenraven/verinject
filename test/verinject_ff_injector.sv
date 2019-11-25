@@ -1,5 +1,5 @@
 module verinject_ff_injector
-#(parameter LEFT = 0, parameter RIGHT = 0, parameter D_START = 0)
+#(parameter LEFT = 0, parameter RIGHT = 0, parameter P_START = 0)
 (
   input [31:0] verinject__injector_state,
   input [LEFT:RIGHT] unmodified,

@@ -362,6 +362,24 @@ fn explore_usages(
                 meta,
             )?;
         }
+        "arraysel" | "sel" => {
+            explore_usages(
+                xmodule,
+                block_kind,
+                elem.children().next().unwrap(),
+                varref_write,
+                meta,
+            )?;
+            for child in elem.children().skip(1) {
+                explore_usages(
+                    xmodule,
+                    block_kind,
+                    child,
+                    false,
+                    meta,
+                )?;
+            }
+        }
         "varref" => {
             let xname = elem.attr("name").expect("Xml varref with no name");
             let xvar = xmodule
