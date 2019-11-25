@@ -2,6 +2,7 @@ use crate::lexer::VerilogType;
 use crate::lexer::{Token, TokenKind, VerilogIoQualifier};
 use crate::transforms::{PResult, ParserParams, RtlTransform};
 use crate::xmlast::{XmlMetadata, XmlModule, XmlVarUsage, XmlVariable};
+use std::collections::HashMap;
 
 fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
@@ -15,6 +16,7 @@ fn modified_modname(name: &str) -> String {
 struct FFErrorInjectionTransform {
     dfs_order: i32,
     next_dfs_order: i32,
+    mem_read_numbers: HashMap<String, i32>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -115,6 +117,96 @@ impl FFErrorInjectionTransform {
         Ok(())
     }
 
+    fn impl_mem_injections<'s>(
+        &mut self,
+        var: &XmlVariable,
+        params: &mut ParserParams<'_, 's>,
+        at_end: bool,
+    ) -> PResult {
+        assert_eq!(var.dir, VerilogIoQualifier::None);
+        if params.xml_module.clock_name.is_none() {
+            return Err(format!(
+                "Couldn't detect clock for module at `{}`",
+                params.xml_module.path
+            ));
+        }
+        let p_clock = params.xml_module.clock_name.as_ref().unwrap();
+        let (lword, rword) = var.xtype.word_range();
+        let (larr, rarr) = var.xtype.mem1_range();
+        let (lad, rad) = var.xtype.mem1_addr_bits();
+        let p_do_write = format!("verinject_do_write__{}", var.name);
+        let p_wr_addr = format!("verinject_write_address__{}", var.name);
+        if !at_end {
+            params
+                .output
+                .push(Token::inject(format!("reg {};\n", p_do_write)));
+            params.output.push(Token::inject(format!(
+                "reg [{lad}:{rad}] {p_wr_addr};\n",
+                lad = lad,
+                rad = rad,
+                p_wr_addr = p_wr_addr
+            )));
+            for i in 0..var.read_count {
+                params.output.push(Token::inject(format!(
+                    "reg [{lword}:{rword}] verinject_read{i}_unmodified__{vn};\n",
+                    lword = lword,
+                    rword = rword,
+                    i = i,
+                    vn = var.name
+                )));
+                params.output.push(Token::inject(format!(
+                    "reg [{lad}:{rad}] verinject_read{i}_address__{vn};\n",
+                    lad = lad,
+                    rad = rad,
+                    i = i,
+                    vn = var.name
+                )));
+                params.output.push(Token::inject(format!(
+                    "wire [{lword}:{rword}] verinject_read{i}_modified__{vn};\n",
+                    lword = lword,
+                    rword = rword,
+                    i = i,
+                    vn = var.name
+                )));
+            }
+            self.mem_read_numbers.insert(var.name.clone(), 0);
+        } else {
+            let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
+            self.dfs_order += var.xtype.bit_count();
+            for i in 0..var.read_count {
+                params.output.push(Token::inject(format!(
+                    r#"verinject_mem1_injector #(.LEFT({lword}), .RIGHT({rword}),
+ .ADDR_LEFT({lad}), .ADDR_RIGHT({rad}),
+ .MEM_LEFT({larr}), .MEM_RIGHT({rarr}),
+ .P_START({pstart}))
+ u_verinject_mem1_rd{i}__inj__{vn}
+( .verinject__injector_state(verinject__injector_state),
+  .clock({p_clock}),
+  .unmodified(verinject_read{i}_unmodified__{vn}),
+  .read_address(verinject_read{i}_address__{vn}),
+  .modified(verinject_read{i}_modified__{vn}),
+  .do_write({p_do_write}),
+  .write_address({p_wr_addr})
+);
+"#,
+                    lword = lword,
+                    rword = rword,
+                    lad = lad,
+                    rad = rad,
+                    larr = larr,
+                    rarr = rarr,
+                    pstart = pstart,
+                    vn = var.name,
+                    i = i,
+                    p_clock = p_clock,
+                    p_do_write = p_do_write,
+                    p_wr_addr = p_wr_addr,
+                )));
+            }
+        }
+        Ok(())
+    }
+
     fn impl_regwire_injections<'s>(
         &mut self,
         params: &mut ParserParams<'_, 's>,
@@ -132,7 +224,9 @@ impl FFErrorInjectionTransform {
                 VarInjectType::PortReg => {
                     self.impl_port_injections(&var, params, at_end)?;
                 }
-                VarInjectType::Memory => { /*TODO*/ }
+                VarInjectType::Memory => {
+                    self.impl_mem_injections(&var, params, at_end)?;
+                }
             }
         }
         Ok(())

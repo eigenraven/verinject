@@ -36,6 +36,14 @@ fn abs_diff(l: i32, r: i32) -> i32 {
     }
 }
 
+fn ilog2_ceil(x: u32) -> u32 {
+    let mut r = 0u32;
+    while (1u32 << r) < x {
+        r += 1;
+    }
+    r
+}
+
 impl XmlType {
     pub fn create_var<'s>(&self, vtype: VerilogType, name: &str) -> Token<'s> {
         let vt = if vtype == VerilogType::Reg {
@@ -86,6 +94,11 @@ impl XmlType {
         }
     }
 
+    pub fn mem1_addr_bits(&self) -> (i32, i32) {
+        let (ml, mr) = self.mem1_range();
+        (ilog2_ceil(ml as u32) as i32, ilog2_ceil(mr as u32) as i32)
+    }
+
     pub fn word_bit_count(&self) -> i32 {
         let (l, r) = self.word_range();
         abs_diff(l, r)
@@ -124,6 +137,7 @@ pub struct XmlModule {
     pub path: String,
     pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
     pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub clock_name: Option<String>,
     pub children: Vec<String>,
     pub previsit_number: i32,
     pub postvisit_number: i32,
@@ -235,6 +249,7 @@ fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i
             path: mfile,
             variables: Default::default(),
             variables_by_xml: Default::default(),
+            clock_name: None,
             children: Vec::new(),
             previsit_number: number,
             postvisit_number: -1,
@@ -345,7 +360,27 @@ fn explore_usages(
                 explore_usages(xmodule, always_kind, child, varref_write, meta)?;
             }
         }
-        "sentree" | "senitem" => {}
+        "senitem" => {
+            let edge = elem.attr("edgeType");
+            if edge != Some("POS") {
+                // unsupported: negedge clocks
+                return Ok(());
+            }
+            let vref = elem.children().next();
+            if let Some(vref) = vref {
+                if vref.name() != "varref" {
+                    return Ok(());
+                }
+                let vname = vref.attr("name").expect("<varref> with no name");
+                if vname == "rst" || vname == "rst_n" || vname == "reset" || vname == "reset_n" {
+                    // common reset names
+                    return Ok(());
+                }
+                if xmodule.clock_name.is_none() {
+                    xmodule.clock_name = Some(vname.to_owned());
+                }
+            }
+        }
         "assigndly" | "assign" => {
             explore_usages(
                 xmodule,
@@ -371,13 +406,7 @@ fn explore_usages(
                 meta,
             )?;
             for child in elem.children().skip(1) {
-                explore_usages(
-                    xmodule,
-                    block_kind,
-                    child,
-                    false,
-                    meta,
-                )?;
+                explore_usages(xmodule, block_kind, child, false, meta)?;
             }
         }
         "varref" => {

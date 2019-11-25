@@ -462,8 +462,7 @@ pub trait RtlTransform {
                 TK::Identifier => {
                     let is_slice = toks
                         .iter()
-                        .filter(|t| t.kind != TK::Whitespace)
-                        .next()
+                        .find(|t| t.kind != TK::Whitespace)
                         .map_or(false, |k| k.kind == TK::LBracket);
                     if is_slice {
                         toks = self.push_while(&toks[1..], TK::Whitespace, params);
