@@ -337,7 +337,7 @@ pub trait RtlTransform {
         let stmttoks = &toks[..endpos];
         let assigncnt = stmttoks
             .iter()
-            .take_while(|t| t.kind != TK::AssignConc || t.kind != TK::AssignSeq)
+            .take_while(|t| t.kind != TK::AssignConc && t.kind != TK::AssignSeq)
             .count();
         let assigncnt = if assigncnt == stmttoks.len() {
             0
