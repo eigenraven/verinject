@@ -155,7 +155,7 @@ pub trait RtlTransform {
             Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen)
                 .expect("Broken module definition");
         assert_eq!(port_toks.last().unwrap().kind, TK::RParen);
-        self.push_tokens(&port_toks[..port_toks.len() - 1], params);
+        self.on_module_ports(&port_toks[..port_toks.len() - 1], params)?;
         self.on_post_module_ports(params)?;
         params.output.push(port_toks.last().unwrap().clone());
         toks = self.push_until(next_toks, TK::Semicolon, params);
@@ -371,6 +371,16 @@ pub trait RtlTransform {
 
     // module abc #(parameter a = 1, parameter b = 2 .HERE.) ...
     fn on_post_module_parameters<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        Ok(())
+    }
+
+    // module abc #(parameter a = 1, parameter b = 2) (<START>input a, output [31:0] b <END>) ...
+    fn on_module_ports<'s>(
+        &mut self,
+        toks: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        self.push_tokens(toks, params);
         Ok(())
     }
 

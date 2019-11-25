@@ -56,6 +56,13 @@ impl XmlType {
         }
     }
 
+    pub fn is_memory(&self) -> bool {
+        match self {
+            XmlType::Basic { .. } | XmlType::BasicRange { .. } => false,
+            XmlType::MemoryArray1D { .. } => true,
+        }
+    }
+
     pub fn word_range(&self) -> (i32, i32) {
         match self {
             XmlType::Basic { .. } => (0, 0),
@@ -461,6 +468,7 @@ fn visit_calc_bits(meta: &XmlMetadata, module: &RefCell<XmlModule>) -> i32 {
         module_r
             .variables
             .values()
+            .filter(|v| v.borrow().usage == XmlVarUsage::Clocked || v.borrow().xtype.is_memory())
             .map(|v| v.borrow().xtype.bit_count())
             .sum()
     };
