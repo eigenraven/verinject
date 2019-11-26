@@ -17,6 +17,7 @@ struct FFErrorInjectionTransform {
     dfs_order: i32,
     next_dfs_order: i32,
     mem_read_numbers: HashMap<String, i32>,
+    post_statement_queue: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -231,6 +232,82 @@ impl FFErrorInjectionTransform {
         }
         Ok(())
     }
+
+    fn on_identifier_in_expr<'s, 't>(
+        &mut self,
+        id_tok: &'t Token<'s>,
+        is_write: bool,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        let id = &id_tok.instance as &str;
+        let mut no_print = false;
+        let vitype = if is_write {
+            VarInjectType::PortReg
+        } else {
+            VarInjectType::BodyReg
+        };
+        if let Some(xvar) = params.xml_module.variables.get(id) {
+            let xvar = xvar.borrow();
+            if VarInjectType::from_var(&xvar) == vitype {
+                no_print = true;
+                params.output.push(Token::inject(modified_ff(id)));
+            }
+        }
+        if !no_print {
+            params.output.push(id_tok.clone());
+        }
+        Ok(())
+    }
+
+    fn on_memory_in_expr<'s, 't>(
+        &mut self,
+        id_tok: &'t Token<'s>,
+        index_toks: &'t [Token<'s>],
+        is_write: bool,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        let id = &id_tok.instance as &str;
+        if let Some(xvar) = params.xml_module.variables.get(id) {
+            let xvar = xvar.borrow();
+            if VarInjectType::from_var(&xvar) == VarInjectType::Memory {
+                let addr = {
+                    let mut addr = String::new();
+                    let mut found_left = false;
+                    let lastpos = index_toks
+                        .iter()
+                        .rposition(|t| t.kind == TokenKind::RBracket)
+                        .unwrap();
+                    for atok in index_toks.iter().take(lastpos) {
+                        if !found_left && atok.kind == TokenKind::LBracket {
+                            found_left = true;
+                            continue;
+                        }
+                        addr.push_str(&atok.instance);
+                    }
+                    addr
+                };
+                if is_write {
+                    params.output.push(id_tok.clone());
+                    self.push_tokens(index_toks, params);
+                    self.post_statement_queue.push(format!(
+                        r#"
+verinject_do_write__{vn} <= 1'b1;
+verinject_write_address__{vn} <= ({addr});
+"#,
+                        vn = xvar.name,
+                        addr = addr
+                    ));
+                }
+            } else {
+                self.on_identifier_in_expr(id_tok, is_write, params)?;
+                self.push_tokens(index_toks, params);
+            }
+        } else {
+            params.output.push(id_tok.clone());
+            self.push_tokens(index_toks, params);
+        }
+        Ok(())
+    }
 }
 
 impl RtlTransform for FFErrorInjectionTransform {
@@ -329,7 +406,7 @@ impl RtlTransform for FFErrorInjectionTransform {
         id: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
-        self.on_assignment_right_name(id, params)
+        self.on_assignment_right_simple_id(id, params)
     }
 
     fn on_post_instance_ports<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
@@ -344,37 +421,38 @@ impl RtlTransform for FFErrorInjectionTransform {
         id_tok: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
     ) -> Result<(), String> {
-        let id = &id_tok.instance as &str;
-        let mut no_print = false;
-        if let Some(xvar) = params.xml_module.variables.get(id) {
-            let xvar = xvar.borrow();
-            if VarInjectType::from_var(&xvar) == VarInjectType::PortReg {
-                no_print = true;
-                params.output.push(Token::inject(modified_ff(id)));
-            }
-        }
-        if !no_print {
-            params.output.push(id_tok.clone());
-        }
-        Ok(())
+        self.on_identifier_in_expr(id_tok, true, params)
     }
 
-    fn on_assignment_right_name<'s>(
+    fn on_assignment_left_index<'s>(
+        &mut self,
+        id_tok: &Token<'s>,
+        index_toks: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        self.on_memory_in_expr(id_tok, index_toks, true, params)
+    }
+
+    fn on_assignment_right_simple_id<'s>(
         &mut self,
         id_tok: &Token<'s>,
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
-        let id = &id_tok.instance as &str;
-        let mut no_print = false;
-        if let Some(xvar) = params.xml_module.variables.get(id) {
-            let xvar = xvar.borrow();
-            if VarInjectType::from_var(&xvar) == VarInjectType::BodyReg {
-                no_print = true;
-                params.output.push(Token::inject(modified_ff(id)));
-            }
-        }
-        if !no_print {
-            params.output.push(id_tok.clone());
+        self.on_identifier_in_expr(id_tok, false, params)
+    }
+
+    fn on_assignment_right_index<'s>(
+        &mut self,
+        id_tok: &Token<'s>,
+        index_toks: &[Token<'s>],
+        params: &mut ParserParams<'_, 's>,
+    ) -> Result<(), String> {
+        self.on_memory_in_expr(id_tok, index_toks, false, params)
+    }
+
+    fn on_post_statement<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> Result<(), String> {
+        for s in self.post_statement_queue.drain(..) {
+            params.output.push(Token::inject(s));
         }
         Ok(())
     }

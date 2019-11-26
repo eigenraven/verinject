@@ -96,7 +96,8 @@ impl XmlType {
 
     pub fn mem1_addr_bits(&self) -> (i32, i32) {
         let (ml, mr) = self.mem1_range();
-        (ilog2_ceil(ml as u32) as i32, ilog2_ceil(mr as u32) as i32)
+        let (al, ar) = (ilog2_ceil(ml as u32) as i32, ilog2_ceil(mr as u32) as i32);
+        (al.max(ar) - 1, 0)
     }
 
     pub fn word_bit_count(&self) -> i32 {

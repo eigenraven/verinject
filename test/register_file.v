@@ -21,7 +21,9 @@ logic [31:0] memory [0:31];
 
 always_ff @(posedge clk) begin
     if (in_write_enable && in_write_number != 0)
+    begin
         memory[in_write_number] <= in_write_value;
+    end
 end
 
 always_comb begin

@@ -1,17 +1,21 @@
 module simple_mem(
   input clk,
-  input [9:0] addr,
-  output [31:0] memword
+  input [9:0] raddr,
+  input [9:0] waddr,
+  input [31:0] wrword,
+  output [31:0] rdword
 );
 
 reg [31:0] word_memory [0:1023];
-reg [31:0] outword;
 
-assign memword = outword;
+always @*
+begin
+  rdword = word_memory[raddr];
+end
 
 always @(posedge clk)
 begin
-  outword <= word_memory[addr];
+  word_memory[waddr] <= wrword;
 end
 
 endmodule
