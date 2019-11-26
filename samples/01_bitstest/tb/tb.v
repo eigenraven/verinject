@@ -11,11 +11,16 @@ initial begin
     $dumpfile("waveform.vcd");
     $dumpvars;
     clk = 1'b0;
-    inject_state = 0;
+    inject_state = ~0;
 end
 
 initial forever #10 clk = ~clk;
-initial forever #30 inject_state = (inject_state + 1) & (64-1);
+initial forever #30 
+begin
+  inject_state = inject_state + 1;
+  if (inject_state > 96)
+    inject_state = 0;
+end
 initial #10000 $finish();
 
 endmodule
