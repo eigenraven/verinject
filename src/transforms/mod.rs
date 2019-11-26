@@ -1,6 +1,6 @@
 use crate::lexer::TokenKind as TK;
 use crate::lexer::{Token, TokenKind};
-use crate::xmlast::{XmlMetadata, XmlModule};
+use crate::xmlast::{XmlMetadata, XmlModule, XmlVarUsage};
 
 pub mod generate_bit_map;
 pub mod inject_ff_errors;
@@ -173,6 +173,7 @@ pub trait RtlTransform {
         mut toks: &[Token<'s>],
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
+        let mut append_end = false;
         loop {
             toks = self.push_while(toks, TK::Whitespace, params);
             if toks.is_empty() {
@@ -203,7 +204,11 @@ pub trait RtlTransform {
                 let (args, next_toks) =
                     Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
                 self.on_expression_read_toks(args, params)?;
-                toks = next_toks;
+                toks = self.push_while(next_toks, TK::Whitespace, params);
+                if toks[0].kind != TK::KBegin {
+                    params.output.push(Token::inject("\nbegin\n".to_owned()));
+                    append_end = true;
+                }
                 continue;
             }
             // variable declarations
@@ -216,26 +221,72 @@ pub trait RtlTransform {
                 params.output.push(sc.clone());
                 toks = next_toks;
                 self.on_post_statement(params)?;
+                if append_end {
+                    append_end = false;
+                    params.output.push(Token::inject("\nend\n".to_owned()));
+                }
                 continue;
             }
-            // always blocks with arguments (not always_comb) - skip their sensitivity lists
-            if [TK::KAlwaysLatch, TK::KAlwaysFF, TK::KAlways]
-                .iter()
-                .any(|k| toks[0].kind == *k)
-            {
-                let (atoks, at, next_toks) = Self::token_split(toks, TK::At).unwrap();
-                self.push_tokens(atoks, params);
-                params.output.push(at.clone());
-                toks = self.push_while(next_toks, TK::Whitespace, params);
-                if toks[0].kind == TK::LParen {
-                    let (sense, next_toks) =
-                        Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
-                    self.push_tokens(sense, params);
+            // don't touch initial blocks
+            if toks[0].kind == TK::KInitial {
+                params.output.push(toks[0].clone());
+                toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                if toks[0].kind == TK::KBegin {
+                    let (itoks, next_toks) =
+                        Self::token_split_balanced_parens(toks, TK::KBegin, TK::KEnd).unwrap();
+                    self.push_tokens(itoks, params);
                     toks = next_toks;
-                } else if toks[0].kind == TK::Star {
+                } else {
+                    let (itoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
+                    self.push_tokens(itoks, params);
+                    params.output.push(sc.clone());
+                    toks = next_toks;
+                }
+                continue;
+            }
+            // always blocks with arguments - skip their sensitivity lists
+            if [
+                TK::KAlwaysLatch,
+                TK::KAlwaysFF,
+                TK::KAlways,
+                TK::KAlwaysComb,
+            ]
+            .iter()
+            .any(|k| toks[0].kind == *k)
+            {
+                let mut usage = XmlVarUsage::Combinatorial;
+                if toks[0].kind != TK::KAlwaysComb {
+                    let (atoks, at, next_toks) = Self::token_split(toks, TK::At).unwrap();
+                    self.push_tokens(atoks, params);
+                    params.output.push(at.clone());
+                    toks = self.push_while(next_toks, TK::Whitespace, params);
+                    if toks[0].kind == TK::LParen {
+                        let (sense, next_toks) =
+                            Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen)
+                                .unwrap();
+                        if sense.iter().any(|t| t.kind == TK::KPosedge) {
+                            usage = XmlVarUsage::Clocked;
+                        }
+                        self.push_tokens(sense, params);
+                        toks = next_toks;
+                    } else if toks[0].kind == TK::Star {
+                        params.output.push(toks[0].clone());
+                        toks = &toks[1..];
+                    }
+                } else {
                     params.output.push(toks[0].clone());
                     toks = &toks[1..];
                 }
+                toks = self.push_while(toks, TK::Whitespace, params);
+                if toks[0].kind != TK::KBegin {
+                    params.output.push(Token::inject("\nbegin\n".to_owned()));
+                    append_end = true;
+                } else {
+                    params.output.push(toks[0].clone());
+                    toks = &toks[1..];
+                }
+                self.on_always_begin(usage, params)?;
+                self.on_post_statement(params)?;
                 continue;
             }
             // keywords
@@ -245,7 +296,6 @@ pub trait RtlTransform {
                 TK::KEndInterface,
                 TK::KEndModule,
                 TK::Semicolon,
-                TK::KAlwaysComb,
             ]
             .iter()
             .any(|k| toks[0].kind == *k)
@@ -256,6 +306,10 @@ pub trait RtlTransform {
                 continue;
             }
             toks = self.parse_generic_statement(toks, params)?;
+            if append_end {
+                append_end = false;
+                params.output.push(Token::inject("\nend\n".to_owned()));
+            }
         }
         Ok(())
     }
@@ -337,8 +391,16 @@ pub trait RtlTransform {
         assert_eq!(toks[0].kind, TK::Identifier);
         let assignee_id = &toks[0];
         self.on_declaration_name(assignee_id, params)?;
-        toks = &toks[1..];
-        self.on_expression_read_toks(toks, params)?;
+        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+        while !toks.is_empty() && toks[0].kind == TK::LBracket {
+            let (vtoks, next_toks) =
+                Self::token_split_balanced_parens(toks, TK::LBracket, TK::RBracket).unwrap();
+            self.push_tokens(vtoks, params);
+            toks = self.push_while(next_toks, TK::Whitespace, params);
+        }
+        if !toks.is_empty() {
+            self.on_expression_read_toks(toks, params)?;
+        }
         Ok(())
     }
 
@@ -651,6 +713,14 @@ pub trait RtlTransform {
     }
 
     fn on_post_statement<'s>(&mut self, params: &mut ParserParams<'_, 's>) -> PResult {
+        Ok(())
+    }
+
+    fn on_always_begin<'s>(
+        &mut self,
+        kind: XmlVarUsage,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
         Ok(())
     }
 }

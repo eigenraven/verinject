@@ -2,7 +2,7 @@ use crate::lexer::VerilogType;
 use crate::lexer::{Token, TokenKind, VerilogIoQualifier};
 use crate::transforms::{PResult, ParserParams, RtlTransform};
 use crate::xmlast::{XmlMetadata, XmlModule, XmlVarUsage, XmlVariable};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 fn modified_ff(name: &str) -> String {
     format!("verinject_modified__{}", name)
@@ -19,6 +19,8 @@ struct FFErrorInjectionTransform {
     mem_read_numbers: HashMap<String, i32>,
     post_statement_queue: Vec<String>,
     last_stmt_end: usize,
+    last_always_pos: usize,
+    handled_dowrites: HashSet<String>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -53,64 +55,45 @@ impl FFErrorInjectionTransform {
         params: &mut ParserParams<'_, 's>,
         at_end: bool,
     ) -> PResult {
-        assert_eq!(var.dir, VerilogIoQualifier::None);
+        let is_port = var.dir != VerilogIoQualifier::None;
         assert_eq!(var.xtype.mem1_range(), (0, 0));
         let mname = modified_ff(&var.name);
         let (left, right) = var.xtype.word_range();
         if !at_end {
-            params
-                .output
-                .push(var.xtype.create_var(VerilogType::Wire, &mname));
-            params.output.push(Token::inject(";\n".to_owned()));
-        } else {
-            let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
-            self.dfs_order += var.xtype.bit_count();
+            params.output.push(var.xtype.create_var(
+                if is_port {
+                    VerilogType::Reg
+                } else {
+                    VerilogType::Wire
+                },
+                &mname,
+            ));
             params.output.push(Token::inject(format!(
-                r#"verinject_ff_injector #(.LEFT({left}), .RIGHT({right}), .P_START({pstart}))
- u_verinject__inj__{vname}
-( .verinject__injector_state(verinject__injector_state),
-  .unmodified({vname}),
-  .modified({mname})
-);
-"#,
-                vname = &var.name,
-                mname = &mname,
-                left = left,
-                right = right,
-                pstart = pstart
+                ";\nreg verinject_do_write__{vname};",
+                vname = &var.name
             )));
-        }
-        Ok(())
-    }
-
-    fn impl_port_injections<'s>(
-        &mut self,
-        var: &XmlVariable,
-        params: &mut ParserParams<'_, 's>,
-        at_end: bool,
-    ) -> PResult {
-        assert_ne!(var.dir, VerilogIoQualifier::None);
-        assert_eq!(var.xtype.mem1_range(), (0, 0));
-        let mname = modified_ff(&var.name);
-        let (left, right) = var.xtype.word_range();
-        if !at_end {
-            params
-                .output
-                .push(var.xtype.create_var(VerilogType::Reg, &mname));
-            params.output.push(Token::inject(";\n".to_owned()));
         } else {
+            let clock = params
+                .xml_module
+                .clock_name
+                .as_ref()
+                .expect("No clock signal found");
             let pstart = format!("VERINJECT_DSTART + {dstart}", dstart = self.dfs_order);
             self.dfs_order += var.xtype.bit_count();
             params.output.push(Token::inject(format!(
                 r#"verinject_ff_injector #(.LEFT({left}), .RIGHT({right}), .P_START({pstart}))
  u_verinject__inj__{vname}
-( .verinject__injector_state(verinject__injector_state),
-  .unmodified({mname}),
-  .modified({vname})
+( .clock({clock}),
+  .do_write(verinject_do_write__{vname}),
+  .verinject__injector_state(verinject__injector_state),
+  .unmodified({unmod}),
+  .modified({ismod})
 );
 "#,
                 vname = &var.name,
-                mname = &mname,
+                ismod = if is_port { &var.name } else { &mname },
+                unmod = if is_port { &mname } else { &var.name },
+                clock = clock,
                 left = left,
                 right = right,
                 pstart = pstart
@@ -220,11 +203,8 @@ impl FFErrorInjectionTransform {
             let var = var.borrow();
             match VarInjectType::from_var(&var) {
                 VarInjectType::None => {}
-                VarInjectType::BodyReg => {
+                VarInjectType::BodyReg | VarInjectType::PortReg => {
                     self.impl_reg_injections(&var, params, at_end)?;
-                }
-                VarInjectType::PortReg => {
-                    self.impl_port_injections(&var, params, at_end)?;
                 }
                 VarInjectType::Memory => {
                     self.impl_mem_injections(&var, params, at_end)?;
@@ -249,7 +229,26 @@ impl FFErrorInjectionTransform {
         };
         if let Some(xvar) = params.xml_module.variables.get(id) {
             let xvar = xvar.borrow();
-            if VarInjectType::from_var(&xvar) == vitype {
+            let vi = VarInjectType::from_var(&xvar);
+            if vi != VarInjectType::None {
+                if is_write && !self.handled_dowrites.contains(&xvar.name) {
+                    self.handled_dowrites.insert(xvar.name.clone());
+                    self.push_at_always(
+                        Token::inject(format!(
+                            "\nverinject_do_write__{vn} = 1'b0;\n",
+                            vn = xvar.name
+                        )),
+                        params,
+                    );
+                }
+                if is_write {
+                    self.post_statement_queue.push(format!(
+                        "\nverinject_do_write__{vn} = 1'b1;\n",
+                        vn = xvar.name
+                    ));
+                }
+            }
+            if vi == vitype {
                 no_print = true;
                 params.output.push(Token::inject(modified_ff(id)));
             }
@@ -288,12 +287,22 @@ impl FFErrorInjectionTransform {
                     addr
                 };
                 if is_write {
+                    if !self.handled_dowrites.contains(&xvar.name) {
+                        self.handled_dowrites.insert(xvar.name.clone());
+                        self.push_at_always(
+                            Token::inject(format!(
+                                "\nverinject_do_write__{vn} = 1'b0;\n",
+                                vn = xvar.name
+                            )),
+                            params,
+                        );
+                    }
                     params.output.push(id_tok.clone());
                     self.push_tokens(index_toks, params);
                     self.post_statement_queue.push(format!(
                         r#"
-  verinject_do_write__{vn} <= 1'b1;
-  verinject_write_address__{vn} <= ({addr});
+  verinject_do_write__{vn} = 1'b1;
+  verinject_write_address__{vn} = ({addr});
 "#,
                         vn = xvar.name,
                         addr = addr
@@ -303,8 +312,7 @@ impl FFErrorInjectionTransform {
                     let rdnum = *rdent as u32;
                     *rdent += 1;
                     assert!(rdnum < xvar.read_count);
-                    params.output.insert(
-                        self.last_stmt_end,
+                    self.push_at_last_stmt(
                         Token::inject(format!(
                             r#"
   verinject_read{rdnum}_address__{vn} = {addr};
@@ -314,6 +322,7 @@ impl FFErrorInjectionTransform {
                             rdnum = rdnum,
                             addr = addr
                         )),
+                        params,
                     );
                     params.output.push(Token::inject(format!(
                         "verinject_read{rdnum}_modified__{vn}",
@@ -330,6 +339,22 @@ impl FFErrorInjectionTransform {
             self.push_tokens(index_toks, params);
         }
         Ok(())
+    }
+
+    fn push_at_last_stmt<'s>(&mut self, tok: Token<'s>, params: &mut ParserParams<'_, 's>) {
+        params.output.insert(self.last_stmt_end, tok);
+        if self.last_always_pos >= self.last_stmt_end {
+            self.last_always_pos += 1;
+        }
+        self.last_stmt_end += 1;
+    }
+
+    fn push_at_always<'s>(&mut self, tok: Token<'s>, params: &mut ParserParams<'_, 's>) {
+        params.output.insert(self.last_always_pos, tok);
+        if self.last_stmt_end >= self.last_always_pos {
+            self.last_stmt_end += 1;
+        }
+        self.last_always_pos += 1;
     }
 }
 
@@ -478,6 +503,15 @@ impl RtlTransform for FFErrorInjectionTransform {
             params.output.push(Token::inject(s));
         }
         self.last_stmt_end = params.output.len();
+        Ok(())
+    }
+
+    fn on_always_begin<'s>(
+        &mut self,
+        _kind: XmlVarUsage,
+        params: &mut ParserParams<'_, 's>,
+    ) -> PResult {
+        self.last_always_pos = params.output.len();
         Ok(())
     }
 }

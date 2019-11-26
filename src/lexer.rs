@@ -32,6 +32,7 @@ pub enum TokenKind {
     AssignSeq,
     AssignConc,
     // block headers (always, etc.)
+    KInitial,
     KAlways,
     KAlwaysComb,
     KAlwaysFF,
@@ -272,6 +273,7 @@ fn l_number<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
 fn keyword_kind(id: &str) -> TokenKind {
     use TokenKind::*;
     match id {
+        "initial" => KInitial,
         "always" => KAlways,
         "always_comb" => KAlwaysComb,
         "always_ff" => KAlwaysFF,
