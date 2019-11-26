@@ -244,6 +244,7 @@ pub trait RtlTransform {
                 TK::KEndInterface,
                 TK::KEndModule,
                 TK::Semicolon,
+                TK::KAlwaysComb,
             ]
             .iter()
             .any(|k| toks[0].kind == *k)
@@ -456,11 +457,13 @@ pub trait RtlTransform {
         mut toks: &[Token<'s>],
         params: &mut ParserParams<'_, 's>,
     ) -> PResult {
-        for tok in toks {
+        while !toks.is_empty() {
+            let tok = &toks[0];
             match tok.kind {
                 TK::Identifier => {
-                    let is_slice = toks[1..]
+                    let is_slice = toks
                         .iter()
+                        .skip(1)
                         .find(|t| t.kind != TK::Whitespace)
                         .map_or(false, |k| k.kind == TK::LBracket);
                     if is_slice {
@@ -503,6 +506,7 @@ pub trait RtlTransform {
                 }
                 _ => {
                     params.output.push(tok.clone());
+                    toks = &toks[1..];
                 }
             }
         }
@@ -519,8 +523,9 @@ pub trait RtlTransform {
             let tok = &toks[0];
             match tok.kind {
                 TK::Identifier => {
-                    let is_slice = toks[1..]
+                    let is_slice = toks
                         .iter()
+                        .skip(1)
                         .find(|t| t.kind != TK::Whitespace)
                         .map_or(false, |k| k.kind == TK::LBracket);
                     if is_slice {

@@ -18,6 +18,7 @@ struct FFErrorInjectionTransform {
     next_dfs_order: i32,
     mem_read_numbers: HashMap<String, i32>,
     post_statement_queue: Vec<String>,
+    last_stmt_end: usize,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -291,12 +292,34 @@ impl FFErrorInjectionTransform {
                     self.push_tokens(index_toks, params);
                     self.post_statement_queue.push(format!(
                         r#"
-verinject_do_write__{vn} <= 1'b1;
-verinject_write_address__{vn} <= ({addr});
+  verinject_do_write__{vn} <= 1'b1;
+  verinject_write_address__{vn} <= ({addr});
 "#,
                         vn = xvar.name,
                         addr = addr
                     ));
+                } else {
+                    let rdent = self.mem_read_numbers.get_mut(&xvar.name).unwrap();
+                    let rdnum = *rdent as u32;
+                    *rdent += 1;
+                    assert!(rdnum < xvar.read_count);
+                    params.output.insert(
+                        self.last_stmt_end,
+                        Token::inject(format!(
+                            r#"
+  verinject_read{rdnum}_address__{vn} = {addr};
+  verinject_read{rdnum}_unmodified__{vn} = {vn}[{addr}];
+"#,
+                            vn = xvar.name,
+                            rdnum = rdnum,
+                            addr = addr
+                        )),
+                    );
+                    params.output.push(Token::inject(format!(
+                        "verinject_read{rdnum}_modified__{vn}",
+                        rdnum = rdnum,
+                        vn = xvar.name
+                    )));
                 }
             } else {
                 self.on_identifier_in_expr(id_tok, is_write, params)?;
@@ -454,6 +477,7 @@ impl RtlTransform for FFErrorInjectionTransform {
         for s in self.post_statement_queue.drain(..) {
             params.output.push(Token::inject(s));
         }
+        self.last_stmt_end = params.output.len();
         Ok(())
     }
 }
