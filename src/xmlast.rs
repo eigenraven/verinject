@@ -132,14 +132,21 @@ pub struct XmlVariable {
     pub write_count: u32,
 }
 
+#[derive(Clone, Default)]
+pub struct XmlChild {
+    pub module: String,
+    pub name: String,
+}
+
 #[derive(Clone)]
 pub struct XmlModule {
+    pub name: String,
     pub is_top: bool,
     pub path: String,
     pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
     pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
     pub clock_name: Option<String>,
-    pub children: Vec<String>,
+    pub children: Vec<XmlChild>,
     pub previsit_number: i32,
     pub postvisit_number: i32,
     pub own_bits_used: i32,
@@ -246,6 +253,7 @@ fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i
                 .to_owned()
         };
         let mut xm = XmlModule {
+            name: mname.to_owned(),
             is_top: number == 0,
             path: mfile,
             variables: Default::default(),
@@ -261,8 +269,10 @@ fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i
             if child.name() != "cell" {
                 continue;
             }
-            xm.children
-                .push(child.attr("submodname").unwrap().to_owned());
+            xm.children.push(XmlChild {
+                module: child.attr("submodname").unwrap().to_owned(),
+                name: child.attr("name").unwrap().to_owned(),
+            });
         }
         if xm.is_top {
             meta.top_module = mname.to_owned();
@@ -540,8 +550,8 @@ fn visit_calc_bits(meta: &XmlMetadata, module: &RefCell<XmlModule>) -> i32 {
             .sum()
     };
     let mut other_bits = 0;
-    for child_name in module_r.children.iter() {
-        let child = meta.modules.get(child_name).unwrap();
+    for xchild in module_r.children.iter() {
+        let child = meta.modules.get(&xchild.module).unwrap();
         other_bits += visit_calc_bits(meta, child);
     }
     drop(module_r);

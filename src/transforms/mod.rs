@@ -2,6 +2,7 @@ use crate::lexer::TokenKind as TK;
 use crate::lexer::{Token, TokenKind};
 use crate::xmlast::{XmlMetadata, XmlModule};
 
+pub mod generate_bit_map;
 pub mod inject_ff_errors;
 
 pub struct ParserParams<'v, 's> {
