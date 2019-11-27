@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import sys
+
+if len(sys.argv) < 2:
+    print("Usage: vj-filter mapfile.map")
+    sys.exit(1)
+
+mappath = sys.argv[1]
+ranges = list()
+with open(mappath, 'r') as f:
+    for line in f:
+        line = line.strip()
+        if len(line) < 3:
+            continue
+        spl = line.split(' ')
+        if len(spl) < 9:
+            continue
+        rg = {
+            "start": int(spl[0]),
+            "end": int(spl[1]),
+            "path": spl[2],
+            "lword": int(spl[4]),
+            "rword": int(spl[5]),
+            "lmem": int(spl[6]),
+            "rmem": int(spl[7]),
+            "kind": spl[8]
+        }
+        rg["wmin"] = min(rg["lword"], rg["rword"])
+        rg["wmax"] = max(rg["lword"], rg["rword"])
+        rg["wlen"] = rg["wmax"] - rg["wmin"] + 1
+        rg["mmin"] = min(rg["lmem"], rg["rmem"])
+        rg["mmax"] = max(rg["lmem"], rg["rmem"])
+        rg["mlen"] = rg["mmax"] - rg["mmin"] + 1
+        ranges.append(rg)
+
+for line in sys.stdin:
+    line = line.rstrip()
+    if not line.startswith("verinject: at"):
+        print(line)
+        continue
+    bit = int(line.split()[-1])
+    r = next(x for x in ranges if x["start"] <= bit <= x["end"])
+    if r["kind"] == "mem":
+        apos = bit - r["start"]
+        mnum = apos // r["wlen"]
+        wnum = apos - mnum*r["wlen"]
+        wpos = wnum + r["wmin"]
+        mpos = mnum + r["mmin"]
+        print(f"{line} ({r['path']}[{mpos}][{wpos}])")
+    elif r["kind"] == "var":
+        wpos = bit - r["start"] + r["wmin"]
+        print(f"{line} ({r['path']}[{wpos}])")
+    else:
+        print("%s (%s[%d])" % (line, r["path"], bit-r["start"]))

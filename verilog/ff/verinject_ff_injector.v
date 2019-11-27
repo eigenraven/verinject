@@ -8,6 +8,8 @@ module verinject_ff_injector
   input [31:0] verinject__injector_state
 );
 
+wire [31:0] bits_start;
+assign bits_start = (LEFT < RIGHT) ? LEFT : RIGHT;
 wire [31:0] word_len;
 assign word_len = (LEFT < RIGHT) ? (RIGHT - LEFT + 1) : (LEFT - RIGHT + 1);
 
@@ -18,7 +20,7 @@ begin : fault_injection
   modified = unmodified;
   if (verinject__injector_state >= P_START && verinject__injector_state < (P_START + word_len))
   begin
-    xor_modifier = (1 << (verinject__injector_state - P_START));
+    xor_modifier = (1 << (verinject__injector_state - P_START + bits_start));
     modified = unmodified ^ xor_modifier;
   end
 end

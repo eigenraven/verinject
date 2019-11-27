@@ -17,14 +17,18 @@ module verinject_mem1_injector
   input [ADDR_LEFT:ADDR_RIGHT] write_address
 );
 
+wire [31:0] bits_start;
+assign bits_start = (LEFT < RIGHT) ? LEFT : RIGHT;
 wire [31:0] word_len;
 assign word_len = (LEFT < RIGHT) ? (RIGHT - LEFT + 1) : (LEFT - RIGHT + 1);
+wire [31:0] mem_start;
+assign mem_start = (MEM_LEFT < MEM_RIGHT) ? MEM_LEFT : MEM_RIGHT;
 wire [31:0] mem_len;
 assign mem_len = (MEM_LEFT < MEM_RIGHT) ? (MEM_RIGHT - MEM_LEFT + 1) : (MEM_LEFT - MEM_RIGHT + 1);
 
 wire [31:0] read_word_start;
 wire [31:0] read_word_end;
-assign read_word_start = P_START + (read_address + 0) * word_len;
+assign read_word_start = P_START + (read_address - mem_start) * word_len;
 assign read_word_end = read_word_start + word_len;
 
 reg [LEFT:RIGHT] xor_modifier;
@@ -34,7 +38,7 @@ begin : fault_injection
   modified = unmodified;
   if (verinject__injector_state >= read_word_start && verinject__injector_state < read_word_end)
   begin
-    xor_modifier = (1 << (verinject__injector_state - read_word_start));
+    xor_modifier = (1 << (verinject__injector_state - read_word_start + bits_start));
     modified = unmodified ^ xor_modifier;
   end
 end
