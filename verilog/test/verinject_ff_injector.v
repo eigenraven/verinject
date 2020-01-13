@@ -4,38 +4,22 @@ module verinject_ff_injector
   input clock,
   input do_write,
   input [LEFT:RIGHT] unmodified,
-  output [LEFT:RIGHT] modified,
+  output reg [LEFT:RIGHT] modified,
   input [31:0] verinject__injector_state
 );
 
 localparam bits_start = (LEFT < RIGHT) ? LEFT : RIGHT;
 localparam word_len = (LEFT < RIGHT) ? (RIGHT - LEFT + 1) : (LEFT - RIGHT + 1);
 
-reg [LEFT:RIGHT] xor_modifier_r;
-reg [LEFT:RIGHT] xor_modifier_nxt;
-
-assign modified = unmodified ^ xor_modifier_r;
-
-initial
-begin
-  xor_modifier_r <= 0;
-end
-
-always @(posedge clk)
-begin
-  xor_modifier_r <= xor_modifier_nxt;
-end
+reg [LEFT:RIGHT] xor_modifier;
 
 always @*
-begin
-  xor_modifier_nxt = xor_modifier_r;
-  if (do_write)
-  begin
-    xor_modifier = 0;
-  end
+begin : fault_injection
+  modified = unmodified;
   if (verinject__injector_state >= P_START && verinject__injector_state < (P_START + word_len))
   begin
-    xor_modifier ^= (1 << (verinject__injector_state - P_START + bits_start));
+    xor_modifier = (1 << (verinject__injector_state - P_START + bits_start));
+    modified = unmodified ^ xor_modifier;
   end
 end
 

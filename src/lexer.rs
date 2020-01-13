@@ -167,9 +167,9 @@ fn l_whitespace<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
                 }
             }
             state.remaining_source = &src[len + 2..];
-        } else if src.chars().nth(0).unwrap().is_ascii_whitespace() {
+        } else if src.chars().next().unwrap().is_ascii_whitespace() {
             state.loc.index += 1;
-            if state.remaining_source.chars().nth(0).unwrap() == '\n' {
+            if state.remaining_source.starts_with('\n') {
                 state.loc.column = 0;
                 state.loc.line += 1;
             } else {
@@ -230,7 +230,7 @@ fn l_identifier_or_keyword<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
             instance: Cow::from(id),
         }));
     }
-    if !(src.chars().nth(0).unwrap().is_ascii_alphabetic() || src.chars().nth(0).unwrap() == '_') {
+    if !(src.chars().next().unwrap().is_ascii_alphabetic() || src.starts_with('_')) {
         return Ok(None);
     }
     let len = src
@@ -251,7 +251,7 @@ fn l_identifier_or_keyword<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
 
 fn l_number<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     let src = state.remaining_source;
-    if !src.chars().nth(0).unwrap().is_ascii_digit() {
+    if !src.chars().next().unwrap().is_ascii_digit() {
         return Ok(None);
     }
     let len = src
@@ -316,13 +316,13 @@ fn l_symbol<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
     if !state
         .remaining_source
         .chars()
-        .nth(0)
+        .next()
         .unwrap()
         .is_ascii_punctuation()
     {
         return Ok(None);
     }
-    let t = match state.remaining_source.chars().nth(0).unwrap() {
+    let t = match state.remaining_source.chars().next().unwrap() {
         '#' => Some(TokenKind::Hash),
         '(' => Some(TokenKind::LParen),
         ')' => Some(TokenKind::RParen),

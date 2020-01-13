@@ -402,15 +402,43 @@ impl RtlTransform for FFErrorInjectionTransform {
 
     fn on_module_ports<'s>(
         &mut self,
-        toks: &[Token<'s>],
+        mut toks: &[Token<'s>],
         params: &mut ParserParams<'_, 's>,
     ) -> Result<(), String> {
-        toks.iter()
-            .filter(|t| match t.kind {
-                TokenKind::KLogic(_) => false,
-                _ => true,
-            })
-            .for_each(|t| params.output.push(t.clone()));
+        while !toks.is_empty() {
+            let tok = &toks[0];
+            toks = &toks[1..];
+            // remove reg/logic for memory cells in ports
+            if let TokenKind::KLogic(_) = tok.kind {
+                let mut ahead = toks;
+                while ahead[0].kind == TokenKind::Whitespace {
+                    ahead = &ahead[1..];
+                }
+                let varname = if ahead[0].kind == TokenKind::Identifier {
+                    &ahead[0].instance
+                } else {
+                    let (_, mut rest) = Self::token_split_balanced_parens(
+                        ahead,
+                        TokenKind::LBracket,
+                        TokenKind::RBracket,
+                    )
+                    .unwrap();
+                    while rest[0].kind != TokenKind::Identifier {
+                        rest = &rest[1..];
+                    }
+                    &rest[0].instance
+                };
+                let xvar = params
+                    .xml_module
+                    .variables
+                    .get(varname.as_ref())
+                    .expect("AST/Source mismatch");
+                if xvar.borrow().usage == XmlVarUsage::Clocked {
+                    continue;
+                }
+            }
+            params.output.push(tok.clone());
+        }
         Ok(())
     }
 

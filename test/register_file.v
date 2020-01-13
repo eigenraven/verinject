@@ -12,9 +12,9 @@ module register_file(
     // What to write to the register
     input [32-1:0] in_write_value,
     // Value read from register on port 1
-    output [32-1:0] out_reg_value_1,
+    output reg [32-1:0] out_reg_value_1,
     // Value read from register on port 2
-    output [32-1:0] out_reg_value_2
+    output reg [32-1:0] out_reg_value_2
 );
 
 logic [31:0] memory [0:31];

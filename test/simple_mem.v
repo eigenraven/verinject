@@ -3,7 +3,7 @@ module simple_mem(
   input [9:0] raddr,
   input [9:0] waddr,
   input [31:0] wrword,
-  output [31:0] rdword
+  output reg [31:0] rdword
 );
 
 reg [31:0] word_memory [0:1023];
