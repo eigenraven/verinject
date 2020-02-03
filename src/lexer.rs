@@ -198,7 +198,7 @@ fn l_string<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         return Ok(None);
     }
     let len = src.chars().skip(1).take_while(|c| *c != '"').count();
-    let sstr = &src[1..=len];
+    let sstr = &src[0..=len+1];
     let location = state.loc;
     state.loc.index += len + 2;
     state.loc.column += len + 2;
