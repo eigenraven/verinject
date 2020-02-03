@@ -3,8 +3,11 @@ module verinject_serial_tester
 (
   input clock,
   input reset_n,
-  output reg [31:0] verinject__injector_state
+  output reg [31:0] verinject__injector_state,
+  output [47:0] cycle_number
 );
+
+assign cycle_number = {16'b0, verinject__injector_state};
 
 reg [31:0] next_state;
 

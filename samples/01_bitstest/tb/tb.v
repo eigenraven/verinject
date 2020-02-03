@@ -10,13 +10,14 @@ wire [31:0] verinject__injector_state;
 top u_top(.clk(clk));
 top__injected i_top(.clk(clk), .verinject__injector_state(verinject__injector_state));
 
+wire [47:0] cycle_number;
 verinject_serial_tester #(.TOTAL_BITS(TOTAL_BITS)) u_injector(
   .clock(clk),
   .reset_n(rst_n),
-  .verinject__injector_state(verinject__injector_state)
+  .verinject__injector_state(verinject__injector_state),
+  .cycle_number(cycle_number)
 );
 
-wire [47:0] cycle_number;
 verinject_sim_monitor #(.TOTAL_BITS(TOTAL_BITS)) u_inject_monitor(
   .clock(clk),
   .verinject__injector_state(verinject__injector_state),

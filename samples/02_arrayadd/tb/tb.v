@@ -17,16 +17,18 @@ wire [31:0] inj_sum;
 top u_top(.clk(clk), .run(run), .index(real_index), .sum(real_sum));
 top__injected i_top(.clk(clk), .run(run),
   .index(inj_index), .sum(inj_sum),
-  .verinject__injector_state(verinject__injector_state));
-
-verinject_serial_tester #(.TOTAL_BITS(TOTAL_BITS)) u_injector(
-  .clock(clk),
-  .reset_n(rst_n),
   .verinject__injector_state(verinject__injector_state)
 );
 
 wire [47:0] cycle_number;
-verinject_sim_monitor #(.TOTAL_BITS(TOTAL_BITS)) u_inject_monitor(
+verinject_file_tester u_injector(
+  .clock(clk),
+  .reset_n(rst_n),
+  .verinject__injector_state(verinject__injector_state),
+  .cycle_number(cycle_number)
+);
+
+verinject_sim_monitor u_inject_monitor(
   .clock(clk),
   .verinject__injector_state(verinject__injector_state),
   .cycle_number(cycle_number)
