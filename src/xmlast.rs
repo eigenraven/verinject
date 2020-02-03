@@ -2,7 +2,7 @@ use crate::lexer::Token;
 use crate::lexer::{VerilogIoQualifier, VerilogType};
 use minidom::Element;
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::io::{Error, ErrorKind, Result};
 use std::rc::Rc;
 use std::str::FromStr;
@@ -143,8 +143,8 @@ pub struct XmlModule {
     pub name: String,
     pub is_top: bool,
     pub path: String,
-    pub variables: HashMap<String, Rc<RefCell<XmlVariable>>>,
-    pub variables_by_xml: HashMap<String, Rc<RefCell<XmlVariable>>>,
+    pub variables: BTreeMap<String, Rc<RefCell<XmlVariable>>>,
+    pub variables_by_xml: BTreeMap<String, Rc<RefCell<XmlVariable>>>,
     pub clock_name: Option<String>,
     pub children: Vec<XmlChild>,
     pub previsit_number: i32,
@@ -155,9 +155,9 @@ pub struct XmlModule {
 
 #[derive(Default)]
 pub struct XmlMetadata {
-    pub types: HashMap<i32, Rc<XmlType>>,
+    pub types: BTreeMap<i32, Rc<XmlType>>,
     pub top_module: String,
-    pub modules: HashMap<String, Rc<RefCell<XmlModule>>>,
+    pub modules: BTreeMap<String, Rc<RefCell<XmlModule>>>,
 }
 
 fn parse_verilog_num(mut vnum: &str) -> Option<i32> {
