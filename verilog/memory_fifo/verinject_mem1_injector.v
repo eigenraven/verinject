@@ -1,5 +1,6 @@
 `ifndef VERINJECT_MEM_FIFO_SIZE
 `define VERINJECT_MEM_FIFO_SIZE 4
+`define VERINJECT_MEM_FIFO_SIZE_LOG2 2
 `endif
 
 module verinject_mem1_injector
@@ -15,39 +16,96 @@ module verinject_mem1_injector
   // memory read injection
   input [LEFT:RIGHT] unmodified,
   input [ADDR_LEFT:ADDR_RIGHT] read_address,
-  output reg [LEFT:RIGHT] modified,
+  output [LEFT:RIGHT] modified,
   // memory write capture
   input do_write,
   input [ADDR_LEFT:ADDR_RIGHT] write_address
 );
-
-localparam FIFO_SIZE_L2 = $clog2(VERINJECT_MEM_FIFO_SIZE);
 
 localparam bits_start = (LEFT < RIGHT) ? LEFT : RIGHT;
 localparam word_len = (LEFT < RIGHT) ? (RIGHT - LEFT + 1) : (LEFT - RIGHT + 1);
 localparam mem_start = (MEM_LEFT < MEM_RIGHT) ? MEM_LEFT : MEM_RIGHT;
 localparam mem_len = (MEM_LEFT < MEM_RIGHT) ? (MEM_RIGHT - MEM_LEFT + 1) : (MEM_LEFT - MEM_RIGHT + 1);
 
-reg [31:0] active_injections [0:VERINJECT_MEM_FIFO_SIZE];
-reg [FIFO_SIZE_L2:0] injection_wptr_r;
-reg [FIFO_SIZE_L2:0] injection_wptr_nxt;
-reg [VERINJECT_MEM_FIFO_SIZE-1:0] injection_matching;
+localparam idx_start = P_START;
+localparam idx_end = P_START + mem_len*word_len;
+
+integer ii;
+
+reg [31:0] active_injections [0:`VERINJECT_MEM_FIFO_SIZE];
+reg [`VERINJECT_MEM_FIFO_SIZE_LOG2:0] injection_wptr_r;
+reg [`VERINJECT_MEM_FIFO_SIZE_LOG2:0] injection_wptr_nxt;
+reg injection_writing;
 
 wire [31:0] read_word_start;
 wire [31:0] read_word_end;
 assign read_word_start = P_START + (read_address - mem_start) * word_len;
 assign read_word_end = read_word_start + word_len;
 
-reg [LEFT:RIGHT] xor_modifier;
+wire [31:0] write_word_start;
+wire [31:0] write_word_end;
+assign write_word_start = P_START + (write_address - mem_start) * word_len;
+assign write_word_end = write_word_start + word_len;
+
+reg [LEFT:RIGHT] xor_modifier_r;
+reg [LEFT:RIGHT] xor_modifier_nxt;
+
+assign modified = unmodified ^ xor_modifier_r;
+
+initial
+begin
+  xor_modifier_r = 0;
+  injection_wptr_r = 0;
+  for (ii = 0; ii < `VERINJECT_MEM_FIFO_SIZE; ii=ii+1)
+  begin
+    active_injections[ii] = 32'hFFFF_FFFF;
+  end
+end
 
 always @*
 begin : fault_injection
-  modified = unmodified;
+  xor_modifier_nxt = 0;
+
+  injection_writing = 0;
+  injection_wptr_nxt = injection_wptr_r;
+  if (verinject__injector_state >= idx_start && verinject__injector_state < idx_end)
+  begin
+    injection_writing = 1'b1;
+    injection_wptr_nxt = injection_wptr_r + 1;
+  end
+
+  for (ii = 0; ii < `VERINJECT_MEM_FIFO_SIZE; ii=ii+1)
+  begin
+    if (active_injections[ii] >= read_word_start && active_injections[ii] < read_word_end)
+    begin
+      xor_modifier_nxt ^= (1 << (active_injections[ii] - read_word_start + bits_start));
+    end
+  end
   if (verinject__injector_state >= read_word_start && verinject__injector_state < read_word_end)
   begin
-    xor_modifier = (1 << (verinject__injector_state - read_word_start + bits_start));
-    modified = unmodified ^ xor_modifier;
+    xor_modifier_nxt ^= (1 << (verinject__injector_state - read_word_start + bits_start));
   end
+end
+
+always @(posedge clock)
+begin : fault_memory_fifo
+  // using blocking assignments for fifo writes to ensure priority of writes
+  // erase from fifo
+  for(ii = 0; ii < `VERINJECT_MEM_FIFO_SIZE; ii=ii+1)
+  begin
+    if (do_write && active_injections[ii] >= write_word_start && active_injections[ii] < write_word_end)
+    begin
+      active_injections[ii] = 0;
+    end
+  end
+  // write to fifo
+  if (injection_writing)
+  begin
+    active_injections[injection_wptr_r] = verinject__injector_state;
+  end
+  // update registers
+  injection_wptr_r <= injection_wptr_nxt;
+  xor_modifier_r <= xor_modifier_nxt;
 end
 
 endmodule

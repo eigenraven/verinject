@@ -5,6 +5,7 @@ localparam TOTAL_BITS = 24584;
 
 reg clk;
 reg run;
+reg rst_n;
 wire [31:0] verinject__injector_state;
 
 wire [7:0] real_index;
@@ -35,6 +36,7 @@ initial begin
     $dumpfile("waveform.vcd");
     $dumpvars;
     clk = 1'b0;
+    rst_n = 1'b1;
     #20 run = 1'b1;
     #10000 $finish();
 end
@@ -45,11 +47,11 @@ always @(negedge clk)
 begin
   if (real_index != inj_index)
   begin
-    $strobe("Index mismatch at cycle %d: real(%d) != injected(%d)", cycle_number, real_index, inj_index);
+    $display("Index mismatch at cycle %d: real(%d) != injected(%d) xor(%08x)", cycle_number, real_index, inj_index, real_index ^ inj_index);
   end
   if (real_sum != inj_sum)
   begin
-    $strobe("Sum mismatch at cycle %d: real(%08x) != injected(%08x)", cycle_number, real_sum, inj_sum);
+    $display("Sum mismatch at cycle %d: real(%08x) != injected(%08x) xor(%08x)", cycle_number, real_sum, inj_sum, real_sum ^ inj_sum);
   end
 end
 

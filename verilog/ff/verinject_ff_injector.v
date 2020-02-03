@@ -21,7 +21,7 @@ begin
   xor_modifier_r <= 0;
 end
 
-always @(posedge clk)
+always @(posedge clock)
 begin
   xor_modifier_r <= xor_modifier_nxt;
 end
@@ -31,11 +31,11 @@ begin
   xor_modifier_nxt = xor_modifier_r;
   if (do_write)
   begin
-    xor_modifier = 0;
+    xor_modifier_nxt = 0;
   end
   if (verinject__injector_state >= P_START && verinject__injector_state < (P_START + word_len))
   begin
-    xor_modifier ^= (1 << (verinject__injector_state - P_START + bits_start));
+    xor_modifier_nxt ^= (1 << (verinject__injector_state - P_START + bits_start));
   end
 end
 
