@@ -7,7 +7,6 @@ module top(
 
 reg [31:0] memory_a [0:255];
 reg [31:0] memory_b [0:255];
-reg [31:0] memory_result [0:255];
 
 reg [31:0] word_a;
 reg [31:0] word_b;
@@ -23,7 +22,6 @@ begin
   sum = 32'b0;
   $readmemh("mem/memory_a.mem", memory_a);
   $readmemh("mem/memory_b.mem", memory_b);
-  $readmemh("mem/memory_result.mem", memory_result);
 end
 
 always @*
@@ -43,7 +41,6 @@ always @(posedge clk)
 begin
   if (run)
   begin
-    memory_result[index_r] <= sum;
     index_r <= index_nxt;
   end
 end

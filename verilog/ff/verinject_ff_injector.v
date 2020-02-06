@@ -14,7 +14,7 @@ localparam word_len = (LEFT < RIGHT) ? (RIGHT - LEFT + 1) : (LEFT - RIGHT + 1);
 reg [LEFT:RIGHT] xor_modifier_r;
 reg [LEFT:RIGHT] xor_modifier_nxt;
 
-assign modified = unmodified ^ xor_modifier_r;
+assign modified = unmodified ^ xor_modifier_nxt;
 
 initial
 begin

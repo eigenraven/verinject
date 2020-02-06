@@ -47,14 +47,13 @@ wire [31:0] write_word_end;
 assign write_word_start = P_START + (write_address - mem_start) * word_len;
 assign write_word_end = write_word_start + word_len;
 
-reg [LEFT:RIGHT] xor_modifier_r;
-reg [LEFT:RIGHT] xor_modifier_nxt;
+reg [LEFT:RIGHT] xor_modifier;
 
-assign modified = unmodified ^ xor_modifier_r;
+assign modified = unmodified ^ xor_modifier;
 
 initial
 begin
-  xor_modifier_r = 0;
+  xor_modifier = 0;
   injection_wptr_r = 0;
   for (ii = 0; ii < `VERINJECT_MEM_FIFO_SIZE; ii=ii+1)
   begin
@@ -64,7 +63,7 @@ end
 
 always @*
 begin : fault_injection
-  xor_modifier_nxt = 0;
+  xor_modifier = 0;
 
   injection_writing = 0;
   injection_wptr_nxt = injection_wptr_r;
@@ -78,12 +77,12 @@ begin : fault_injection
   begin
     if (active_injections[ii] >= read_word_start && active_injections[ii] < read_word_end)
     begin
-      xor_modifier_nxt ^= (1 << (active_injections[ii] - read_word_start + bits_start));
+      xor_modifier ^= (1 << (active_injections[ii] - read_word_start + bits_start));
     end
   end
   if (verinject__injector_state >= read_word_start && verinject__injector_state < read_word_end)
   begin
-    xor_modifier_nxt ^= (1 << (verinject__injector_state - read_word_start + bits_start));
+    xor_modifier ^= (1 << (verinject__injector_state - read_word_start + bits_start));
   end
 end
 
@@ -105,7 +104,6 @@ begin : fault_memory_fifo
   end
   // update registers
   injection_wptr_r <= injection_wptr_nxt;
-  xor_modifier_r <= xor_modifier_nxt;
 end
 
 endmodule

@@ -1,0 +1,2 @@
+1000 runs
+./test.sh  167.52s user 33.64s system 55% cpu 6:01.24 total

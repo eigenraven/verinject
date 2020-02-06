@@ -39,11 +39,11 @@ initial begin
     $dumpvars;
     clk = 1'b0;
     rst_n = 1'b1;
-    #20 run = 1'b1;
-    #10000 $finish();
+    run = 1'b1;
+    #2560 $finish();
 end
 
-initial forever #10 clk = ~clk;
+initial forever #5 clk = ~clk;
 
 always @(negedge clk)
 begin
