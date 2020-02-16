@@ -16,6 +16,9 @@ reg [LEFT:RIGHT] xor_modifier_nxt;
 
 assign modified = unmodified ^ xor_modifier_nxt;
 
+wire reset_buffer;
+assign reset_buffer = (verinject__injector_state == 32'hFFFF_FFFE);
+
 initial
 begin
   xor_modifier_r <= 0;
@@ -29,7 +32,7 @@ end
 always @*
 begin
   xor_modifier_nxt = xor_modifier_r;
-  if (do_write)
+  if (do_write || reset_buffer)
   begin
     xor_modifier_nxt = 0;
   end

@@ -51,6 +51,9 @@ reg [LEFT:RIGHT] xor_modifier;
 
 assign modified = unmodified ^ xor_modifier;
 
+wire reset_fifo;
+assign reset_fifo = (verinject__injector_state == 32'hFFFF_FFFE);
+
 initial
 begin
   xor_modifier = 0;
@@ -92,7 +95,7 @@ begin : fault_memory_fifo
   // erase from fifo
   for(ii = 0; ii < `VERINJECT_MEM_FIFO_SIZE; ii=ii+1)
   begin
-    if (do_write && active_injections[ii] >= write_word_start && active_injections[ii] < write_word_end)
+    if (reset_fifo || (do_write && active_injections[ii] >= write_word_start && active_injections[ii] < write_word_end))
     begin
       active_injections[ii] = 0;
     end
