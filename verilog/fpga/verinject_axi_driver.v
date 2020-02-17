@@ -46,6 +46,7 @@ module	verinject_axi_driver
     // Users to add parameters here
     parameter [0:0] OPT_READ_SIDEEFFECTS = 1,
     parameter integer LOG_QWORDS = 128,
+    parameter integer LOG_QWORDS_LOG2 = 7,
     // User parameters ends
     // Do not modify the parameters beyond this line
     // Width of S_AXI data bus
@@ -135,6 +136,7 @@ module	verinject_axi_driver
   reg		axi_bvalid;
   reg		axi_arready;
   reg [C_S_AXI_DATA_WIDTH-1 : 0] 	axi_rdata;
+  reg [C_S_AXI_DATA_WIDTH-1 : 0] 	axi_rdata_nxt;
   reg		axi_rvalid;
 
   // Example-specific design signals
@@ -145,15 +147,43 @@ module	verinject_axi_driver
   localparam integer ADDR_LSB = 2;
   localparam integer AW = C_S_AXI_ADDR_WIDTH-2;
   localparam integer DW = C_S_AXI_DATA_WIDTH;
+  integer ii;
+
+  localparam [31:0] REGID_LOG_QWORD_COUNT = 0;
+  localparam [31:0] REGID_TRACE_QWORD_COUNT = 1;
+  localparam [31:0] REGID_CYCLE_NUMBER = 2;
+  localparam [31:0] REGID_RUNNING = 3; // 0 - not ran, 1 - running/start, 2 - stopped
+  localparam [31:0] REGID_STOP_CYCLE_NUMBER = 4; // 0 - don't stop
+  localparam [31:0] REGID_LOG_POSITION = 5;
+  localparam [31:0] REGID_LOG_DATA = 8;
+  localparam [31:0] REGID_TRACE_DATA = REGID_LOG_DATA + LOG_QWORDS*2;
+  localparam [31:0] REGID_TRACE_DATA_END = REGID_LOG_DATA + LOG_QWORDS*2 + 2048;
   //----------------------------------------------
   //-- Signals for user logic register space example
   //------------------------------------------------
-  reg [DW-1:0]	slv_mem	[0:63];
-  reg [63:0] log_mem [0:LOG_QWORDS];
+  reg [63:0] log_mem [0:LOG_QWORDS-1];
   reg [63:0] trace_mem [0:1023];
+
+  reg [LOG_QWORDS_LOG2:0] log_wptr_r;
+  initial log_wptr_r = 0;
   reg [47:0] cycle_r;
+  initial cycle_r = 0;
+  reg [31:0] stop_cycle_r;
+  initial stop_cycle_r = 0;
   reg run_designs_r;
+  initial run_designs_r = 0;
   reg stopped_r;
+  initial stopped_r = 0;
+
+  wire [LOG_QWORDS_LOG2:0] log_read_addr;
+  assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
+  wire [63:0] log_read_word;
+  assign log_read_word = log_mem[log_read_idx];
+
+  wire [LOG_QWORDS_LOG2:0] trace_axiread_addr;
+  assign trace_axiread_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
+  wire [63:0] trace_axiread_word;
+  assign trace_axiread_word = trace_aximem[trace_axiread_idx];
   
   wire [63:0] trace_read;
   wire trace_here;
@@ -162,14 +192,13 @@ module	verinject_axi_driver
   assign verinject__injector_state = trace_here ? trace_read[31:0] : 32'hFFFFFFFF;
   assign cycle_number = cycle_r;
 
-  localparam [31:0] REGID_LOG_QWORD_COUNT = 0;
-  localparam [31:0] REGID_TRACE_QWORD_COUNT = 1;
-  localparam [31:0] REGID_CYCLE_NUMBER = 2;
-  localparam [31:0] REGID_RUNNING = 3; // 0 - not ran, 1 - running/start, 2 - stopped
-  localparam [31:0] REGID_STOP_CYCLE_NUMBER = 4; // 0 - don't stop
-  localparam [31:0] REGID_LOG_POSITION = 5;
-  localparam [31:0] REGID_LOG_DATA = 6;
-  localparam [31:0] REGID_TRACE_DATA = REGID_LOG_DATA + LOG_QWORDS*2;
+  initial
+  begin
+    for (ii = 0; ii < LOG_QWORDS; ii=ii+1)
+      log_mem[ii] = 64'b0;
+    for (ii = 0; ii < 1024; ii=ii+1)
+      trace_mem[ii] = ~64'b0;
+  end
 
 
   // I/O Connections assignments
@@ -228,12 +257,36 @@ module	verinject_axi_driver
   //
   // Read the data
   //
+  always @*
+  begin
+    // axi_rdata_nxt = slv_mem[rd_addr];
+    axi_rdata_nxt = 0;
+    case (rd_addr[AW+ADDR_LSB-1:ADDR_LSB])
+      REGID_LOG_QWORD_COUNT : axi_rdata_nxt = LOG_QWORDS;
+      REGID_TRACE_QWORD_COUNT : axi_rdata_nxt = 1024;
+      REGID_CYCLE_NUMBER : axi_rdata_nxt = cycle_r;
+      REGID_RUNNING : axi_rdata_nxt = {30'b0, stopped_r, run_designs_r};
+      REGID_STOP_CYCLE_NUMBER : axi_rdata_nxt = stop_cycle_r;
+      REGID_LOG_POSITION : axi_rdata_nxt = log_wptr_r;
+    endcase
+    if (rd_addr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && rd_addr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
+    begin
+      axi_rdata_nxt = rd_addr[2] ? log_read_word[63:32] : log_read_word[31:0];
+    end
+    if (rd_addr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_TRACE_DATA && rd_addr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA_END)
+    begin
+      axi_rdata_nxt = rd_addr[2] ? trace_axiread_word[63:32] : trace_axiread_word[31:0];
+    end
+  end
+
   always @(posedge S_AXI_ACLK)
   if (!read_response_stall
     &&(!OPT_READ_SIDEEFFECTS || valid_read_request))
     // If the outgoing channel is not stalled (above)
     // then read
-    axi_rdata <= slv_mem[rd_addr[AW+ADDR_LSB-1:ADDR_LSB]];
+  begin
+    axi_rdata <= axi_rdata_nxt;
+  end
 
   //
   // The read address channel ready signal
