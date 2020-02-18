@@ -47,6 +47,7 @@ begin
     trace_ptr_r <= 0;
   end else begin
     cycle_r <= cycle_r + 1;
+    trace_ptr_r <= trace_ptr_nxt;
   end
 end
 

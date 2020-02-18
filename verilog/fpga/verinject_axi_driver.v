@@ -38,7 +38,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 `default_nettype none
-
+/* verilator lint_off WIDTH */
 `timescale 1 ns / 1 ps
 
 module	verinject_axi_driver
@@ -52,7 +52,7 @@ module	verinject_axi_driver
     // Width of S_AXI data bus
     parameter integer C_S_AXI_DATA_WIDTH	= 32,
     // Width of S_AXI address bus
-    parameter integer C_S_AXI_ADDR_WIDTH	= 8
+    parameter integer C_S_AXI_ADDR_WIDTH	= 16
   ) (
     // Users ports begin
     // Data to append to log
@@ -155,6 +155,7 @@ module	verinject_axi_driver
   localparam [31:0] REGID_RUNNING = 3; // 0 - not ran, 1 - running/start, 2 - stopped
   localparam [31:0] REGID_STOP_CYCLE_NUMBER = 4; // 0 - don't stop
   localparam [31:0] REGID_LOG_POSITION = 5;
+  localparam [31:0] REGID_TRACE_POSITION = 6;
   localparam [31:0] REGID_LOG_DATA = 8;
   localparam [31:0] REGID_TRACE_DATA = REGID_LOG_DATA + LOG_QWORDS*2;
   localparam [31:0] REGID_TRACE_DATA_END = REGID_LOG_DATA + LOG_QWORDS*2 + 2048;
@@ -166,6 +167,9 @@ module	verinject_axi_driver
 
   reg [LOG_QWORDS_LOG2:0] log_wptr_r;
   initial log_wptr_r = 0;
+  reg [9:0] trace_ptr_r;
+  reg [9:0] trace_ptr_nxt;
+  initial trace_ptr_r = 0;
   reg [47:0] cycle_r;
   initial cycle_r = 0;
   reg [31:0] stop_cycle_r;
@@ -175,15 +179,19 @@ module	verinject_axi_driver
   reg stopped_r;
   initial stopped_r = 0;
 
-  wire [LOG_QWORDS_LOG2:0] log_read_addr;
+  wire [LOG_QWORDS_LOG2-1:0] log_read_idx;
   assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
+  wire [LOG_QWORDS_LOG2-1:0] log_write_idx;
+  assign log_write_idx = waddr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
   wire [63:0] log_read_word;
   assign log_read_word = log_mem[log_read_idx];
 
-  wire [LOG_QWORDS_LOG2:0] trace_axiread_addr;
+  wire [9:0] trace_axiread_idx;
   assign trace_axiread_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
+  wire [9:0] trace_axiwrite_idx;
+  assign trace_axiwrite_idx = waddr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
   wire [63:0] trace_axiread_word;
-  assign trace_axiread_word = trace_aximem[trace_axiread_idx];
+  assign trace_axiread_word = trace_mem[trace_axiread_idx];
   
   wire [63:0] trace_read;
   wire trace_here;
@@ -198,6 +206,30 @@ module	verinject_axi_driver
       log_mem[ii] = 64'b0;
     for (ii = 0; ii < 1024; ii=ii+1)
       trace_mem[ii] = ~64'b0;
+  end
+
+  always @*
+  begin
+    trace_ptr_nxt = trace_ptr_r;
+    if (run_designs_r && !stopped_r && trace_here && !(&trace_ptr_r)) // avoid overflow
+    begin
+      trace_ptr_nxt += 1;
+    end
+  end
+
+  always @(posedge S_AXI_ACLK)
+  begin
+    cycle_r <= cycle_r + 1;
+    trace_ptr_r <= trace_ptr_nxt;
+    if (trace_read[63:32] == 32'hFFFF_FFFF)
+    begin
+      stopped_r <= 1'b1;
+    end
+    if (stop_cycle_r != 0 && cycle_r >= stop_cycle_r)
+    begin
+      stopped_r <= 1'b1;
+      run_designs_r <= 1'b0;
+    end
   end
 
 
@@ -264,7 +296,7 @@ module	verinject_axi_driver
     case (rd_addr[AW+ADDR_LSB-1:ADDR_LSB])
       REGID_LOG_QWORD_COUNT : axi_rdata_nxt = LOG_QWORDS;
       REGID_TRACE_QWORD_COUNT : axi_rdata_nxt = 1024;
-      REGID_CYCLE_NUMBER : axi_rdata_nxt = cycle_r;
+      REGID_CYCLE_NUMBER : axi_rdata_nxt = cycle_r[31:0];
       REGID_RUNNING : axi_rdata_nxt = {30'b0, stopped_r, run_designs_r};
       REGID_STOP_CYCLE_NUMBER : axi_rdata_nxt = stop_cycle_r;
       REGID_LOG_POSITION : axi_rdata_nxt = log_wptr_r;
@@ -411,18 +443,35 @@ module	verinject_axi_driver
     // If we have valid data
     && valid_write_data)
   begin
-    if (wstrb[0])
-      slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][7:0]
-        <= wdata[7:0];
-    if (wstrb[1])
-      slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][15:8]
-        <= wdata[15:8];
-    if (wstrb[2])
-      slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][23:16]
-        <= wdata[23:16];
-    if (wstrb[3])
-      slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][31:24]
-        <= wdata[31:24];
+    for (ii = 0; ii < 4; ii = ii + 1)
+    begin
+      if (wstrb[ii])
+      begin
+        // slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][8*ii+7:8*ii] <= wdata[8*ii+7:8*ii];
+        case (waddr[AW+ADDR_LSB-1:ADDR_LSB])
+          // REGID_LOG_QWORD_COUNT : Read-only
+          // REGID_TRACE_QWORD_COUNT : Read-only
+          REGID_CYCLE_NUMBER : cycle_r[8*ii +: 8] <= wdata[8*ii +: 8];
+          REGID_RUNNING : if (ii == 0) {stopped_r, run_designs_r} <= wdata[1:0];
+          REGID_STOP_CYCLE_NUMBER : stop_cycle_r[8*ii +: 8] <= wdata[8*ii +: 8];
+          REGID_LOG_POSITION : log_wptr_r[8*ii +: 8] <= wdata[8*ii +: 8];
+        endcase
+        if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
+        begin
+          if (waddr[2])
+            log_mem[log_write_idx][32+8*ii +: 8] <= wdata[8*ii +: 8];
+          else
+            log_mem[log_write_idx][8*ii +: 8] <= wdata[8*ii +: 8];
+        end
+        if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_TRACE_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA_END)
+        begin
+          if (waddr[2])
+            trace_mem[trace_axiwrite_idx][32+8*ii +: 8] <= wdata[8*ii +: 8];
+          else
+            trace_mem[trace_axiwrite_idx][8*ii +: 8] <= wdata[8*ii +: 8];
+        end
+      end
+    end
   end
 
   //
@@ -456,336 +505,6 @@ module	verinject_axi_driver
         S_AXI_ARADDR[ADDR_LSB-1:0] };
   // Verilator lint_on UNUSED
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-`ifdef	FORMAL
-  localparam	F_LGDEPTH = 4;
-
-  wire	[(F_LGDEPTH-1):0]	f_axi_awr_outstanding,
-          f_axi_wr_outstanding,
-          f_axi_rd_outstanding;
-
-  faxil_slave #(// .C_AXI_DATA_WIDTH(C_S_AXI_DATA_WIDTH),
-      .C_AXI_ADDR_WIDTH(C_S_AXI_ADDR_WIDTH),
-      // .F_OPT_NO_READS(1'b0),
-      // .F_OPT_NO_WRITES(1'b0),
-      .F_OPT_XILINX(1),
-      .F_LGDEPTH(F_LGDEPTH))
-    properties (
-    .i_clk(S_AXI_ACLK),
-    .i_axi_reset_n(S_AXI_ARESETN),
-    //
-    .i_axi_awaddr(S_AXI_AWADDR),
-    .i_axi_awcache(4'h0),
-    .i_axi_awprot(S_AXI_AWPROT),
-    .i_axi_awvalid(S_AXI_AWVALID),
-    .i_axi_awready(S_AXI_AWREADY),
-    //
-    .i_axi_wdata(S_AXI_WDATA),
-    .i_axi_wstrb(S_AXI_WSTRB),
-    .i_axi_wvalid(S_AXI_WVALID),
-    .i_axi_wready(S_AXI_WREADY),
-    //
-    .i_axi_bresp(S_AXI_BRESP),
-    .i_axi_bvalid(S_AXI_BVALID),
-    .i_axi_bready(S_AXI_BREADY),
-    //
-    .i_axi_araddr(S_AXI_ARADDR),
-    .i_axi_arprot(S_AXI_ARPROT),
-    .i_axi_arcache(4'h0),
-    .i_axi_arvalid(S_AXI_ARVALID),
-    .i_axi_arready(S_AXI_ARREADY),
-    //
-    .i_axi_rdata(S_AXI_RDATA),
-    .i_axi_rresp(S_AXI_RRESP),
-    .i_axi_rvalid(S_AXI_RVALID),
-    .i_axi_rready(S_AXI_RREADY),
-    //
-    .f_axi_rd_outstanding(f_axi_rd_outstanding),
-    .f_axi_wr_outstanding(f_axi_wr_outstanding),
-    .f_axi_awr_outstanding(f_axi_awr_outstanding));
-
-  reg	f_past_valid;
-  initial	f_past_valid = 1'b0;
-  always @(posedge S_AXI_ACLK)
-    f_past_valid <= 1'b1;
-
-  ///////
-  //
-  // Properties necessary to pass induction
-  always @(*)
-  if (S_AXI_ARESETN)
-  begin
-    if (!S_AXI_RVALID)
-      assert(f_axi_rd_outstanding == 0);
-    else if (!S_AXI_ARREADY)
-      assert((f_axi_rd_outstanding == 2)||(f_axi_rd_outstanding == 1));
-    else
-      assert(f_axi_rd_outstanding == 1);
-  end
-
-  always @(*)
-  if (S_AXI_ARESETN)
-  begin
-    if (axi_bvalid)
-    begin
-      assert(f_axi_awr_outstanding == 1+(axi_awready ? 0:1));
-      assert(f_axi_wr_outstanding  == 1+(axi_wready  ? 0:1));
-    end else begin
-      assert(f_axi_awr_outstanding == (axi_awready ? 0:1));
-      assert(f_axi_wr_outstanding  == (axi_wready  ? 0:1));
-    end
-  end
-
-
-  ////////////////////////////////////////////////////////////////////////
-  //
-  // Cover properties
-  //
-  // In addition to making sure the design returns a value, any value,
-  // let's cover returning three values on adjacent clocks--just to prove
-  // we can.
-  //
-  ////////////////////////////////////////////////////////////////////////
-  //
-  //
-  always @( posedge S_AXI_ACLK )
-  if ((f_past_valid)&&(S_AXI_ARESETN))
-    cover(($past((S_AXI_BVALID && S_AXI_BREADY)))
-      &&($past((S_AXI_BVALID && S_AXI_BREADY),2))
-      &&(S_AXI_BVALID && S_AXI_BREADY));
-
-  always @( posedge S_AXI_ACLK )
-  if ((f_past_valid)&&(S_AXI_ARESETN))
-    cover(($past((S_AXI_RVALID && S_AXI_RREADY)))
-      &&($past((S_AXI_RVALID && S_AXI_RREADY),2))
-      &&(S_AXI_RVALID && S_AXI_RREADY));
-
-  // Let's go just one further, and verify we can do three returns in a
-  // row.  Why?  It might just be possible that one value was waiting
-  // already, and so we haven't yet tested that two requests could be
-  // made in a row.
-  always @( posedge S_AXI_ACLK )
-  if ((f_past_valid)&&(S_AXI_ARESETN))
-    cover(($past((S_AXI_BVALID && S_AXI_BREADY)))
-      &&($past((S_AXI_BVALID && S_AXI_BREADY),2))
-      &&($past((S_AXI_BVALID && S_AXI_BREADY),3))
-      &&(S_AXI_BVALID && S_AXI_BREADY));
-
-  always @( posedge S_AXI_ACLK )
-  if ((f_past_valid)&&(S_AXI_ARESETN))
-    cover(($past((S_AXI_RVALID && S_AXI_RREADY)))
-      &&($past((S_AXI_RVALID && S_AXI_RREADY),2))
-      &&($past((S_AXI_RVALID && S_AXI_RREADY),3))
-      &&(S_AXI_RVALID && S_AXI_RREADY));
-
-  //
-  // Let's create a sophisticated cover statement designed to show off
-  // how our core can handle stalls and non-valids, synchronizing
-  // across multiple scenarios
-  reg	[22:0]	fw_wrdemo_pipe, fr_wrdemo_pipe;
-  always @(*)
-  if (!S_AXI_ARESETN)
-    fw_wrdemo_pipe = 0;
-  else begin
-    fw_wrdemo_pipe[0] = (S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[1] = fr_wrdemo_pipe[0]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[2] = fr_wrdemo_pipe[1]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    //
-    //
-    fw_wrdemo_pipe[3] = fr_wrdemo_pipe[2]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[4] = fr_wrdemo_pipe[3]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[5] = fr_wrdemo_pipe[4]
-        &&(!S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[6] = fr_wrdemo_pipe[5]
-        &&(S_AXI_AWVALID)
-        &&( S_AXI_WVALID)
-        &&( S_AXI_BREADY);
-    fw_wrdemo_pipe[7] = fr_wrdemo_pipe[6]
-        &&(!S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&( S_AXI_BREADY);
-    fw_wrdemo_pipe[8] = fr_wrdemo_pipe[7]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[9] = fr_wrdemo_pipe[8]
-//				&&(S_AXI_AWVALID)
-//				&&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[10] = fr_wrdemo_pipe[9]
-//				&&(S_AXI_AWVALID)
-//				&&(S_AXI_WVALID)
-        // &&(S_AXI_BREADY);
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[11] = fr_wrdemo_pipe[10]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(!S_AXI_BREADY);
-    fw_wrdemo_pipe[12] = fr_wrdemo_pipe[11]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[13] = fr_wrdemo_pipe[12]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[14] = fr_wrdemo_pipe[13]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(f_axi_awr_outstanding == 0)
-        &&(f_axi_wr_outstanding == 0)
-        &&(S_AXI_BREADY);
-    //
-    //
-    //
-    fw_wrdemo_pipe[15] = fr_wrdemo_pipe[14]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[16] = fr_wrdemo_pipe[15]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[17] = fr_wrdemo_pipe[16]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[18] = fr_wrdemo_pipe[17]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(!S_AXI_BREADY);
-    fw_wrdemo_pipe[19] = fr_wrdemo_pipe[18]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[20] = fr_wrdemo_pipe[19]
-        &&(S_AXI_AWVALID)
-        &&(S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[21] = fr_wrdemo_pipe[20]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-    fw_wrdemo_pipe[22] = fr_wrdemo_pipe[21]
-        &&(!S_AXI_AWVALID)
-        &&(!S_AXI_WVALID)
-        &&(S_AXI_BREADY);
-  end
-
-  always @(posedge S_AXI_ACLK)
-    fr_wrdemo_pipe <= fw_wrdemo_pipe;
-
-  always @(*)
-  if (S_AXI_ARESETN)
-  begin
-    cover(fw_wrdemo_pipe[0]);
-    cover(fw_wrdemo_pipe[1]);
-    cover(fw_wrdemo_pipe[2]);
-    cover(fw_wrdemo_pipe[3]);
-    cover(fw_wrdemo_pipe[4]);
-    cover(fw_wrdemo_pipe[5]);
-    cover(fw_wrdemo_pipe[6]);
-    cover(fw_wrdemo_pipe[7]); //
-    cover(fw_wrdemo_pipe[8]);
-    cover(fw_wrdemo_pipe[9]);
-    cover(fw_wrdemo_pipe[10]);
-    cover(fw_wrdemo_pipe[11]);
-    cover(fw_wrdemo_pipe[12]);
-    cover(fw_wrdemo_pipe[13]);
-    cover(fw_wrdemo_pipe[14]);
-    cover(fw_wrdemo_pipe[15]);
-    cover(fw_wrdemo_pipe[16]);
-    cover(fw_wrdemo_pipe[17]);
-    cover(fw_wrdemo_pipe[18]);
-    cover(fw_wrdemo_pipe[19]);
-    cover(fw_wrdemo_pipe[20]);
-    cover(fw_wrdemo_pipe[21]);
-    cover(fw_wrdemo_pipe[22]);
-  end
-
-  //
-  // Now let's repeat, but for a read demo
-  reg	[10:0]	fw_rddemo_pipe, fr_rddemo_pipe;
-  always @(*)
-  if (!S_AXI_ARESETN)
-    fw_rddemo_pipe = 0;
-  else begin
-    fw_rddemo_pipe[0] = (S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[1] = fr_rddemo_pipe[0]
-        &&(!S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[2] = fr_rddemo_pipe[1]
-        &&(!S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    //
-    //
-    fw_rddemo_pipe[3] = fr_rddemo_pipe[2]
-        &&(S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[4] = fr_rddemo_pipe[3]
-        &&(S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[5] = fr_rddemo_pipe[4]
-        &&(S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[6] = fr_rddemo_pipe[5]
-        &&(S_AXI_ARVALID)
-        &&(!S_AXI_RREADY);
-    fw_rddemo_pipe[7] = fr_rddemo_pipe[6]
-        &&(S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[8] = fr_rddemo_pipe[7]
-        &&(S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[9] = fr_rddemo_pipe[8]
-        &&(!S_AXI_ARVALID)
-        &&(S_AXI_RREADY);
-    fw_rddemo_pipe[10] = fr_rddemo_pipe[9]
-        &&(f_axi_rd_outstanding == 0);
-  end
-
-  initial	fr_rddemo_pipe = 0;
-  always @(posedge S_AXI_ACLK)
-    fr_rddemo_pipe <= fw_rddemo_pipe;
-
-  always @(*)
-  begin
-    cover(fw_rddemo_pipe[0]);
-    cover(fw_rddemo_pipe[1]);
-    cover(fw_rddemo_pipe[2]);
-    cover(fw_rddemo_pipe[3]);
-    cover(fw_rddemo_pipe[4]);
-    cover(fw_rddemo_pipe[5]);
-    cover(fw_rddemo_pipe[6]);
-    cover(fw_rddemo_pipe[7]);
-    cover(fw_rddemo_pipe[8]);
-    cover(fw_rddemo_pipe[9]);
-    cover(fw_rddemo_pipe[10]);
-  end
-`endif
 endmodule
 `ifndef	YOSYS
 `default_nettype wire
