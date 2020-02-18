@@ -199,6 +199,7 @@ module	verinject_axi_driver
   assign trace_here = trace_read[63:32] == cycle_r;
   assign verinject__injector_state = trace_here ? trace_read[31:0] : 32'hFFFFFFFF;
   assign cycle_number = cycle_r;
+  assign run_designs = run_designs_r;
 
   initial
   begin
@@ -229,6 +230,11 @@ module	verinject_axi_driver
     begin
       stopped_r <= 1'b1;
       run_designs_r <= 1'b0;
+    end
+    if (log_write)
+    begin
+      log_mem[log_wptr_r] <= log_data;
+      log_wptr_r <= log_wptr_r + 1;
     end
   end
 
