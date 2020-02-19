@@ -172,7 +172,7 @@ module	verinject_axi_driver
   initial trace_ptr_r = 0;
   reg [47:0] cycle_r;
   initial cycle_r = 0;
-  reg [31:0] stop_cycle_r;
+  reg [31:0] stop_cycle_r; // Cycle counter should probably be 48- or 64-bit everywhere, it's 32 now to avoid extra complexity when testing the bus implementation
   initial stop_cycle_r = 0;
   reg run_designs_r;
   initial run_designs_r = 0;
