@@ -162,10 +162,15 @@ module	verinject_axi_driver
   //----------------------------------------------
   //-- Signals for user logic register space example
   //------------------------------------------------
+  (* ram_style = "block" *)
   reg [63:0] log_mem [0:LOG_QWORDS-1];
+  (* ram_style = "block" *)
   reg [63:0] trace_mem [0:1023];
 
-  reg [LOG_QWORDS_LOG2:0] log_wptr_r;
+  reg [63:0] log_data_buf;
+  reg log_write_buf;
+  initial log_write_buf = 1'b0;
+  reg [31:0] log_wptr_r;
   initial log_wptr_r = 0;
   reg [9:0] trace_ptr_r;
   reg [9:0] trace_ptr_nxt;
@@ -180,22 +185,15 @@ module	verinject_axi_driver
   initial stopped_r = 0;
 
   wire [LOG_QWORDS_LOG2-1:0] log_read_idx;
-  assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
   wire [LOG_QWORDS_LOG2-1:0] log_write_idx;
-  assign log_write_idx = waddr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
   wire [63:0] log_read_word;
-  assign log_read_word = log_mem[log_read_idx];
 
   wire [9:0] trace_axiread_idx;
-  assign trace_axiread_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
   wire [9:0] trace_axiwrite_idx;
-  assign trace_axiwrite_idx = waddr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
   wire [63:0] trace_axiread_word;
-  assign trace_axiread_word = trace_mem[trace_axiread_idx];
   
-  wire [63:0] trace_read;
+  reg [63:0] trace_read;
   wire trace_here;
-  assign trace_read = trace_mem[trace_ptr_r];
   assign trace_here = trace_read[63:32] == cycle_r;
   assign verinject__injector_state = run_designs_r ? (trace_here ? trace_read[31:0] : 32'hFFFF_FFFF) : 32'hFFFF_FFFE;
   assign cycle_number = cycle_r;
@@ -214,27 +212,7 @@ module	verinject_axi_driver
     trace_ptr_nxt = trace_ptr_r;
     if (run_designs_r && !stopped_r && trace_here && !(&trace_ptr_r)) // avoid overflow
     begin
-      trace_ptr_nxt += 1;
-    end
-  end
-
-  always @(posedge S_AXI_ACLK)
-  begin
-    cycle_r <= cycle_r + 1;
-    trace_ptr_r <= trace_ptr_nxt;
-    if (trace_read[63:32] == 32'hFFFF_FFFF)
-    begin
-      stopped_r <= 1'b1;
-    end
-    if (stop_cycle_r != 0 && cycle_r >= stop_cycle_r)
-    begin
-      stopped_r <= 1'b1;
-      run_designs_r <= 1'b0;
-    end
-    if (log_write)
-    begin
-      log_mem[log_wptr_r] <= log_data;
-      log_wptr_r <= log_wptr_r + 1;
+      trace_ptr_nxt = trace_ptr_nxt + 1;
     end
   end
 
@@ -295,6 +273,12 @@ module	verinject_axi_driver
   //
   // Read the data
   //
+
+  assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
+  assign log_write_idx = waddr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
+  assign log_read_word = log_mem[log_read_idx];
+  assign trace_axiwrite_idx = waddr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
+
   always @*
   begin
     // axi_rdata_nxt = slv_mem[rd_addr];
@@ -310,10 +294,6 @@ module	verinject_axi_driver
     if (rd_addr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && rd_addr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
     begin
       axi_rdata_nxt = rd_addr[2] ? log_read_word[63:32] : log_read_word[31:0];
-    end
-    if (rd_addr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_TRACE_DATA && rd_addr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA_END)
-    begin
-      axi_rdata_nxt = rd_addr[2] ? trace_axiread_word[63:32] : trace_axiread_word[31:0];
     end
   end
 
@@ -442,40 +422,59 @@ module	verinject_axi_driver
   // Actually (finally) write the data
   //
   always @( posedge S_AXI_ACLK )
-  // If the output channel isn't stalled, and
-  if (!write_response_stall
-    // If we have a valid address, and
-    && valid_write_address
-    // If we have valid data
-    && valid_write_data)
   begin
-    for (ii = 0; ii < 4; ii = ii + 1)
+    trace_read <= trace_mem[trace_ptr_nxt];
+    log_data_buf <= log_data;
+    log_write_buf <= log_write;
+    if (run_designs_r)
     begin
-      if (wstrb[ii])
+      cycle_r <= cycle_r + 1;
+    end
+    trace_ptr_r <= trace_ptr_nxt;
+    if (trace_read[63:32] == 32'hFFFF_FFFF)
+    begin
+      stopped_r <= 1'b1;
+    end
+    if (stop_cycle_r != 0 && cycle_r >= stop_cycle_r)
+    begin
+      stopped_r <= 1'b1;
+      run_designs_r <= 1'b0;
+    end
+    // If the output channel isn't stalled, and
+    if (!write_response_stall
+      // If we have a valid address, and
+      && valid_write_address
+      // If we have valid data
+      && valid_write_data)
+    begin
+      // slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][8*ii+7:8*ii] <= wdata[8*ii+7:8*ii];
+      case (waddr[AW+ADDR_LSB-1:ADDR_LSB])
+        // REGID_LOG_QWORD_COUNT : Read-only
+        // REGID_TRACE_QWORD_COUNT : Read-only
+        REGID_CYCLE_NUMBER : cycle_r <= wdata;
+        REGID_RUNNING : {stopped_r, run_designs_r} <= wdata[1:0];
+        REGID_STOP_CYCLE_NUMBER : stop_cycle_r <= wdata;
+        REGID_LOG_POSITION : log_wptr_r <= wdata;
+      endcase
+      if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
       begin
-        // slv_mem[waddr[AW+ADDR_LSB-1:ADDR_LSB]][8*ii+7:8*ii] <= wdata[8*ii+7:8*ii];
-        case (waddr[AW+ADDR_LSB-1:ADDR_LSB])
-          // REGID_LOG_QWORD_COUNT : Read-only
-          // REGID_TRACE_QWORD_COUNT : Read-only
-          REGID_CYCLE_NUMBER : cycle_r[8*ii +: 8] <= wdata[8*ii +: 8];
-          REGID_RUNNING : if (ii == 0) {stopped_r, run_designs_r} <= wdata[1:0];
-          REGID_STOP_CYCLE_NUMBER : stop_cycle_r[8*ii +: 8] <= wdata[8*ii +: 8];
-          REGID_LOG_POSITION : log_wptr_r[8*ii +: 8] <= wdata[8*ii +: 8];
-        endcase
-        if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
-        begin
-          if (waddr[2])
-            log_mem[log_write_idx][32+8*ii +: 8] <= wdata[8*ii +: 8];
-          else
-            log_mem[log_write_idx][8*ii +: 8] <= wdata[8*ii +: 8];
-        end
-        if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_TRACE_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA_END)
-        begin
-          if (waddr[2])
-            trace_mem[trace_axiwrite_idx][32+8*ii +: 8] <= wdata[8*ii +: 8];
-          else
-            trace_mem[trace_axiwrite_idx][8*ii +: 8] <= wdata[8*ii +: 8];
-        end
+        if (waddr[2])
+          log_mem[log_write_idx][63:32] <= wdata;
+        else
+          log_mem[log_write_idx][31:0] <= wdata;
+      end
+      if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_TRACE_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA_END)
+      begin
+        if (waddr[2])
+          trace_mem[trace_axiwrite_idx][63:32] <= wdata;
+        else
+          trace_mem[trace_axiwrite_idx] <= wdata;
+      end
+    end else begin
+      if (log_write_buf)
+      begin
+        log_mem[log_wptr_r[LOG_QWORDS_LOG2-1:0]] <= log_data_buf;
+        log_wptr_r <= log_wptr_r + 1;
       end
     end
   end

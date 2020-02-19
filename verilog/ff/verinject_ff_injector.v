@@ -38,7 +38,7 @@ begin
   end
   if (verinject__injector_state >= P_START && verinject__injector_state < (P_START + word_len))
   begin
-    xor_modifier_nxt ^= (1 << (verinject__injector_state - P_START + bits_start));
+    xor_modifier_nxt = xor_modifier_nxt ^ (1 << (verinject__injector_state - P_START + bits_start));
   end
 end
 

@@ -15,3 +15,4 @@ obj_dir
 **/injected/
 /.vscode/
 *.log
+samples/02_arrayadd/pynqz2/fpga_block/**

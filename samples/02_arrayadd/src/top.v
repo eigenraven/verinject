@@ -1,3 +1,9 @@
+
+`ifndef MEMORY_A_FILE
+`define MEMORY_A_FILE "mem/memory_a.mem"
+`define MEMORY_B_FILE "mem/memory_b.mem"
+`endif
+
 module top(
   input clk,
   input rst_n,
@@ -21,8 +27,8 @@ initial
 begin
   index_r = 8'b0;
   sum = 32'b0;
-  $readmemh("mem/memory_a.mem", memory_a);
-  $readmemh("mem/memory_b.mem", memory_b);
+  $readmemh(`MEMORY_A_FILE, memory_a);
+  $readmemh(`MEMORY_B_FILE, memory_b);
 end
 
 always @*

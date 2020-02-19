@@ -80,12 +80,12 @@ begin : fault_injection
   begin
     if (active_injections[ii] >= read_word_start && active_injections[ii] < read_word_end)
     begin
-      xor_modifier ^= (1 << (active_injections[ii] - read_word_start + bits_start));
+      xor_modifier = xor_modifier ^ (1 << (active_injections[ii] - read_word_start + bits_start));
     end
   end
   if (verinject__injector_state >= read_word_start && verinject__injector_state < read_word_end)
   begin
-    xor_modifier ^= (1 << (verinject__injector_state - read_word_start + bits_start));
+    xor_modifier = xor_modifier ^ (1 << (verinject__injector_state - read_word_start + bits_start));
   end
 end
 
