@@ -1,2 +1,5 @@
 1000 runs
 ./test.sh  167.52s user 33.64s system 55% cpu 6:01.24 total
+
+1000 runs without waveforms or compression
+./test.sh  148.76s user 26.11s system 63% cpu 4:35.88 total

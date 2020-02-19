@@ -197,7 +197,7 @@ module	verinject_axi_driver
   wire trace_here;
   assign trace_read = trace_mem[trace_ptr_r];
   assign trace_here = trace_read[63:32] == cycle_r;
-  assign verinject__injector_state = trace_here ? trace_read[31:0] : 32'hFFFFFFFF;
+  assign verinject__injector_state = run_designs_r ? (trace_here ? trace_read[31:0] : 32'hFFFF_FFFF) : 32'hFFFF_FFFE;
   assign cycle_number = cycle_r;
   assign run_designs = run_designs_r;
 

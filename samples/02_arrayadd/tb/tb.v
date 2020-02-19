@@ -14,8 +14,8 @@ wire [31:0] real_sum;
 wire [7:0] inj_index;
 wire [31:0] inj_sum;
 
-top u_top(.clk(clk), .run(run), .index(real_index), .sum(real_sum));
-top__injected i_top(.clk(clk), .run(run),
+top u_top(.clk(clk), .rst_n(rst_n), .run(run), .index(real_index), .sum(real_sum));
+top__injected i_top(.clk(clk), .rst_n(rst_n), .run(run),
   .index(inj_index), .sum(inj_sum),
   .verinject__injector_state(verinject__injector_state)
 );
@@ -53,7 +53,10 @@ begin
   end
   if (real_sum != inj_sum)
   begin
-    $display("Sum mismatch at cycle %d: real(%08x) != injected(%08x) xor(%08x)", cycle_number, real_sum, inj_sum, real_sum ^ inj_sum);
+    $display("Sum mismatch at cycle %d: real(%08x) != injected(%08x) xor(%08x) absdifference(%08x)",
+      cycle_number, real_sum, inj_sum,
+      real_sum ^ inj_sum,
+      (real_sum > inj_sum) ? (real_sum - inj_sum) : (inj_sum - real_sum));
   end
 end
 

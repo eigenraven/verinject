@@ -1,5 +1,6 @@
 module top(
   input clk,
+  input rst_n,
   input run,
   output [7:0] index,
   output reg [31:0] sum
@@ -37,9 +38,12 @@ begin
 
 end
 
-always @(posedge clk)
+always @(posedge clk, negedge rst_n)
 begin
-  if (run)
+  if (!rst_n)
+  begin
+    index_r <= 0;
+  end else if (run)
   begin
     index_r <= index_nxt;
   end
