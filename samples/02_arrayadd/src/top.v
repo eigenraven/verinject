@@ -33,6 +33,7 @@ end
 
 always @*
 begin
+  index_nxt = index_r;
   if (run)
   begin
    index_nxt = index_r + 8'b1;

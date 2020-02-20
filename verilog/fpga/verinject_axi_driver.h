@@ -41,7 +41,9 @@ typedef struct verinject_axi_interface {
     uint32_t stop_cycle_number;
     uint32_t log_position;
     uint32_t trace_position;
-    uint32_t _pad0[2];
+    uint32_t trace_current_cycle;
+    uint32_t trace_current_bitid;
+    uint32_t _pad1[1];
     uint64_t log_data[VERINJECT_AXI_LOG_QWORDS];
     uint64_t trace_data[1024];
 } verinject_axi_interface;

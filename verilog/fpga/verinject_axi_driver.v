@@ -60,7 +60,7 @@ module	verinject_axi_driver
     // Enables appending the above data in current clock cycle
     input wire log_write,
     // Bit id to inject a fault into, or all 1's if no fault currently injected, 32'hFFFF_FFFE if injector reset requested
-    output wire [31:0] verinject__injector_state,
+    output reg [31:0] verinject__injector_state,
     // Current cycle number
     output wire [47:0] cycle_number,
     // Asserted when target design is requested to run by the host
@@ -156,7 +156,9 @@ module	verinject_axi_driver
   localparam [31:0] REGID_STOP_CYCLE_NUMBER = 4; // 0 - don't stop
   localparam [31:0] REGID_LOG_POSITION = 5;
   localparam [31:0] REGID_TRACE_POSITION = 6;
-  localparam [31:0] REGID_LOG_DATA = 8;
+  localparam [31:0] REGID_TRACE_CURR_CYCLE = 7;
+  localparam [31:0] REGID_TRACE_CURR_BITID = 8;
+  localparam [31:0] REGID_LOG_DATA = 10;
   localparam [31:0] REGID_TRACE_DATA = REGID_LOG_DATA + LOG_QWORDS*2;
   localparam [31:0] REGID_TRACE_DATA_END = REGID_LOG_DATA + LOG_QWORDS*2 + 2048;
   //----------------------------------------------
@@ -167,6 +169,7 @@ module	verinject_axi_driver
   (* ram_style = "block" *)
   reg [63:0] trace_mem [0:1023];
 
+  initial verinject__injector_state = 32'hFFFF_FFFF;
   reg [63:0] log_data_buf;
   reg log_write_buf;
   initial log_write_buf = 1'b0;
@@ -177,6 +180,7 @@ module	verinject_axi_driver
   initial trace_ptr_r = 0;
   reg [47:0] cycle_r;
   initial cycle_r = 0;
+  reg [47:0] cycle_nxt;
   reg [31:0] stop_cycle_r; // Cycle counter should probably be 48- or 64-bit everywhere, it's 32 now to avoid extra complexity when testing the bus implementation
   initial stop_cycle_r = 0;
   reg run_designs_r;
@@ -192,10 +196,12 @@ module	verinject_axi_driver
   wire [9:0] trace_axiwrite_idx;
   wire [63:0] trace_axiread_word;
   
-  reg [63:0] trace_read;
+  wire [63:0] trace_read;
+  assign trace_read = trace_mem[trace_ptr_r];
   wire trace_here;
-  assign trace_here = trace_read[63:32] == cycle_r;
-  assign verinject__injector_state = run_designs_r ? (trace_here ? trace_read[31:0] : 32'hFFFF_FFFF) : 32'hFFFF_FFFE;
+  assign trace_here = trace_read[63:32] <= cycle_nxt;
+  wire [31:0] verinject__injector_state_nxt;
+  assign verinject__injector_state_nxt = run_designs_r ? (trace_here ? trace_read[31:0] : 32'hFFFF_FFFF) : 32'hFFFF_FFFE;
   assign cycle_number = cycle_r;
   assign run_designs = run_designs_r;
 
@@ -274,14 +280,15 @@ module	verinject_axi_driver
   // Read the data
   //
 
-  assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
-  assign log_write_idx = waddr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA;
+  assign log_read_idx = rd_addr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA[31:1];
+  assign log_write_idx = waddr[AW+ADDR_LSB-1:3] - REGID_LOG_DATA[31:1];
   assign log_read_word = log_mem[log_read_idx];
-  assign trace_axiwrite_idx = waddr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA;
+  assign trace_axiwrite_idx = waddr[AW+ADDR_LSB-1:3] - REGID_TRACE_DATA[31:1];
 
   always @*
   begin
     // axi_rdata_nxt = slv_mem[rd_addr];
+    cycle_nxt = run_designs_r ? cycle_r + 1 : cycle_r;
     axi_rdata_nxt = 0;
     case (rd_addr[AW+ADDR_LSB-1:ADDR_LSB])
       REGID_LOG_QWORD_COUNT : axi_rdata_nxt = LOG_QWORDS;
@@ -290,6 +297,9 @@ module	verinject_axi_driver
       REGID_RUNNING : axi_rdata_nxt = {30'b0, stopped_r, run_designs_r};
       REGID_STOP_CYCLE_NUMBER : axi_rdata_nxt = stop_cycle_r;
       REGID_LOG_POSITION : axi_rdata_nxt = log_wptr_r;
+      REGID_TRACE_POSITION : axi_rdata_nxt = trace_ptr_r;
+      REGID_TRACE_CURR_CYCLE : axi_rdata_nxt = trace_read[63:32];
+      REGID_TRACE_CURR_BITID : axi_rdata_nxt = trace_read[31:0];
     endcase
     if (rd_addr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && rd_addr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
     begin
@@ -423,13 +433,10 @@ module	verinject_axi_driver
   //
   always @( posedge S_AXI_ACLK )
   begin
-    trace_read <= trace_mem[trace_ptr_nxt];
+    verinject__injector_state <= verinject__injector_state_nxt;
     log_data_buf <= log_data;
     log_write_buf <= log_write;
-    if (run_designs_r)
-    begin
-      cycle_r <= cycle_r + 1;
-    end
+    cycle_r <= cycle_nxt;
     trace_ptr_r <= trace_ptr_nxt;
     if (trace_read[63:32] == 32'hFFFF_FFFF)
     begin
@@ -455,6 +462,9 @@ module	verinject_axi_driver
         REGID_RUNNING : {stopped_r, run_designs_r} <= wdata[1:0];
         REGID_STOP_CYCLE_NUMBER : stop_cycle_r <= wdata;
         REGID_LOG_POSITION : log_wptr_r <= wdata;
+        REGID_TRACE_POSITION : trace_ptr_r <= wdata;
+        // REGID_TRACE_CURR_CYCLE
+        // REGID_TRACE_CURR_BITID
       endcase
       if (waddr[AW+ADDR_LSB-1:ADDR_LSB] >= REGID_LOG_DATA && waddr[AW+ADDR_LSB-1:ADDR_LSB] < REGID_TRACE_DATA)
       begin
