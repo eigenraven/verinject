@@ -33,8 +33,8 @@ localparam idx_end = P_START + mem_len*word_len;
 integer ii;
 
 reg [31:0] active_injections [0:`VERINJECT_MEM_FIFO_SIZE];
-reg [`VERINJECT_MEM_FIFO_SIZE_LOG2:0] injection_wptr_r;
-reg [`VERINJECT_MEM_FIFO_SIZE_LOG2:0] injection_wptr_nxt;
+reg [`VERINJECT_MEM_FIFO_SIZE_LOG2-1:0] injection_wptr_r;
+reg [`VERINJECT_MEM_FIFO_SIZE_LOG2-1:0] injection_wptr_nxt;
 reg injection_writing;
 
 wire [31:0] read_word_start;
@@ -69,7 +69,7 @@ begin : fault_injection
   xor_modifier = 0;
 
   injection_writing = 0;
-  injection_wptr_nxt = injection_wptr_r;
+  injection_wptr_nxt = reset_fifo ? 0 : injection_wptr_r;
   if (verinject__injector_state >= idx_start && verinject__injector_state < idx_end)
   begin
     injection_writing = 1'b1;
