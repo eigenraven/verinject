@@ -1,4 +1,4 @@
-// For use in a Xilinx Vitis 2019.2 Project
+
 #include <stdio.h>
 #include "xparameters.h"
 #include "platform.h"
@@ -7,6 +7,12 @@
 #include "verinject_axi_driver.h"
 
 volatile verinject_axi_interface* vj;
+
+const uint64_t RUNS_ARRAY[] = {
+#include "c_runs.inc"
+};
+
+#define RUNS_ARRAY_LEN (sizeof(RUNS_ARRAY)/sizeof(uint64_t))
 
 void membarrier() {
 	asm volatile("" ::: "memory");
@@ -25,10 +31,8 @@ void reset_vj() {
 }
 
 void print_vj_log() {
-	membarrier();
 	uint32_t end_pos = vj->log_position;
 	uint32_t maxqwords = vj->log_qword_count;
-	xil_printf("Finished at cycle = %d\n", vj->cycle_number);
 	if(end_pos > maxqwords) {
 		end_pos = maxqwords;
 	}
@@ -56,24 +60,33 @@ int main()
     XTime_GetTime(&postinit_time);
     xil_printf("Init time: %d\n", (int)(postinit_time - init_time));
 
-    vj->trace_data[0] = 0x0000001c00000bbaULL;
-    xil_printf("verinject: at cycle %15d injected into bit %10d\n", 0x1c, 0xbba);
+    XTime t_all_start, t_all_end;
+    XTime_GetTime(&t_all_start);
+
+    for(int runid=0; runid < RUNS_ARRAY_LEN; runid++) {
+    	xil_printf("run%d\n", runid);
+
+    	vj->running_flags = VERINJECT_AXI_RUNNING_NOT;
+    	vj->cycle_number = 0;
+    	vj->log_position = 0;
+    	vj->trace_position = 0;
+    	uint64_t tdata = RUNS_ARRAY[runid];
+		vj->trace_data[0] = tdata;
+		vj->trace_data[1] = ~(uint64_t)0;
+		xil_printf("verinject: at cycle %15d injected into bit %10d\n", (int)(tdata >> 32), (int)(tdata & 0xFFFFFFFF));
+		membarrier();
+
+		vj->running_flags = VERINJECT_AXI_RUNNING_RUN;
+		while(vj->running_flags&VERINJECT_AXI_RUNNING_RUN) {}
+		membarrier();
+
+		print_vj_log();
+    }
+
     membarrier();
-
-    XTime t_run_start, t_run_end;
-
-    XTime_GetTime(&t_run_start);
-    vj->running_flags = VERINJECT_AXI_RUNNING_RUN;
-    membarrier();
-    while(vj->running_flags&VERINJECT_AXI_RUNNING_RUN) {}
-    membarrier();
-    XTime_GetTime(&t_run_end);
-
-    print("Log for run 1\n");
-    print_vj_log();
-    print("End log\n");
-
-    xil_printf("Run took %d cycles\n", (u32)(t_run_end - t_run_start));
+    XTime_GetTime(&t_all_end);
+    u64 all_cycles = t_all_end - t_all_start;
+    printf("Finished all runs in %llu cycles", all_cycles);
 
     cleanup_platform();
     return 0;
