@@ -77,13 +77,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -130,495 +126,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
-
 module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, 
                   des1, des2, des_acc, desCy, desAc, desOv, sub_result);
 //
@@ -635,24 +248,19 @@ module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in,
 // desAc        (out) auxiliary carry output [oc8051_psw.ac_in]
 // desOv        (out) Overflow output [oc8051_psw.ov_in]
 //
-
 input        srcCy, srcAc, bit_in, clk, rst;
 input  [3:0] op_code;
 input  [7:0] src1, src2, src3;
 output       desCy, desAc, desOv;
 output [7:0] des1, des2, des_acc, sub_result;
-
 reg desCy, desAc, desOv;
 reg [7:0] des1, des2, des_acc;
-
-
 //
 //add
 //
 wire [4:0] add1, add2, add3, add4;
 wire [3:0] add5, add6, add7, add8;
 wire [1:0] add9, adda, addb, addc;
-
 //
 //sub
 //
@@ -660,78 +268,63 @@ wire [4:0] sub1, sub2, sub3, sub4;
 wire [3:0] sub5, sub6, sub7, sub8;
 wire [1:0] sub9, suba, subb, subc;
 wire [7:0] sub_result;
-
 //
 //mul
 //
   wire [7:0] mulsrc1, mulsrc2;
   wire mulOv;
   reg enable_mul;
-
 //
 //div
 //
 wire [7:0] divsrc1,divsrc2;
 wire divOv;
 reg enable_div;
-
 //
 //da
 //
 reg da_tmp, da_tmp1;
 //reg [8:0] da1;
-
 //
 // inc
 //
 wire [15:0] inc, dec;
-
 oc8051_multiply oc8051_mul1(.clk(clk), .rst(rst), .enable(enable_mul), .src1(src1), .src2(src2), .des1(mulsrc1), .des2(mulsrc2), .desOv(mulOv));
 oc8051_divide oc8051_div1(.clk(clk), .rst(rst), .enable(enable_div), .src1(src1), .src2(src2), .des1(divsrc1), .des2(divsrc2), .desOv(divOv));
-
 /* Add */
 assign add1 = {1'b0,src1[3:0]};
 assign add2 = {1'b0,src2[3:0]};
 assign add3 = {3'b000,srcCy};
 assign add4 = add1+add2+add3;
-
 assign add5 = {1'b0,src1[6:4]};
 assign add6 = {1'b0,src2[6:4]};
 assign add7 = {1'b0,1'b0,1'b0,add4[4]};
 assign add8 = add5+add6+add7;
-
 assign add9 = {1'b0,src1[7]};
 assign adda = {1'b0,src2[7]};
 assign addb = {1'b0,add8[3]};
 assign addc = add9+adda+addb;
-
 /* Sub */
 assign sub1 = {1'b1,src1[3:0]};
 assign sub2 = {1'b0,src2[3:0]};
 assign sub3 = {1'b0,1'b0,1'b0,srcCy};
 assign sub4 = sub1-sub2-sub3;
-
 assign sub5 = {1'b1,src1[6:4]};
 assign sub6 = {1'b0,src2[6:4]};
 assign sub7 = {1'b0,1'b0,1'b0, !sub4[4]};
 assign sub8 = sub5-sub6-sub7;
-
 assign sub9 = {1'b1,src1[7]};
 assign suba = {1'b0,src2[7]};
 assign subb = {1'b0,!sub8[3]};
 assign subc = sub9-suba-subb;
-
 assign sub_result = {subc[0],sub8[2:0],sub4[3:0]};
-
 /* inc */
 assign inc = {src2, src1} + {15'h0, 1'b1};
 assign dec = {src2, src1} - {15'h0, 1'b1};
-
 always @(op_code or src1 or src2 or srcCy or srcAc or bit_in or src3 or mulsrc1
       or mulsrc2 or mulOv or divsrc1 or divsrc2 or divOv or addc or add8 or add4
       or sub4 or sub8 or subc or da_tmp or inc or dec or sub_result)
 begin
-
   case (op_code) /* synopsys full_case parallel_case */
 //operation add
     4'b0001: begin
@@ -741,7 +334,6 @@ begin
       desCy = addc[1];
       desAc = add4[4];
       desOv = addc[1] ^ add8[3];
-
       enable_mul = 1'b0;
       enable_div = 1'b0;
     end
@@ -754,7 +346,6 @@ begin
       desCy = !subc[1];
       desAc = !sub4[4];
       desOv = !subc[1] ^ !sub8[3];
-
       enable_mul = 1'b0;
       enable_div = 1'b0;
     end
@@ -782,14 +373,11 @@ begin
     end
 //operation decimal adjustment
     4'b0101: begin
-
       if (srcAc==1'b1 | src1[3:0]>4'b1001) {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]}+ 5'b00110;
       else {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]};
-
       if (srcCy | da_tmp | src1[7:4]>4'b1001)
         {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp};
       else {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp};
-
       desCy = da_tmp | da_tmp1;
       des1 = src1;
       des2 = 8'h00;
@@ -939,5 +527,4 @@ begin
     end
   endcase
 end
-
 endmodule

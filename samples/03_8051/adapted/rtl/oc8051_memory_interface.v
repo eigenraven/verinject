@@ -81,13 +81,9 @@
 // initial import
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -134,496 +130,113 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
 module oc8051_memory_interface (clk, rst,
-
 //decoder
      wr_i,
      wr_bit_i,
@@ -636,7 +249,6 @@ module oc8051_memory_interface (clk, rst,
      mem_wait,
      mem_act,
      istb,
-
 //internal ram
      wr_o, 
      wr_bit_o, 
@@ -645,14 +257,12 @@ module oc8051_memory_interface (clk, rst,
      rd_ind, 
      wr_ind, 
      wr_dat,
-
      bit_in, 
      in_ram, 
      sfr, 
      sfr_bit, 
      bit_out, 
      iram_out,
-
 //program rom
      iadr_o, 
      ea, 
@@ -660,15 +270,12 @@ module oc8051_memory_interface (clk, rst,
      op1_out, 
      op2_out, 
      op3_out,
-
 //internal
      idat_onchip,
-
 //external
      iack_i, 
      istb_o, 
      idat_i,
-
 //external data ram
      dadr_o, 
      dwe_o, 
@@ -676,17 +283,14 @@ module oc8051_memory_interface (clk, rst,
      dack_i,
      ddat_i, 
      ddat_o,
-
 //interrupt interface
      intr, 
      int_v, 
      int_ack,
-
 //alu
      des_acc, 
      des1, 
      des2,
-
 //sfr's
      dptr, 
      ri, 
@@ -696,13 +300,10 @@ module oc8051_memory_interface (clk, rst,
      acc, 
      reti
    );
-
-
 input         clk,
               rst,
 	      wr_i,
 	      wr_bit_i;
-
 input         bit_in,
               sfr_bit,
 	      dack_i;
@@ -712,13 +313,11 @@ input [7:0]   in_ram,
 	      acc,
 	      sp_w;
 input [31:0]  idat_i;
-
 output        bit_out,
               mem_wait,
 	      reti;
 output [7:0]  iram_out,
               wr_dat;
-
 reg           bit_out,
               reti;
 reg [7:0]     iram_out,
@@ -726,12 +325,10 @@ reg [7:0]     iram_out,
 reg           rd_addr_r;
 output        wr_o,
               wr_bit_o;
-
 //????
 reg           dack_ir;
 reg [7:0]     ddat_ir;
 reg [23:0]    idat_ir;
-
 /////////////////////////////
 //
 //  rom_addr_sel
@@ -742,9 +339,7 @@ input [7:0]   des_acc,
               des1,
 	      des2;
 output [15:0] iadr_o;
-
 wire          ea_rom_sel;
-
 /////////////////////////////
 //
 // ext_addr_sel
@@ -753,23 +348,19 @@ wire          ea_rom_sel;
 input [7:0]   ri,
               ddat_i;
 input [15:0]  dptr;
-
 output        dstb_o,
               dwe_o;
 output [7:0]  ddat_o;
 output [15:0] dadr_o;
-
 /////////////////////////////
 //
 // ram_adr_sel
 //
 /////////////////////////////
-
 input [2:0]   rd_sel,
               wr_sel;
 input [4:0]   rn;
 input [7:0]   sp;
-
 output        rd_ind,
               wr_ind;
 output [7:0]  wr_addr,
@@ -778,7 +369,6 @@ reg           rd_ind,
               wr_ind;
 reg [7:0]     wr_addr,
               rd_addr;
-
 reg [4:0]     rn_r;
 reg [7:0]     ri_r,
               imm_r,
@@ -786,34 +376,26 @@ reg [7:0]     ri_r,
 	      op1_r;
 wire [7:0]    imm,
               imm2;
-
 /////////////////////////////
 //
 // op_select
 //
 /////////////////////////////
-
 input         intr,
               rd,
 	      ea, 
 	      ea_int, 
 	      istb;
-
 input  [7:0]  int_v;
-
 input  [31:0] idat_onchip;
-
 output        int_ack,
               istb_o;
-
 output  [7:0] op1_out,
               op3_out,
 	      op2_out;
-
 reg           int_ack_t,
               int_ack,
 	      int_ack_buff;
-
 reg [7:0]     int_vec_buff;
 reg [7:0]     op1_out,
               op2_buff,
@@ -821,33 +403,23 @@ reg [7:0]     op1_out,
 reg [7:0]     op1_o,
               op2_o,
 	      op3_o;
-
 reg [7:0]     op1_xt, 
               op2_xt, 
 	      op3_xt;
-
 reg [7:0]     op1,
               op2,
 	      op3;
 wire [7:0]    op2_direct;
-
 input [2:0]   pc_wr_sel;
-
 input         pc_wr;
 output [15:0] pc;
-
 reg [15:0]    pc;
-
 //
 //pc            program counter register, save current value
 reg [15:0]    pc_buf;
 wire [15:0]   alu;
-
-
 reg           int_buff,
               int_buff1; // interrupt buffer: used to prevent interrupting in the middle of executin instructions
-
-
 //
 //
 ////////////////////////////
@@ -855,7 +427,6 @@ reg           istb_t,
               imem_wait,
 	      dstb_o,
 	      dwe_o;
-
 reg [7:0]     ddat_o;
 reg [15:0]    iadr_t,
               dadr_ot;
@@ -863,25 +434,17 @@ reg           dmem_wait;
 wire          pc_wait;
 wire [1:0]    bank;
 wire [7:0]    isr_call;
-
 reg [1:0]     op_length;
 reg [2:0]     op_pos;
 wire          inc_pc;
-
 reg           pc_wr_r;
-
 wire [15:0]   pc_out;
-
 reg [31:0]    idat_cur,
               idat_old;
-
 reg           inc_pc_r,
               pc_wr_r2;
-
 reg [7:0]     cdata;
 reg           cdone;
-
-
 assign bank       = rn[4:3];
 assign imm        = op2_out;
 assign imm2       = op3_out;
@@ -889,29 +452,12 @@ assign alu        = {des2, des_acc};
 assign ea_rom_sel = ea && ea_int;
 assign wr_o       = wr_i;
 assign wr_bit_o   = wr_bit_i;
-
 //assign mem_wait   = dmem_wait || imem_wait || pc_wr_r;
 assign mem_wait   = dmem_wait || imem_wait || pc_wr_r2;
 //assign mem_wait   = dmem_wait || imem_wait;
 assign istb_o     = (istb || (istb_t & !iack_i)) && !dstb_o && !ea_rom_sel;
-
 assign pc_wait    = rd && (ea_rom_sel || (!istb_t && iack_i));
-
 assign wr_dat     = des1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /////////////////////////////
 //
 //  ram_select
@@ -927,13 +473,11 @@ begin
     bit_out = bit_in;
   end
 end
-
 /////////////////////////////
 //
 // ram_adr_sel
 //
 /////////////////////////////
-
 always @(rd_sel or sp or ri or rn or imm or dadr_o[15:0] or bank)
 begin
   case (rd_sel) /* synopsys full_case parallel_case */
@@ -941,17 +485,13 @@ begin
     3'b001    : rd_addr = ri;
     3'b010    : rd_addr = imm;
     3'b011   : rd_addr = sp;
-
     3'b100    : rd_addr = 8'hf0;
     3'b101 : rd_addr = 8'h82;
     3'b110  : rd_addr = 8'hd0;
     3'b111  : rd_addr = 8'he0;
 //    default          : rd_addr = 2'bxx;
   endcase
-
 end
-
-
 //
 //
 always @(wr_sel or sp_w or rn_r or imm_r or ri_r or imm2_r or op1_r or dadr_o[15:0])
@@ -966,7 +506,6 @@ begin
 //    default        : wr_addr = 2'bxx;
   endcase
 end
-
 always @(posedge clk or posedge rst)
   if (rst)
     rd_ind <= #1 1'b0;
@@ -974,14 +513,11 @@ always @(posedge clk or posedge rst)
     rd_ind <= #1 1'b1;
   else
     rd_ind <= #1 1'b0;
-
 always @(wr_sel)
   if ((wr_sel==3'b010) || (wr_sel==3'b011))
     wr_ind = 1'b1;
   else
     wr_ind = 1'b0;
-
-
 /////////////////////////////
 //
 //  rom_addr_sel
@@ -990,11 +526,8 @@ always @(wr_sel)
 //
 // output address is alu destination
 // (instructions MOVC)
-
 //assign iadr_o = (istb_t & !iack_i) ? iadr_t : pc_out;
 assign iadr_o = (istb_t) ? iadr_t : pc_out;
-
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1015,15 +548,12 @@ begin
     idat_ir <= #1 idat_i [23:0];
   end
 end
-
 /////////////////////////////
 //
 // ext_addr_sel
 //
 /////////////////////////////
-
 assign dadr_o = dadr_ot;
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1069,15 +599,11 @@ begin
     endcase
   end
 end
-
 /////////////////////////////
 //
 // op_select
 //
 /////////////////////////////
-
-
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1087,9 +613,7 @@ begin
     idat_cur <= #1 ea_rom_sel ? idat_onchip : idat_i;
     idat_old <= #1 idat_cur;
   end
-
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1102,7 +626,6 @@ begin
     cdone <= #1 1'b0;
   end
 end
-
 always @(op_pos or idat_cur or idat_old)
 begin
   case (op_pos)  /* synopsys parallel_case */
@@ -1138,12 +661,9 @@ begin
       end
   endcase
 end
-
 /*assign op1 = ea_rom_sel ? idat_onchip[7:0]   : op1_xt;
 assign op2 = ea_rom_sel ? idat_onchip[15:8]  : op2_xt;
 assign op3 = ea_rom_sel ? idat_onchip[23:16] : op3_xt;*/
-
-
 always @(dack_ir or ddat_ir or op1_o or iram_out or cdone or cdata)
   if (dack_ir)
     op1_out = ddat_ir;
@@ -1151,10 +671,8 @@ always @(dack_ir or ddat_ir or op1_o or iram_out or cdone or cdata)
     op1_out = cdata;
   else
     op1_out = op1_o;
-
 assign op3_out = (rd) ? op3_o : op3_buff;
 assign op2_out = (rd) ? op2_o : op2_buff;
-
 always @(idat_i or iack_i or idat_ir or rd)
 begin
   if (iack_i) begin
@@ -1171,8 +689,6 @@ begin
     op3_xt = 8'h00;
   end
 end
-
-
 //
 // in case of interrupts
 always @(op1 or op2 or op3 or int_ack_t or int_vec_buff or iack_i or ea_rom_sel)
@@ -1187,14 +703,12 @@ begin
     op3_o = op3;
   end
 end
-
 //
 //in case of reti
 always @(posedge clk or posedge rst)
   if (rst) reti <= #1 1'b0;
   else if ((op1_o==8'b0011_0010) & rd & !mem_wait) reti <= #1 1'b1;
   else reti <= #1 1'b0;
-
 //
 // remember inputs
 always @(posedge clk or posedge rst)
@@ -1207,32 +721,27 @@ begin
     op3_buff <= #1 op3_o;
   end
 end
-
 /////////////////////////////
 //
 //  pc
 //
 /////////////////////////////
-
 always @(op1_out)
 begin
         casex (op1_out) /* synopsys parallel_case */
           8'bxxx1_0001 :  op_length = 2'h2;
           8'bxxx0_0001 :   op_length = 2'h2;
-
         //op_code [7:3]
           8'b1011_1xxx : op_length = 2'h3;
           8'b1101_1xxx : op_length = 2'h2;
           8'b1010_1xxx : op_length = 2'h2;
           8'b0111_1xxx : op_length = 2'h2;
           8'b1000_1xxx : op_length = 2'h2;
-
         //op_code [7:1]
           8'b1011_011x : op_length = 2'h3;
           8'b1000_011x : op_length = 2'h2;
           8'b1010_011x : op_length = 2'h2;
           8'b0111_011x : op_length = 2'h2;
-
         //op_code [7:0]
           8'b0010_0101 :  op_length = 2'h2;
           8'b0010_0100 :  op_length = 2'h2;
@@ -1288,7 +797,6 @@ begin
           default:         op_length = 2'h1;
         endcase
 end
-
 /*
 always @(posedge clk or posedge rst)
 begin
@@ -1299,20 +807,17 @@ begin
         casex (op1_out)
           `OC8051_ACALL :  op_length <= #1 2'h2;
           `OC8051_AJMP :   op_length <= #1 2'h2;
-
         //op_code [7:3]
           `OC8051_CJNE_R : op_length <= #1 2'h3;
           `OC8051_DJNZ_R : op_length <= #1 2'h2;
           `OC8051_MOV_DR : op_length <= #1 2'h2;
           `OC8051_MOV_CR : op_length <= #1 2'h2;
           `OC8051_MOV_RD : op_length <= #1 2'h2;
-
         //op_code [7:1]
           `OC8051_CJNE_I : op_length <= #1 2'h3;
           `OC8051_MOV_ID : op_length <= #1 2'h2;
           `OC8051_MOV_DI : op_length <= #1 2'h2;
           `OC8051_MOV_CI : op_length <= #1 2'h2;
-
         //op_code [7:0]
           `OC8051_ADD_D :  op_length <= #1 2'h2;
           `OC8051_ADD_C :  op_length <= #1 2'h2;
@@ -1374,9 +879,7 @@ begin
    end
 end
 */
-
 assign inc_pc = ((op_pos[2] | (&op_pos[1:0])) & rd) | pc_wr_r2;
-
 always @(posedge rst or posedge clk)
 begin
   if (rst) begin
@@ -1399,7 +902,6 @@ begin
     op_pos <= #1 op_pos + {1'b0, op_length};
   end
 end
-
 //
 // remember interrupt
 // we don't want to interrupt instruction in the middle of execution
@@ -1411,11 +913,9 @@ always @(posedge clk or posedge rst)
    int_ack_t <= #1 1'b1;
    int_vec_buff <= #1 int_v;
  end else if (rd && (ea_rom_sel || iack_i) && !pc_wr_r2) int_ack_t <= #1 1'b0;
-
 always @(posedge clk or posedge rst)
   if (rst) int_ack_buff <= #1 1'b0;
   else int_ack_buff <= #1 int_ack_t;
-
 always @(posedge clk or posedge rst)
   if (rst) int_ack <= #1 1'b0;
   else begin
@@ -1423,8 +923,6 @@ always @(posedge clk or posedge rst)
       int_ack <= #1 1'b1;
     else int_ack <= #1 1'b0;
   end
-
-
 //
 //interrupt buffer
 always @(posedge clk or posedge rst)
@@ -1433,7 +931,6 @@ always @(posedge clk or posedge rst)
   end else begin
     int_buff1 <= #1 int_buff;
   end
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     int_buff <= #1 1'b0;
@@ -1441,13 +938,10 @@ always @(posedge clk or posedge rst)
     int_buff <= #1 1'b1;
   end else if (pc_wait)
     int_buff <= #1 1'b0;
-
 wire [7:0]  pcs_source;
 reg  [15:0] pcs_result;
 reg         pcs_cy;
-
 assign pcs_source = pc_wr_sel[0] ? op3_out : op2_out;
-
 always @(pcs_source or pc or pcs_cy)
 begin
   if (pcs_source[7]) begin
@@ -1455,11 +949,9 @@ begin
     pcs_result[15:8] = pc[15:8] - {7'h0, !pcs_cy};
   end else pcs_result = pc + {8'h00, pcs_source};
 end
-
 //assign pc = pc_buf - {13'h0, op_pos[2] | inc_pc_r, op_pos[1:0]}; ////******???
 //assign pc = pc_buf - 16'h8 + {13'h0, op_pos}; ////******???
 //assign pc = pc_buf - 16'h8 + {13'h0, op_pos} + {14'h0, op_length};
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -1469,8 +961,6 @@ begin
   else if (rd & !int_ack_t)
     pc <= #1 pc_buf - 16'h8 + {13'h0, op_pos} + {14'h0, op_length};
 end
-
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1494,23 +984,14 @@ begin
       pc_buf <= #1 pc_out;
   end
 end
-
-
 assign pc_out = inc_pc ? pc_buf + 16'h4
                        : pc_buf ;
-
-
-
-
-
 always @(posedge clk or posedge rst)
   if (rst)
     ddat_ir <= #1 8'h00;
   else if (dack_i)
     ddat_ir <= #1 ddat_i;
-
 /*
-
 always @(pc_buf or op1_out or pc_wait or int_buff or int_buff1 or ea_rom_sel or iack_i)
 begin
     if (int_buff || int_buff1) begin
@@ -1523,20 +1004,17 @@ begin
         casex (op1_out)
           `OC8051_ACALL :  pc= pc_buf + 16'h2;
           `OC8051_AJMP :   pc= pc_buf + 16'h2;
-
         //op_code [7:3]
           `OC8051_CJNE_R : pc= pc_buf + 16'h3;
           `OC8051_DJNZ_R : pc= pc_buf + 16'h2;
           `OC8051_MOV_DR : pc= pc_buf + 16'h2;
           `OC8051_MOV_CR : pc= pc_buf + 16'h2;
           `OC8051_MOV_RD : pc= pc_buf + 16'h2;
-
         //op_code [7:1]
           `OC8051_CJNE_I : pc= pc_buf + 16'h3;
           `OC8051_MOV_ID : pc= pc_buf + 16'h2;
           `OC8051_MOV_DI : pc= pc_buf + 16'h2;
           `OC8051_MOV_CI : pc= pc_buf + 16'h2;
-
         //op_code [7:0]
           `OC8051_ADD_D :  pc= pc_buf + 16'h2;
           `OC8051_ADD_C :  pc= pc_buf + 16'h2;
@@ -1597,8 +1075,6 @@ begin
       pc= pc_buf;
    end
 end
-
-
 //
 //interrupt buffer
 always @(posedge clk or posedge rst)
@@ -1607,7 +1083,6 @@ always @(posedge clk or posedge rst)
   end else begin
     int_buff1 <= #1 int_buff;
   end
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     int_buff <= #1 1'b0;
@@ -1615,13 +1090,10 @@ always @(posedge clk or posedge rst)
     int_buff <= #1 1'b1;
   end else if (pc_wait)
     int_buff <= #1 1'b0;
-
 wire [7:0]  pcs_source;
 reg  [15:0] pcs_result;
 reg         pcs_cy;
-
 assign pcs_source = pc_wr_sel[0] ? op3_out : op2_out;
-
 always @(pcs_source or pc or pcs_cy)
 begin
   if (pcs_source[7]) begin
@@ -1629,8 +1101,6 @@ begin
     pcs_result[15:8] = pc[15:8] - {7'h0, !pcs_cy};
   end else pcs_result = pc + {8'h00, pcs_source};
 end
-
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1654,15 +1124,12 @@ begin
       pc_buf <= #1 pc;
   end
 end
-
-
 always @(posedge clk or posedge rst)
   if (rst)
     ddat_ir <= #1 8'h00;
   else if (dack_i)
     ddat_ir <= #1 ddat_i;
 */
-
 ////////////////////////
 always @(posedge clk or posedge rst)
   if (rst) begin
@@ -1688,30 +1155,11 @@ always @(posedge clk or posedge rst)
     pc_wr_r   <= #1 pc_wr && (pc_wr_sel != 3'b001);
     pc_wr_r2  <= #1 pc_wr_r;
   end
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     inc_pc_r  <= #1 1'b1;
   end else if (istb) begin
     inc_pc_r  <= #1 inc_pc;
   end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   
-
 endmodule

@@ -51,13 +51,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -104,494 +100,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
 module oc8051_cy_select (cy_sel, cy_in, data_in, data_out);
 //
 // cy_sel       (in)  carry select, from decoder (see defines.v) [oc8051_decoder.cy_sel -r]
@@ -599,13 +213,10 @@ module oc8051_cy_select (cy_sel, cy_in, data_in, data_out);
 // data_in      (in)  ram data input [oc8051_ram_sel.bit_out]
 // data_out     (out) data output [oc8051_alu.srcCy]
 //
-
 input [1:0] cy_sel;
 input cy_in, data_in;
-
 output data_out;
 reg data_out;
-
 always @(cy_sel or cy_in or data_in)
 begin
   case (cy_sel) /* synopsys full_case parallel_case */
@@ -615,5 +226,4 @@ begin
     2'b11: data_out = 1'b1;
   endcase
 end
-
 endmodule

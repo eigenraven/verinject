@@ -66,13 +66,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -119,494 +115,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
 module oc8051_ram_top (clk, 
                        rst, 
 		       rd_addr, 
@@ -617,20 +231,9 @@ module oc8051_ram_top (clk,
 		       wr, 
 		       bit_data_in, 
 		       bit_data_out
-
-
-
-
-
-
-
-
 		       );
-
 // on-chip ram-size (2**ram_aw bytes)
 parameter ram_aw = 8; // default 256 bytes
-
-
 //
 // clk          (in)  clock
 // rd_addr      (in)  read addres [oc8051_ram_rd_sel.out]
@@ -642,41 +245,25 @@ parameter ram_aw = 8; // default 256 bytes
 // bit_data_in  (in)  bit data input [oc8051_alu.desCy]
 // bit_data_out (out)  bit data output [oc8051_ram_sel.bit_in]
 //
-
 input clk, wr, bit_addr, bit_data_in, rst;
 input [7:0] wr_data;
 input [7:0] rd_addr, wr_addr;
 output bit_data_out;
 output [7:0] rd_data;
-
-
-
-
-
-
-
-
-
 // rd_addr_m    read address modified
 // wr_addr_m    write address modified
 // wr_data_m    write data modified
 reg [7:0] wr_data_m;
 reg [7:0] rd_addr_m, wr_addr_m;
-
-
 wire       rd_en;
 reg        bit_addr_r,
            rd_en_r;
 reg  [7:0] wr_data_r;
 wire [7:0] rd_data_m;
 reg  [2:0] bit_select;
-
 assign bit_data_out = rd_data[bit_select];
-
-
 assign rd_data = rd_en_r ? wr_data_r: rd_data_m;
 assign rd_en   = (rd_addr_m == wr_addr_m) & wr;
-
 oc8051_ram_256x8_two_bist oc8051_idata(
                            .clk     ( clk        ),
                            .rst     ( rst        ),
@@ -687,16 +274,7 @@ oc8051_ram_256x8_two_bist oc8051_idata(
 			   .wr_data ( wr_data_m  ),
 			   .wr_en   ( 1'b1       ),
 			   .wr      ( wr         )
-
-
-
-
-
-
-
-
 			   );
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     bit_addr_r <= #1 1'b0;
@@ -705,8 +283,6 @@ always @(posedge clk or posedge rst)
     bit_addr_r <= #1 bit_addr;
     bit_select <= #1 rd_addr[2:0];
   end
-
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     rd_en_r    <= #1 1'b0;
@@ -715,24 +291,18 @@ always @(posedge clk or posedge rst)
     rd_en_r    <= #1 rd_en;
     wr_data_r  <= #1 wr_data_m;
   end
-
-
 always @(rd_addr or bit_addr)
   casex ( {bit_addr, rd_addr[7]} ) // synopsys full_case parallel_case
       2'b0?: rd_addr_m = rd_addr;
       2'b10: rd_addr_m = {4'b0010, rd_addr[6:3]};
       2'b11: rd_addr_m = {1'b1, rd_addr[6:3], 3'b000};
   endcase
-
-
 always @(wr_addr or bit_addr_r)
   casex ( {bit_addr_r, wr_addr[7]} ) // synopsys full_case parallel_case
       2'b0?: wr_addr_m = wr_addr;
       2'b10: wr_addr_m = {8'h00, 4'b0010, wr_addr[6:3]};
       2'b11: wr_addr_m = {8'h00, 1'b1, wr_addr[6:3], 3'b000};
   endcase
-
-
 always @(rd_data or bit_select or bit_data_in or wr_data or bit_addr_r)
   casex ( {bit_addr_r, bit_select} ) // synopsys full_case parallel_case
       4'b0_???: wr_data_m = wr_data;
@@ -745,6 +315,4 @@ always @(rd_data or bit_select or bit_data_in or wr_data or bit_addr_r)
       4'b1_110: wr_data_m = {rd_data[7], bit_data_in, rd_data[5:0]};
       4'b1_111: wr_data_m = {bit_data_in, rd_data[6:0]};
   endcase
-
-
 endmodule

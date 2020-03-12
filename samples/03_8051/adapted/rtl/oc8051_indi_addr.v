@@ -55,18 +55,11 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
-
 module oc8051_indi_addr (clk, rst, wr_addr, data_in, wr, wr_bit, ri_out, sel, bank);
 //
-
-
 input        clk,	// clock
              rst,	// reset
 	     wr,	// write
@@ -75,15 +68,10 @@ input        clk,	// clock
 input  [1:0] bank;	// select register bank
 input  [7:0] data_in;	// data input
 input  [7:0] wr_addr;	// write address
-
 output [7:0] ri_out;
-
 //reg [7:0] buff [31:0];
 reg wr_bit_r;
-
-
 reg [7:0] buff [0:7];
-
 //
 //write to buffer
 always @(posedge clk or posedge rst)
@@ -112,20 +100,14 @@ begin
     end
   end
 end
-
 //
 //read from buffer
-
 assign ri_out = (({3'b000, bank, 2'b00, sel}==wr_addr) & (wr) & !wr_bit_r) ?
                  data_in : buff[{bank, sel}];
-
-
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     wr_bit_r <= #1 1'b0;
   end else begin
     wr_bit_r <= #1 wr_bit;
   end
-
 endmodule

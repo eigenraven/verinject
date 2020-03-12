@@ -60,7 +60,6 @@
 // prepared header
 //
 //
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -107,501 +106,115 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
 //synopsys translate_off
-
-
 `timescale 1ns/10ps
 //synopsys translate_on
-
-
-
 module oc8051_tc (clk, rst, 
             data_in,
             wr_addr,
@@ -613,7 +226,6 @@ module oc8051_tc (clk, rst,
 	    pres_ow,
 //registers
 	    tmod, tl0, th0, tl1, th1);
-
 input [7:0]  wr_addr,
              data_in;
 input        clk,
@@ -634,17 +246,12 @@ output [7:0] tmod,
 	     th1;
 output       tf0,
              tf1;
-
-
 reg [7:0] tmod, tl0, th0, tl1, th1;
 reg tf0, tf1_0, tf1_1, t0_buff, t1_buff;
-
 wire tc0_add, tc1_add;
-
 assign tc0_add = (tr0 & (!tmod[3] | !ie0) & ((!tmod[2] & pres_ow) | (tmod[2] & !t0 & t0_buff)));
 assign tc1_add = (tr1 & (!tmod[7] | !ie1) & ((!tmod[6] & pres_ow) | (tmod[6] & !t1 & t1_buff)));
 assign tf1= tf1_0 | tf1_1;
-
 //
 // read or write from one of the addresses in tmod
 //
@@ -655,7 +262,6 @@ begin
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h89))
     tmod <= #1 data_in;
 end
-
 //
 // TIMER COUNTER 0
 //
@@ -686,7 +292,6 @@ begin
         if (tc0_add)
           {tf0, th0,tl0} <= #1 {1'b0, th0, tl0}+ 1'b1;
       end
-
       2'b10: begin                       // mode 2
         tf1_0 <= #1 1'b0;
         if (tc0_add) begin
@@ -701,13 +306,10 @@ begin
 	end
       end
       2'b11: begin                       // mode 3
-
 	 if (tc0_add)
 	   {tf0, tl0} <= #1 {1'b0, tl0} +1'b1;
-
          if (tr1 & pres_ow)
 	   {tf1_0, th0} <= #1 {1'b0, th0} +1'b1;
-
       end
 /*      default:begin
         tf0 <= #1 1'b0;
@@ -716,7 +318,6 @@ begin
     endcase
  end
 end
-
 //
 // TIMER COUNTER 1
 //
@@ -742,7 +343,6 @@ begin
         if (tc1_add)
           {tf1_1, th1,tl1} <= #1 {1'b0, th1, tl1}+ 1'b1;
       end
-
       2'b10: begin                       // mode 2
         if (tc1_add) begin
 	  if (tl1 == 8'b1111_1111) begin
@@ -761,8 +361,6 @@ begin
     endcase
  end
 end
-
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     t0_buff <= #1 1'b0;

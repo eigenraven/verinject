@@ -62,8 +62,6 @@
 // prepared header
 //
 //
-
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -110,501 +108,115 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
 //synopsys translate_off
-
-
 `timescale 1ns/10ps
 //synopsys translate_on
-
-
-
 module oc8051_int (clk, rst, 
         wr_addr,  
 	data_in, bit_in, 
@@ -620,21 +232,16 @@ module oc8051_int (clk, rst,
         intr, reti, int_vec, ack,
 //registers
 	ie, tcon, ip);
-
 input [7:0] wr_addr, data_in;
 input wr, tf0, tf1, t2_int, ie0, ie1, clk, rst, reti, wr_bit, bit_in, ack, uart_int;
-
 output tr0, tr1, intr;
 output [7:0] int_vec,
              ie,
 	     tcon,
 	     ip;
-
 reg [7:0] ip, ie, int_vec;
-
 reg [3:0] tcon_s;
 reg tcon_tf1, tcon_tf0, tcon_ie1, tcon_ie0;
-
 //
 // isrc		processing interrupt sources
 // int_dept
@@ -645,15 +252,12 @@ wire [1:0] int_dept_1;
 reg int_proc;
 reg [1:0] int_lev [1:0];
 wire cur_lev;
-
 assign isrc_cur = int_proc ? isrc[int_dept_1] : 2'h0;
 assign int_dept_1 = int_dept - 2'b01;
 assign cur_lev = int_lev[int_dept_1];
-
 //
 // contains witch level of interrupts is running
 //reg [1:0] int_levl, int_levl_w;
-
 //
 // int_ln	waiting interrupts on level n
 // ip_ln	interrupts on level n
@@ -662,32 +266,24 @@ wire [5:0] int_l0, int_l1;
 wire [5:0] ip_l0, ip_l1;
 wire [5:0] int_src;
 wire il0, il1;
-
-
 reg tf0_buff, tf1_buff, ie0_buff, ie1_buff;
-
 //
 //interrupt priority
 assign ip_l0 = ~ip[5:0];
 assign ip_l1 = ip[5:0];
-
 assign int_src = {t2_int, uart_int, tcon_tf1, tcon_ie1, tcon_tf0, tcon_ie0};
-
 //
 // waiting interrupts
 assign int_l0 = ip_l0 & {ie[5:0]} & int_src;
 assign int_l1 = ip_l1 & {ie[5:0]} & int_src;
 assign il0 = |int_l0;
 assign il1 = |int_l1;
-
 //
 // TCON
 assign tcon = {tcon_tf1, tcon_s[3], tcon_tf0, tcon_s[2], tcon_ie1, tcon_s[1], tcon_ie0, tcon_s[0]};
 assign tr0 = tcon_s[2];
 assign tr1 = tcon_s[3];
 assign intr = |int_vec;
-
-
 //
 // IP
 always @(posedge clk or posedge rst)
@@ -699,7 +295,6 @@ begin
  end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10111))
    ip[wr_addr[2:0]] <= #1 bit_in;
 end
-
 //
 // IE
 always @(posedge clk or posedge rst)
@@ -711,7 +306,6 @@ begin
  end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10101))
    ie[wr_addr[2:0]] <= #1 bit_in;
 end
-
 //
 // tcon_s
 //
@@ -730,7 +324,6 @@ begin
    endcase
  end
 end
-
 //
 // tf1 (tmod.7)
 //
@@ -748,7 +341,6 @@ begin
    tcon_tf1 <= #1 1'b0;
  end
 end
-
 //
 // tf0 (tmod.5)
 //
@@ -766,8 +358,6 @@ begin
    tcon_tf0 <= #1 1'b0;
  end
 end
-
-
 //
 // ie0 (tmod.1)
 //
@@ -787,8 +377,6 @@ begin
    tcon_ie0 <= #1 1'b0;
  end
 end
-
-
 //
 // ie1 (tmod.3)
 //
@@ -808,7 +396,6 @@ begin
    tcon_ie1 <= #1 1'b0;
  end
 end
-
 //
 // interrupt processing
 always @(posedge clk or posedge rst)
@@ -848,7 +435,6 @@ begin
      int_vec <= #1 8'h2b;
      isrc[int_dept] <= #1 3'b110;
    end
-
  end else if ((ie[7]) & !int_proc & il0) begin  // interrupt on level 0
    int_proc <= #1 1'b1;
    int_lev[int_dept] <= #1 1'b0;
@@ -876,8 +462,6 @@ begin
    int_vec <= #1 8'h00;
  end
 end
-
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     tf0_buff <= #1 1'b0;
@@ -890,5 +474,4 @@ always @(posedge clk or posedge rst)
     ie0_buff <= #1 ie0;
     ie1_buff <= #1 ie1;
   end
-
 endmodule

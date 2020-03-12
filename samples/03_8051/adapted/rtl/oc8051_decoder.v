@@ -79,13 +79,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -132,494 +128,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
 module oc8051_decoder (clk, rst, op_in, op1_c,
   ram_rd_sel_o, ram_wr_sel_o,
   bit_addr, wr_o, wr_sfr_o,
@@ -627,7 +241,6 @@ module oc8051_decoder (clk, rst, op_in, op1_c,
   alu_op_o, psw_set, eq, cy_sel, comp_sel,
   pc_wr, pc_sel, rd, rmw, istb, mem_act, mem_wait,
   wait_data);
-
 //
 // clk          (in)  clock
 // rst          (in)  reset
@@ -651,22 +264,18 @@ module oc8051_decoder (clk, rst, op_in, op1_c,
 // rmw          (out) read modify write feature [oc8051_ports.rmw]
 // pc_wait      (out)
 //
-
 input clk, rst, eq, mem_wait, wait_data;
 input [7:0] op_in;
-
 output wr_o, bit_addr, pc_wr, rmw, istb, src_sel3;
 output [1:0] psw_set, cy_sel, wr_sfr_o, src_sel2, comp_sel;
 output [2:0] mem_act, src_sel1, ram_rd_sel_o, ram_wr_sel_o, pc_sel, op1_c;
 output [3:0] alu_op_o;
 output rd;
-
 reg rmw;
 reg src_sel3, wr,  bit_addr, pc_wr;
 reg [3:0] alu_op;
 reg [1:0] src_sel2, comp_sel, psw_set, cy_sel, wr_sfr;
 reg [2:0] mem_act, src_sel1, ram_wr_sel, ram_rd_sel, pc_sel;
-
 //
 // state        if 2'b00 then normal execution, sle instructin that need more than one clock
 // op           instruction buffer
@@ -675,27 +284,19 @@ wire [1:0] state_dec;
 reg  [7:0] op;
 wire [7:0] op_cur;
 reg  [2:0] ram_rd_sel_r;
-
 reg stb_i;
-
 assign rd = !state[0] && !state[1] && !wait_data;// && !stb_o;
-
 assign istb = (!state[1]) && stb_i;
-
 assign state_dec = wait_data ? 2'b00 : state;
-
 assign op_cur = mem_wait ? 8'h00
                 : (state[0] || state[1] || mem_wait || wait_data) ? op : op_in;
 //assign op_cur = (state[0] || state[1] || mem_wait || wait_data) ? op : op_in;
-
 assign op1_c = op_cur[2:0];
-
 assign alu_op_o     = wait_data ? 4'b0000 : alu_op;
 assign wr_sfr_o     = wait_data ? 2'b00   : wr_sfr;
 assign ram_rd_sel_o = wait_data ? ram_rd_sel_r    : ram_rd_sel;
 assign ram_wr_sel_o = wait_data ? 3'b000  : ram_wr_sel;
 assign wr_o         = wait_data ? 1'b0            : wr;
-
 //
 // main block
 // unregisterd outputs
@@ -758,7 +359,6 @@ begin
               comp_sel =  2'b00;
               bit_addr = 1'b0;
             end
-
           8'b0010_0010 : begin
               ram_rd_sel = 3'b000;
               pc_wr = 1'b1;
@@ -1707,20 +1307,9 @@ begin
       end
     endcase
 end
-
-
-
-
-
-
-
-
-
-
 //
 //
 // registerd outputs
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -1886,7 +1475,6 @@ begin
         src_sel3 <= #1 1'b0;
         wr_sfr <= #1 2'b00;
       end
-
       2'b11: begin
         casex (op_cur) /* synopsys parallel_case */
           8'b0010_0010 : begin
@@ -3158,14 +2746,11 @@ begin
       endcase
   end
 end
-
-
 //
 // remember current instruction
 always @(posedge clk or posedge rst)
   if (rst) op <= #1 2'b00;
   else if (state==2'b00) op <= #1 op_in;
-
 //
 // in case of instructions that needs more than one clock set state
 always @(posedge clk or posedge rst)
@@ -3213,8 +2798,6 @@ begin
     endcase
   end
 end
-
-
 //
 //in case of writing to external ram
 always @(posedge clk or posedge rst)
@@ -3234,7 +2817,6 @@ begin
       default : mem_act <= #1 3'b111;
     endcase
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -3243,25 +2825,4 @@ begin
     ram_rd_sel_r <= #1 ram_rd_sel;
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 endmodule
-
-

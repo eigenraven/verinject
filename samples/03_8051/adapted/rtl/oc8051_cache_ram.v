@@ -51,14 +51,9 @@
 // initial import
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
-
 module oc8051_cache_ram (clk, rst, addr0, data0, addr1, data1_i, data1_o, wr1);
 //
 // this module is part of oc8051_icache
@@ -72,37 +67,16 @@ module oc8051_cache_ram (clk, rst, addr0, data0, addr1, data1_i, data1_o, wr1);
 // data1_o      (out) data output port 1
 // wr1          (in)  write port 1
 //
-
 parameter ADR_WIDTH = 7; // cache address wihth
 parameter CACHE_RAM = 128; // cache ram x 32 (2^ADR_WIDTH)
-
 input clk, wr1, rst;
 input [ADR_WIDTH-1:0] addr0, addr1;
 input [31:0] data1_i;
 output [31:0] data0, data1_o;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 reg [31:0] data0, data1_o;
-
 //
 // buffer
 reg [31:0] buff [0:CACHE_RAM];
-
 //
 // port 1
 //
@@ -116,7 +90,6 @@ begin
   end else
     data1_o <= #1 buff[addr1];
 end
-
 //
 // port 0
 //
@@ -129,8 +102,4 @@ begin
   else
     data0 <= #1 buff[addr0];
 end
-
-
-
-
 endmodule

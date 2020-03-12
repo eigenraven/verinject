@@ -61,14 +61,9 @@
 //
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
-
 module oc8051_wb_iinterface(rst, clk, 
                   adr_i, dat_o, cyc_i, stb_i, ack_o,
 		  adr_o, dat_i, cyc_o, stb_o, ack_i
@@ -77,7 +72,6 @@ module oc8051_wb_iinterface(rst, clk,
 // rst           (in)  reset - pin
 // clk           (in)  clock - pini
 input rst, clk;
-
 //
 // interface to oc8051 cpu
 //
@@ -91,7 +85,6 @@ input         stb_i,
 input  [15:0] adr_i;
 output        ack_o;
 output [31:0] dat_o;
-
 //
 // interface to instruction rom
 //
@@ -105,19 +98,16 @@ input  [31:0] dat_i;
 output        stb_o,
               cyc_o;
 output [15:0] adr_o;
-
 //
 // internal bufers and wires
 //
 reg [15:0] adr_o;
 reg        stb_o;
-
 assign ack_o = ack_i;
 assign dat_o = dat_i;
 //assign stb_o = stb_i || ack_i;
 assign cyc_o = stb_o;
 //assign adr_o = ack_i ? adr : adr_i;
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     stb_o <= #1 1'b0;
@@ -129,5 +119,4 @@ always @(posedge clk or posedge rst)
     stb_o <= #1 1'b1;
     adr_o <= #1 adr_i;
   end
-
 endmodule

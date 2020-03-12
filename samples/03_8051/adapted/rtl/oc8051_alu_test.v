@@ -50,13 +50,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -103,495 +99,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
-
-
 module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, des1, des2, des1_r, desCy, desAc, desOv);
 //
 // op_code      (in)  operation code [oc8051_decoder.alu_op -r]
@@ -608,96 +221,75 @@ module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, de
 // desAc        (out) auxiliary carry output [oc8051_psw.ac_in]
 // desOv        (out) Overflow output [oc8051_psw.ov_in]
 //
-
 input srcCy, srcAc, bit_in, clk, rst; input [3:0] op_code; input [7:0] src1, src2, src3;
 output desCy, desAc, desOv;
 output [7:0] des1, des2;
 output [7:0] des1_r;
-
 reg desCy, desAc, desOv;
 reg [7:0] des1, des2;
-
 reg [7:0] des1_r;
-
 reg idesCy, idesAc, idesOv;
 reg [7:0] ides1, ides2;
-
 reg [7:0] ides1_r;
-
-
 //
 //add
 //
 wire [4:0] add1, add2, add3, add4;
 wire [3:0] add5, add6, add7, add8;
 wire [1:0] add9, adda, addb, addc;
-
 //
 //sub
 //
 wire [4:0] sub1, sub2, sub3, sub4;
 wire [3:0] sub5, sub6, sub7, sub8;
 wire [1:0] sub9, suba, subb, subc;
-
 //
 //mul
 //
   wire [7:0] mulsrc1, mulsrc2;
   wire mulOv;
   reg enable_mul;
-
 //
 //div
 //
 wire [7:0] divsrc1,divsrc2;
 wire divOv;
 reg enable_div;
-
 //
 //da
 //
 reg da_tmp;
 //reg [8:0] da1;
-
 oc8051_multiply oc8051_mul1(.clk(clk), .rst(rst), .enable(enable_mul), .src1(src1), .src2(src2), .des1(mulsrc1), .des2(mulsrc2), .desOv(mulOv));
 oc8051_divide oc8051_div1(.clk(clk), .rst(rst), .enable(enable_div), .src1(src1), .src2(src2), .des1(divsrc1), .des2(divsrc2), .desOv(divOv));
-
 /* Add */
 assign add1 = {1'b0,src1[3:0]};
 assign add2 = {1'b0,src2[3:0]};
 assign add3 = {3'b000,srcCy};
 assign add4 = add1+add2+add3;
-
 assign add5 = {1'b0,src1[6:4]};
 assign add6 = {1'b0,src2[6:4]};
 assign add7 = {1'b0,1'b0,1'b0,add4[4]};
 assign add8 = add5+add6+add7;
-
 assign add9 = {1'b0,src1[7]};
 assign adda = {1'b0,src2[7]};
 assign addb = {1'b0,add8[3]};
 assign addc = add9+adda+addb;
-
 /* Sub */
 assign sub1 = {1'b1,src1[3:0]};
 assign sub2 = {1'b0,src2[3:0]};
 assign sub3 = {1'b0,1'b0,1'b0,srcCy};
 assign sub4 = sub1-sub2-sub3;
-
 assign sub5 = {1'b1,src1[6:4]};
 assign sub6 = {1'b0,src2[6:4]};
 assign sub7 = {1'b0,1'b0,1'b0, !sub4[4]};
 assign sub8 = sub5-sub6-sub7;
-
 assign sub9 = {1'b1,src1[7]};
 assign suba = {1'b0,src2[7]};
 assign subb = {1'b0,!sub8[3]};
 assign subc = sub9-suba-subb;
-
-
 always @(op_code or src1 or src2 or srcCy or srcAc or bit_in or src3 or mulsrc1 or mulsrc2 or mulOv or divsrc1 or divsrc2 or divOv or addc or add8 or add4 or sub4 or sub8 or subc or da_tmp)
 begin
-
   case (op_code)
 //operation add
     4'b0001: begin
@@ -706,7 +298,6 @@ begin
       idesCy = addc[1];
       idesAc = add4[4];
       idesOv = addc[1] ^ add8[3];
-
       enable_mul = 1'b0;
       enable_div = 1'b0;
     end
@@ -717,7 +308,6 @@ begin
       idesCy = !subc[1];
       idesAc = !sub4[4];
       idesOv = !subc[1] ^ sub8[3];
-
       enable_mul = 1'b0;
       enable_div = 1'b0;
     end
@@ -745,21 +335,16 @@ begin
     4'b0101: begin
 /*      da1= {1'b0, src1};
       if (srcAc==1'b1 | da1[3:0]>4'b1001) da1= da1+ 9'b0_0000_0110;
-
       da1[8]= da1[8] | srcCy;
-
       if (da1[8]==1'b1) da1=da1+ 9'b0_0110_0000;
       des1=da1[7:0];
       des2=8'h00;
       desCy=da1[8];*/
-
       if (srcAc==1'b1 | src1[3:0]>4'b1001) {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]}+ 5'b00110;
       else {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]};
-
       if (srcCy==1'b1 | src1[7:4]>4'b1001)
         {idesCy, ides1[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp};
       else {idesCy, ides1[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp};
-
       ides2 = 8'h00;
       idesAc = 1'b0;
       idesOv = 1'b0;
@@ -891,14 +476,12 @@ begin
     end
   endcase
 end
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     ides1_r <= #1 8'h0;
   end else begin
     ides1_r <= #1 ides1;
   end
-
 always @(posedge clk or posedge rst)
   if (rst) begin
     desCy <= #1 1'b0;
@@ -915,6 +498,4 @@ always @(posedge clk or posedge rst)
     des2 <= #1 ides2;
     des1_r <= #1 ides1_r;
   end
-
-
 endmodule

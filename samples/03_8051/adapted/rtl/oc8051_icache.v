@@ -69,13 +69,9 @@
 // fix bugs in instruction interface
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -122,510 +118,120 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
 module oc8051_icache (rst, clk, 
              adr_i, dat_o, stb_i, ack_o, cyc_i,
              adr_o, dat_i, stb_o, ack_i, cyc_o
-
-
-
-
-
-
-
-
 	     );
 //
 // rst           (in)  reset - pin
 // clk           (in)  clock - pini
 input rst, clk;
-
 //
 // interface to oc8051 cpu
 //
@@ -640,7 +246,6 @@ input  [15:0] adr_i;
 output        ack_o;
 output [31:0] dat_o;
 reg    [31:0] dat_o;
-
 //
 // interface to instruction rom
 //
@@ -656,21 +261,11 @@ output        stb_o,
 output [15:0] adr_o;
 reg           stb_o,
               cyc_o;
-
-
-
-
-
-
-
-
-
 parameter ADR_WIDTH = 6; // cache address wihth
 parameter LINE_WIDTH = 2; // line address width (2 => 4x32)
 parameter BL_WIDTH = ADR_WIDTH - LINE_WIDTH; // block address width
 parameter BL_NUM = 15; // number of blocks (2^BL_WIDTH-1)
 parameter CACHE_RAM = 64; // cache ram x 32 (2^ADR_WIDTH)
-
 //
 // internal buffers adn wires
 //
@@ -693,12 +288,8 @@ reg [31:0] data1_i;
 // temporaly data from ram
 reg [15:0] tmp_data1;
 reg wr1, wr1_t, stb_it;
-
 ////////////////
-
 reg vaild_h, vaild_l;
-
-
 wire [31:0] data0, data1_o;
 wire cy, cy1;
 wire [BL_WIDTH-1:0] adr_i2;
@@ -708,24 +299,17 @@ reg [ADR_WIDTH-1:0] adr_w;
 reg [15:0] mis_adr;
 wire [15:0] data1;
 wire [LINE_WIDTH-1:0] adr_r1;
-
-
 assign cy = &adr_i[LINE_WIDTH+1:1];
 assign {cy1, adr_i2} = {1'b0, adr_i[ADR_WIDTH+1:LINE_WIDTH+2]}+cy;
 assign hit_l = (con0==cadr0) & vaild_l;
 assign hit_h = (con2==cadr2) & vaild_h;
 assign hit = hit_l && hit_h;
-
 assign adr_r = adr_i[ADR_WIDTH+1:2] + adr_i[1];
 assign addr1 = wr1 ? adr_w : adr_r;
 assign adr_r1 = adr_r[LINE_WIDTH-1:0] + 2'b01;
 assign ack_o = hit && stb_it;
-
 assign data1 = wr1_t ? tmp_data1 : data1_o[15:0];
-
 assign adr_o = {mis_adr[15:LINE_WIDTH+2], cyc, 2'b00};
-
-
 oc8051_ram_64x32_dual_bist oc8051_cache_ram(
                            .clk     ( clk        ),
                            .rst     ( rst        ),
@@ -737,19 +321,8 @@ oc8051_ram_64x32_dual_bist oc8051_cache_ram(
 			   .dat1_i  ( data1_i    ),
 			   .en1     ( 1'b1       ),
 			   .wr1     ( wr1        )
-
-
-
-
-
-
-
-
 			   );
-
 defparam oc8051_cache_ram.ADR_WIDTH = ADR_WIDTH;
-
-
 always @(stb_b or data0 or data1 or byte_sel)
 begin
   if (stb_b) begin
@@ -763,7 +336,6 @@ begin
     dat_o = 32'h0;
   end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -781,7 +353,6 @@ begin
 	vaild_h <= #1 valid[adr_i2];
     end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -792,7 +363,6 @@ begin
     cadr2 <= #1 adr_i[15:ADR_WIDTH+2]+ cy1;
   end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -803,7 +373,6 @@ begin
     byte_sel <= #1 adr_i[1:0];
   end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -829,7 +398,6 @@ begin
         data1_i<= #1 dat_i; ///??
         wr1    <= #1 1'b1;
         adr_w  <= #1 adr_o[ADR_WIDTH+1:2];
-
         if (&cyc)
           begin
               cyc   <= #1 2'b00;
@@ -848,13 +416,10 @@ begin
   else
     wr1 <= #1 1'b0;
 end
-
 //rih
 always @(posedge clk)
   if ( ~(stb_b && !hit && !stb_o && !wr1) & (stb_o && ack_i && cyc) )
     con_buf[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= #1 mis_adr[15:ADR_WIDTH+2];
-
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -864,7 +429,6 @@ begin
   else if (!hit_h)
     mis_adr <= #1 adr_i+'d2;
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -876,7 +440,6 @@ begin
 //    tmp_data1 <= #1 data1_o[31:16];
     tmp_data1 <= #1 data1_o[15:0]; //??
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -887,6 +450,4 @@ begin
     stb_it <= #1 stb_i;
   end
 end
-
 endmodule
-

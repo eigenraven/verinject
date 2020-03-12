@@ -63,13 +63,9 @@
 // prepared header
 //
 //
-
 // synopsys translate_off
-
-
 `timescale 1ns/10ps
 // synopsys translate_on
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -116,493 +112,112 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
 module oc8051_uart (rst, clk, 
              bit_in, data_in,
 	     wr_addr,
@@ -613,7 +228,6 @@ module oc8051_uart (rst, clk,
 	     rclk, tclk,
 //registers
 	     scon, pcon, sbuf);
-
 input        rst,
              clk,
 	     bit_in,
@@ -627,19 +241,14 @@ input        rst,
 	     tclk;
 input [7:0]  data_in,
 	     wr_addr;
-
 output       txd,
              intr;
 output [7:0] scon,
              pcon,
 	     sbuf;
-
-
 reg t1_ow_buf;
 //
 reg [7:0] scon, pcon;
-
-
 reg        txd,
            trans,
            receive,
@@ -654,10 +263,8 @@ reg [3:0]  tr_count,
 reg [7:0]  sbuf_rxd;
 reg [11:0] sbuf_rxd_tmp;
 reg [10:0] sbuf_txd;
-
 assign sbuf = sbuf_rxd;
 assign intr = scon[1] | scon [0];
-
 //
 //serial port control register
 //
@@ -666,7 +273,6 @@ assign ren = scon[4];
 assign tb8 = scon[3];
 assign rb8 = scon[2];
 assign ri  = scon[0];
-
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -687,7 +293,6 @@ begin
       scon[2] <= #1 sbuf_rxd_tmp[11];
   end
 end
-
 //
 //power control register
 //
@@ -701,15 +306,11 @@ begin
   end else if ((wr_addr==8'h87) & (wr) & !(wr_bit))
     pcon <= #1 data_in;
 end
-
-
 //
 //serial port buffer (transmit)
 //
-
 wire wr_sbuf;
 assign wr_sbuf = (wr_addr==8'h99) & (wr) & !(wr_bit);
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -765,7 +366,6 @@ begin
     tx_done <= #1 1'b0;
   end
 end
-
 //
 //
 reg sc_clk_tr, smod_clk_tr;
@@ -779,7 +379,6 @@ begin
     sc_clk_tr = !t1_ow_buf & t1_ow;
   end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -796,8 +395,6 @@ begin
     shift_tr <= #1 1'b0;
   end
 end
-
-
 //
 //serial port buffer (receive)
 //
@@ -846,7 +443,6 @@ begin
   end else
     rx_done <= #1 1'b1;
 end
-
 //
 //
 reg sc_clk_re, smod_clk_re;
@@ -860,7 +456,6 @@ begin
     sc_clk_re = !t1_ow_buf & t1_ow;
   end
 end
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -877,13 +472,9 @@ begin
     shift_re <= #1 1'b0;
   end
 end
-
-
-
 //
 //
 //
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -892,8 +483,4 @@ begin
     t1_ow_buf <= #1 t1_ow;
   end
 end
-
-
-
 endmodule
-

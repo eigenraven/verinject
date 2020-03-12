@@ -52,7 +52,6 @@
 //
 //
 //
-
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
 ////  8051 cores Definitions              		          ////
@@ -99,501 +98,115 @@
 //
 // ver: 1
 //
-
 //
 // oc8051 pherypherals
 //
-
-
-
-
-
-
-
-
-
-
 //
 // oc8051 ITERNAL ROM
 //
 //`define OC8051_ROM
-
-
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
 //`define OC8051_WB
-
 //`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-
-
-
-
-
 //
 // oc8051 simulation defines
 //
 //`define OC8051_SIMULATION
 //`define OC8051_SERIAL
-
 //
 // oc8051 bist
 //
 //`define OC8051_BIST
-
-
 //
 // operation codes for alu
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // sfr bit addresses
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 //carry input in alu
 //
-
-
-
-
-
-
 //
 // instruction set
 //
-
 //op_code [4:0]
-
-
-
 //op_code [7:3]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:1]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //op_code [7:0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // default values (used after reset)
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // alu source 1 select
 //
-
-
-
-
-
-
-
-
-
 //
 // alu source 2 select
 //
-
-
-
-
-
-
-
 //
 // alu source 3 select
 //
-
-
 //`define OC8051_AS3_PCU  3'b101 // program clunter not registered
-
-
-
 //
 //write sfr
 //
-
-
-
-
-
-
 //
 // ram read select
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // ram write select
 //
-
-
-
-
-
-
-
-
-
-
 //
 // pc in select
 //
-
-
-
-
-
-
-
-
-
 //
 // compare source select
 //
-
-
-
-
-
-
-
 //
 // pc Write
 //
-
-
-
 //
 //psw set
 //
-
-
-
-
-
 //
 // rom address select
 //
-
-
-
 ////
 //// write accumulator
 ////
 //`define OC8051_WA_N 1'b0 // not
 //`define OC8051_WA_Y 1'b1 // yes
-
-
 //
 //memory action select
 //
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
-
 //
 // Timer/Counter modes
 //
-
-
-
-
-
-
-
 //
 // Interrupt numbers (vectors)
 //
-
-
-
-
-
-
-
-
-
 //
 // interrupt levels
 //
-
-
-
-
 //
 // interrupt sources
 //
-
-
-
-
-
-
-
-
-
-
 //
 // miscellaneus
 //
-
-
-
-
-
 //
 // read modify write instruction
 //
-
-
-
-
-
 //synopsys translate_off
-
-
 `timescale 1ns/10ps
 //synopsys translate_on
-
-
-
 module oc8051_tc2 (clk, rst,
             wr_addr,
 	    data_in, bit_in,
@@ -604,7 +217,6 @@ module oc8051_tc2 (clk, rst,
 	    pres_ow,
 //registers
 	    t2con, tl2, th2, rcap2l, rcap2h);
-
 input [7:0]  wr_addr,
              data_in;
 input        clk,
@@ -624,19 +236,13 @@ output       tc2_int,
 	     rclk,
 	     tclk,
 	     brate2;
-
-
 reg brate2;
 reg [7:0] t2con, tl2, th2, rcap2l, rcap2h;
-
 reg neg_trans, t2ex_r, t2_r, tc2_event, tf2_set;
-
 wire run;
-
 //
 // t2con
 wire tf2, exf2, exen2, tr2, ct2, cprl2;
-
 assign tc2_int = tf2 | exf2;
 assign tf2   = t2con[7];
 assign exf2  = t2con[6];
@@ -646,7 +252,6 @@ assign exen2 = t2con[3];
 assign tr2   = t2con[2];
 assign ct2   = t2con[1];
 assign cprl2 = t2con[0];
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -661,12 +266,9 @@ begin
     t2con[6] <= #1 1'b1;
   end
 end
-
-
 //
 //th2, tl2
 assign run = tr2 & ((!ct2 & pres_ow) | (ct2 & tc2_event));
-
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
@@ -726,8 +328,6 @@ begin
     end
   end else tf2_set <= #1 1'b0;
 end
-
-
 //
 // rcap2l, rcap2h
 always @(posedge clk or posedge rst)
@@ -744,8 +344,6 @@ begin
     rcap2h <= #1 th2;
   end
 end
-
-
 //
 //
 always @(posedge clk or posedge rst)
@@ -764,7 +362,6 @@ begin
     t2ex_r <= #1 t2ex_r;
   end
 end
-
 //
 //
 always @(posedge clk or posedge rst)
@@ -782,5 +379,4 @@ begin
     tc2_event <= #1 1'b0;
   end
 end
-
 endmodule
