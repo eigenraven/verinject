@@ -234,13 +234,21 @@
 //
 // read modify write instruction
 //
-module oc8051_decoder (clk, rst, op_in, op1_c,
-  ram_rd_sel_o, ram_wr_sel_o,
-  bit_addr, wr_o, wr_sfr_o,
-  src_sel1, src_sel2, src_sel3,
-  alu_op_o, psw_set, eq, cy_sel, comp_sel,
-  pc_wr, pc_sel, rd, rmw, istb, mem_act, mem_wait,
-  wait_data);
+module oc8051_decoder (
+  input clk, input rst, input eq, input mem_wait, input wait_data,
+input [7:0] op_in,
+output wr_o, output reg bit_addr, output reg pc_wr, output reg rmw, output istb, output reg src_sel3,
+output reg [1:0] psw_set, output reg [1:0] cy_sel, output [1:0] wr_sfr_o,
+output reg [1:0] src_sel2, output reg [1:0] comp_sel,
+output reg [2:0] mem_act, output reg [2:0] src_sel1, output [2:0] ram_rd_sel_o,
+output [2:0] ram_wr_sel_o, output reg [2:0] pc_sel, output [2:0] op1_c,
+output [3:0] alu_op_o,
+output rd);
+
+reg wr;
+reg [3:0] alu_op;
+reg [1:0] wr_sfr;
+reg [2:0] ram_wr_sel, ram_rd_sel;
 //
 // clk          (in)  clock
 // rst          (in)  reset
@@ -264,18 +272,6 @@ module oc8051_decoder (clk, rst, op_in, op1_c,
 // rmw          (out) read modify write feature [oc8051_ports.rmw]
 // pc_wait      (out)
 //
-input clk, rst, eq, mem_wait, wait_data;
-input [7:0] op_in;
-output wr_o, bit_addr, pc_wr, rmw, istb, src_sel3;
-output [1:0] psw_set, cy_sel, wr_sfr_o, src_sel2, comp_sel;
-output [2:0] mem_act, src_sel1, ram_rd_sel_o, ram_wr_sel_o, pc_sel, op1_c;
-output [3:0] alu_op_o;
-output rd;
-reg rmw;
-reg src_sel3, wr,  bit_addr, pc_wr;
-reg [3:0] alu_op;
-reg [1:0] src_sel2, comp_sel, psw_set, cy_sel, wr_sfr;
-reg [2:0] mem_act, src_sel1, ram_wr_sel, ram_rd_sel, pc_sel;
 //
 // state        if 2'b00 then normal execution, sle instructin that need more than one clock
 // op           instruction buffer
@@ -300,7 +296,7 @@ assign wr_o         = wait_data ? 1'b0            : wr;
 //
 // main block
 // unregisterd outputs
-always @(op_cur or eq or state_dec or mem_wait)
+always @*
 begin
     case (state_dec) /* synopsys full_case parallel_case */
       2'b01: begin
@@ -1313,1433 +1309,1433 @@ end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    ram_wr_sel <= #1 3'b000;
-    src_sel1 <= #1 3'b000;
-    src_sel2 <= #1 3'b00;
-    alu_op <= #1 4'b0000;
-    wr <= #1 1'b0;
-    psw_set <= #1 2'b00;
-    cy_sel <= #1 2'b00;
-    src_sel3 <= #1 1'b0;
-    wr_sfr <= #1 2'b00;
+    ram_wr_sel <= 3'b000;
+    src_sel1 <= 3'b000;
+    src_sel2 <= 2'b00;
+    alu_op <= 4'b0000;
+    wr <= 1'b0;
+    psw_set <= 2'b00;
+    cy_sel <= 2'b00;
+    src_sel3 <= 1'b0;
+    wr_sfr <= 2'b00;
   end else if (!wait_data) begin
     case (state_dec) /* synopsys parallel_case */
       2'b01: begin
         casex (op_cur) /* synopsys parallel_case */
           8'b1001_0011 :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b111;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b111;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              wr_sfr <= 2'b01;
             end
           8'b1000_0011 :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b111;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b111;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              wr_sfr <= 2'b01;
             end
           8'b1110_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b111;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b111;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              wr_sfr <= 2'b01;
             end
           8'b1110_001x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b111;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b111;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              wr_sfr <= 2'b01;
             end
 /*          `OC8051_ACALL :begin
-              ram_wr_sel <= #1 `OC8051_RWS_SP;
-              src_sel1 <= #1 `OC8051_AS1_PCH;
-              src_sel2 <= #1 `OC8051_AS2_DC;
-              alu_op <= #1 `OC8051_ALU_NOP;
-              wr <= #1 1'b1;
-              psw_set <= #1 `OC8051_PS_NOT;
-              wr_sfr <= #1 `OC8051_WRS_N;
+              ram_wr_sel <= `OC8051_RWS_SP;
+              src_sel1 <= `OC8051_AS1_PCH;
+              src_sel2 <= `OC8051_AS2_DC;
+              alu_op <= `OC8051_ALU_NOP;
+              wr <= 1'b1;
+              psw_set <= `OC8051_PS_NOT;
+              wr_sfr <= `OC8051_WRS_N;
             end
           `OC8051_AJMP : begin
-              ram_wr_sel <= #1 `OC8051_RWS_DC;
-              src_sel1 <= #1 `OC8051_AS1_DC;
-              src_sel2 <= #1 `OC8051_AS2_DC;
-              alu_op <= #1 `OC8051_ALU_NOP;
-              wr <= #1 1'b0;
-              psw_set <= #1 `OC8051_PS_NOT;
-              wr_sfr <= #1 `OC8051_WRS_N;
+              ram_wr_sel <= `OC8051_RWS_DC;
+              src_sel1 <= `OC8051_AS1_DC;
+              src_sel2 <= `OC8051_AS2_DC;
+              alu_op <= `OC8051_ALU_NOP;
+              wr <= 1'b0;
+              psw_set <= `OC8051_PS_NOT;
+              wr_sfr <= `OC8051_WRS_N;
             end
           `OC8051_LCALL :begin
-              ram_wr_sel <= #1 `OC8051_RWS_SP;
-              src_sel1 <= #1 `OC8051_AS1_PCH;
-              src_sel2 <= #1 `OC8051_AS2_DC;
-              alu_op <= #1 `OC8051_ALU_NOP;
-              wr <= #1 1'b1;
-              psw_set <= #1 `OC8051_PS_NOT;
-              wr_sfr <= #1 `OC8051_WRS_N;
+              ram_wr_sel <= `OC8051_RWS_SP;
+              src_sel1 <= `OC8051_AS1_PCH;
+              src_sel2 <= `OC8051_AS2_DC;
+              alu_op <= `OC8051_ALU_NOP;
+              wr <= 1'b1;
+              psw_set <= `OC8051_PS_NOT;
+              wr_sfr <= `OC8051_WRS_N;
             end*/
           8'b1000_0100 : begin
-              ram_wr_sel <= #1 3'b111;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0100;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b10;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b111;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0100;
+              wr <= 1'b1;
+              psw_set <= 2'b10;
+              wr_sfr <= 2'b10;
             end
           8'b1010_0100 : begin
-              ram_wr_sel <= #1 3'b111;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0011;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b10;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b111;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0011;
+              wr <= 1'b1;
+              psw_set <= 2'b10;
+              wr_sfr <= 2'b10;
             end
           default begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              wr_sfr <= 2'b00;
           end
         endcase
-        cy_sel <= #1 2'b00;
-        src_sel3 <= #1 1'b0;
+        cy_sel <= 2'b00;
+        src_sel3 <= 1'b0;
       end
       2'b10: begin
         casex (op_cur) /* synopsys parallel_case */
           8'bxxx1_0001 :begin
-              ram_wr_sel <= #1 3'b011;
-              src_sel1 <= #1 3'b100;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
+              ram_wr_sel <= 3'b011;
+              src_sel1 <= 3'b100;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
             end
           8'b0001_0010 :begin
-              ram_wr_sel <= #1 3'b011;
-              src_sel1 <= #1 3'b100;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
+              ram_wr_sel <= 3'b011;
+              src_sel1 <= 3'b100;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
             end
           8'b0001_0000 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
             end
           8'b1000_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0100;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b10;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0100;
+              wr <= 1'b0;
+              psw_set <= 2'b10;
             end
           8'b1010_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0011;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b10;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0011;
+              wr <= 1'b0;
+              psw_set <= 2'b10;
             end
           default begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
           end
         endcase
-        cy_sel <= #1 2'b00;
-        src_sel3 <= #1 1'b0;
-        wr_sfr <= #1 2'b00;
+        cy_sel <= 2'b00;
+        src_sel3 <= 1'b0;
+        wr_sfr <= 2'b00;
       end
       2'b11: begin
         casex (op_cur) /* synopsys parallel_case */
           8'b0010_0010 : begin
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              psw_set <= #1 2'b00;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              psw_set <= 2'b00;
             end
           8'b0011_0010 : begin
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              psw_set <= #1 2'b00;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              psw_set <= 2'b00;
             end
           8'b1000_0100 : begin
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0100;
-              psw_set <= #1 2'b10;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0100;
+              psw_set <= 2'b10;
             end
           8'b1010_0100 : begin
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0011;
-              psw_set <= #1 2'b10;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0011;
+              psw_set <= 2'b10;
             end
          default begin
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              psw_set <= #1 2'b00;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              psw_set <= 2'b00;
           end
         endcase
-        ram_wr_sel <= #1 3'b000;
-        wr <= #1 1'b0;
-        cy_sel <= #1 2'b00;
-        src_sel3 <= #1 1'b0;
-        wr_sfr <= #1 2'b00;
+        ram_wr_sel <= 3'b000;
+        wr <= 1'b0;
+        cy_sel <= 2'b00;
+        src_sel3 <= 1'b0;
+        wr_sfr <= 2'b00;
       end
       default: begin
         casex (op_cur) /* synopsys parallel_case */
           8'bxxx1_0001 :begin
-              ram_wr_sel <= #1 3'b011;
-              src_sel1 <= #1 3'b101;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b011;
+              src_sel1 <= 3'b101;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'bxxx0_0001 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0010_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0011_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0101_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1011_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b11;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b11;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0001_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1101_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0000_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1110_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1111_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0111_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1000_1xxx : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0100_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1001_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1100_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b10;
             end
           8'b0110_1xxx : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
     
     //op_code [7:1]
           8'b0010_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0011_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0101_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1011_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b11;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b11;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0001_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0000_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1110_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1000_011x : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1111_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0111_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1110_001x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1111_001x :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0100_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1001_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1100_011x : begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b10;
             end
           8'b1101_011x :begin
-              ram_wr_sel <= #1 3'b010;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b010;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b10;
             end
           8'b0110_011x : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
     
     //op_code [7:0]
           8'b0010_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0010_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0011_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0011_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0101_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0101_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b0111;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0101_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0101_0011 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b010;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b010;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1000_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0111;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0111;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1011_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1100;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1100;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1011_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1011_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b11;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b11;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1110_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b01;
             end
           8'b1100_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1100_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1111_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0110;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0110;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1011_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0110;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0110;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1011_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b10;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b10;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1101_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0101;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0101;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0001_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0001_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1000_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0100;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b10;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0100;
+              wr <= 1'b0;
+              psw_set <= 2'b10;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1101_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0000_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0000_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b1110;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b1110;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b10;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b11;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b10;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b11;
             end
           8'b0010_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0001_0000 :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0100_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0111_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0011_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0101_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0111_0000 :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0110_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b0001_0010 :begin
-              ram_wr_sel <= #1 3'b011;
-              src_sel1 <= #1 3'b101;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b011;
+              src_sel1 <= 3'b101;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0000_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1110_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0111_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1111_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1000_0101 : begin
-              ram_wr_sel <= #1 3'b101;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b101;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0111_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b010;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b010;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b10;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b10;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1001_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1001_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b010;
-              src_sel2 <= #1 3'b11;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b11;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b010;
+              src_sel2 <= 2'b11;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b11;
             end
           8'b1001_0011 :begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1000_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b101;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b0001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b101;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b0001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1110_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1111_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0011;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b10;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0011;
+              wr <= 1'b0;
+              psw_set <= 2'b10;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0100_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0100_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1001;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0100_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1001;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0100_0011 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b010;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b010;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1001;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0111_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1001;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1001;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1010_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1010;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1101_0000 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b1100_0000 : begin
-              ram_wr_sel <= #1 3'b011;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b011;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0010_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0011_0010 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0010_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1010;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0011_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1011;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1011;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0000_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1100;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1100;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0001_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1101;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1101;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1101_0011 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b01;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b01;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1101_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1000_0000 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b1;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b1;
+              wr_sfr <= 2'b00;
             end
           8'b1001_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1001_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b11;
-              alu_op <= #1 4'b0010;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b11;
-              cy_sel <= #1 2'b01;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b11;
+              alu_op <= 4'b0010;
+              wr <= 1'b0;
+              psw_set <= 2'b11;
+              cy_sel <= 2'b01;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b1100_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b011;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1011;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b011;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1011;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b10;
             end
           8'b1100_0101 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1111;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b11;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b10;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1111;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b11;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b10;
             end
           8'b0110_0101 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0110_0100 : begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b001;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b01;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b001;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b01;
             end
           8'b0110_0010 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b01;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b01;
+              alu_op <= 4'b1000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           8'b0110_0011 : begin
-              ram_wr_sel <= #1 3'b001;
-              src_sel1 <= #1 3'b010;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b1000;
-              wr <= #1 1'b1;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b001;
+              src_sel1 <= 3'b010;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b1000;
+              wr <= 1'b1;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
             end
           default: begin
-              ram_wr_sel <= #1 3'b000;
-              src_sel1 <= #1 3'b000;
-              src_sel2 <= #1 3'b00;
-              alu_op <= #1 4'b0000;
-              wr <= #1 1'b0;
-              psw_set <= #1 2'b00;
-              cy_sel <= #1 2'b00;
-              src_sel3 <= #1 1'b0;
-              wr_sfr <= #1 2'b00;
+              ram_wr_sel <= 3'b000;
+              src_sel1 <= 3'b000;
+              src_sel2 <= 2'b00;
+              alu_op <= 4'b0000;
+              wr <= 1'b0;
+              psw_set <= 2'b00;
+              cy_sel <= 2'b00;
+              src_sel3 <= 1'b0;
+              wr_sfr <= 2'b00;
            end
         endcase
       end
@@ -2749,52 +2745,54 @@ end
 //
 // remember current instruction
 always @(posedge clk or posedge rst)
-  if (rst) op <= #1 2'b00;
-  else if (state==2'b00) op <= #1 op_in;
+begin
+  if (rst) begin op <= 8'b00; end
+  else if (state==2'b00) begin op <= op_in; end
+end
 //
 // in case of instructions that needs more than one clock set state
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    state <= #1 2'b11;
+  if (rst) begin
+    state <= 2'b11; end
   else if  (!mem_wait & !wait_data) begin
     case (state) /* synopsys parallel_case */
-      2'b10: state <= #1 2'b01;
-      2'b11: state <= #1 2'b10;
+      2'b10: begin  state <= 2'b01; end
+      2'b11: begin  state <= 2'b10; end
       2'b00:
           casex (op_in) /* synopsys full_case parallel_case */
-            8'bxxx1_0001   : state <= #1 2'b10;
-            8'bxxx0_0001    : state <= #1 2'b10;
-            8'b1011_1xxx  : state <= #1 2'b10;
-            8'b1011_011x  : state <= #1 2'b10;
-            8'b1011_0101  : state <= #1 2'b10;
-            8'b1011_0100  : state <= #1 2'b10;
-            8'b0000_0010    : state <= #1 2'b10;
-            8'b1101_1xxx  : state <= #1 2'b10;
-            8'b1101_0101  : state <= #1 2'b10;
-            8'b0001_0010   : state <= #1 2'b10;
-            8'b1001_0011 : state <= #1 2'b11;
-            8'b1000_0011 : state <= #1 2'b11;
-            8'b1110_001x : state <= #1 2'b10;
-            8'b1111_001x : state <= #1 2'b10;
-            8'b1110_0000 : state <= #1 2'b10;
-            8'b1111_0000 : state <= #1 2'b10;
-            8'b0010_0010     : state <= #1 2'b11;
-            8'b0011_0010    : state <= #1 2'b11;
-            8'b1000_0000    : state <= #1 2'b10;
-            8'b0010_0000      : state <= #1 2'b10;
-            8'b0001_0000     : state <= #1 2'b10;
-            8'b0100_0000      : state <= #1 2'b10;
-            8'b0111_0011   : state <= #1 2'b10;
-            8'b0101_0000     : state <= #1 2'b10;
-            8'b0011_0000     : state <= #1 2'b10;
-            8'b0111_0000     : state <= #1 2'b10;
-            8'b0110_0000      : state <= #1 2'b10;
-            8'b1000_0100     : state <= #1 2'b11;
-            8'b1010_0100     : state <= #1 2'b11;
-//            default         : state <= #1 2'b00;
+            8'bxxx1_0001   : begin  state <= 2'b10; end
+            8'bxxx0_0001    : begin  state <= 2'b10; end
+            8'b1011_1xxx  : begin  state <= 2'b10; end
+            8'b1011_011x  : begin  state <= 2'b10; end
+            8'b1011_0101  : begin  state <= 2'b10; end
+            8'b1011_0100  : begin  state <= 2'b10; end
+            8'b0000_0010    : begin  state <= 2'b10; end
+            8'b1101_1xxx  : begin  state <= 2'b10; end
+            8'b1101_0101  : begin  state <= 2'b10; end
+            8'b0001_0010   : begin  state <= 2'b10; end
+            8'b1001_0011 : begin  state <= 2'b11; end
+            8'b1000_0011 : begin  state <= 2'b11; end
+            8'b1110_001x : begin  state <= 2'b10; end
+            8'b1111_001x : begin  state <= 2'b10; end
+            8'b1110_0000 : begin  state <= 2'b10; end
+            8'b1111_0000 : begin  state <= 2'b10; end
+            8'b0010_0010     : begin  state <= 2'b11; end
+            8'b0011_0010    : begin  state <= 2'b11; end
+            8'b1000_0000    : begin  state <= 2'b10; end
+            8'b0010_0000      : begin  state <= 2'b10; end
+            8'b0001_0000     : begin  state <= 2'b10; end
+            8'b0100_0000      : begin  state <= 2'b10; end
+            8'b0111_0011   : begin  state <= 2'b10; end
+            8'b0101_0000     : begin  state <= 2'b10; end
+            8'b0011_0000     : begin  state <= 2'b10; end
+            8'b0111_0000     : begin  state <= 2'b10; end
+            8'b0110_0000      : begin  state <= 2'b10; end
+            8'b1000_0100     : begin  state <= 2'b11; end
+            8'b1010_0100     : begin  state <= 2'b11; end
+//            default         : begin  state <= 2'b00; end
           endcase
-      default: state <= #1 2'b00;
+      default: begin  state <= 2'b00; end
     endcase
   end
 end
@@ -2803,26 +2801,27 @@ end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    mem_act <= #1 3'b111;
+    mem_act <= 3'b111;
   end else if (!rd) begin
-    mem_act <= #1 3'b111;
-  end else
+    mem_act <= 3'b111;
+  end else begin
     casex (op_cur) /* synopsys parallel_case */
-      8'b1111_001x : mem_act <= #1 3'b011;
-      8'b1111_0000 : mem_act <= #1 3'b001;
-      8'b1110_001x : mem_act <= #1 3'b010;
-      8'b1110_0000 : mem_act <= #1 3'b000;
-      8'b1001_0011 : mem_act <= #1 3'b100;
-      8'b1000_0011 : mem_act <= #1 3'b100;
-      default : mem_act <= #1 3'b111;
+      8'b1111_001x : begin mem_act <= 3'b011; end
+      8'b1111_0000 : begin mem_act <= 3'b001; end
+      8'b1110_001x : begin mem_act <= 3'b010; end
+      8'b1110_0000 : begin mem_act <= 3'b000; end
+      8'b1001_0011 : begin mem_act <= 3'b100; end
+      8'b1000_0011 : begin mem_act <= 3'b100; end
+      default : begin mem_act <= 3'b111; end
     endcase
+  end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    ram_rd_sel_r <= #1 3'h0;
+    ram_rd_sel_r <= 3'h0;
   end else begin
-    ram_rd_sel_r <= #1 ram_rd_sel;
+    ram_rd_sel_r <= ram_rd_sel;
   end
 end
 endmodule

@@ -199,13 +199,14 @@ pub trait RtlTransform {
                 .iter()
                 .any(|k| toks[0].kind == *k)
             {
+                let allow_end = toks[0].kind == TK::KIf;
                 params.output.push(toks[0].clone());
                 toks = self.push_while(&toks[1..], TK::Whitespace, params);
                 let (args, next_toks) =
                     Self::token_split_balanced_parens(toks, TK::LParen, TK::RParen).unwrap();
                 self.on_expression_read_toks(args, params)?;
                 toks = self.push_while(next_toks, TK::Whitespace, params);
-                if toks[0].kind != TK::KBegin {
+                if allow_end && toks[0].kind != TK::KBegin {
                     params.output.push(Token::inject("\nbegin\n".to_owned()));
                     append_end = true;
                 }

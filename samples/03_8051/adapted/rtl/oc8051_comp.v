@@ -210,7 +210,16 @@
 //
 // read modify write instruction
 //
-module oc8051_comp (sel, b_in, cy, acc, des, /*comp_wait, */eq);
+module oc8051_comp (
+input [1:0] sel,
+input b_in, input cy,
+input [7:0] acc, input [7:0] des,
+output eq,
+/*comp_wait, */
+);
+
+reg eq_r;
+
 //
 // sel          (in)  select whithc sourses to compare (look defines.v) [oc8051_decoder.comp_sel]
 // b_in         (in)  bit in - output from bit addressable memory space [oc8051_ram_sel.bit_out]
@@ -221,13 +230,9 @@ module oc8051_comp (sel, b_in, cy, acc, des, /*comp_wait, */eq);
 // des          (in)  destination from alu [oc8051_alu.des1 -r]
 // eq           (out) if (src1 == src2) eq = 1  [oc8051_decoder.eq]
 //
-input [1:0] sel;
-input b_in, cy/*, comp_wait*/;
-input [7:0] acc, des;
-output eq;
-reg eq_r;
+
 assign eq = eq_r;// & comp_wait;
-always @(sel or b_in or cy or acc or des)
+always @*
 begin
   case (sel) /* synopsys full_case parallel_case */
     2'b00  : eq_r = (acc == 8'h00);
@@ -236,4 +241,5 @@ begin
     2'b11 : eq_r = b_in;
   endcase
 end
+
 endmodule

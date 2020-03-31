@@ -54,7 +54,12 @@
 // synopsys translate_off
 `timescale 1ns/10ps
 // synopsys translate_on
-module oc8051_cache_ram (clk, rst, addr0, data0, addr1, data1_i, data1_o, wr1);
+module oc8051_cache_ram (
+input clk, input wr1, input rst,
+input [ADR_WIDTH-1:0] addr0, input [ADR_WIDTH-1:0] addr1,
+input [31:0] data1_i,
+output reg [31:0] data0, output reg [31:0] data1_o
+);
 //
 // this module is part of oc8051_icache
 // it's tehnology dependent
@@ -69,11 +74,7 @@ module oc8051_cache_ram (clk, rst, addr0, data0, addr1, data1_i, data1_o, wr1);
 //
 parameter ADR_WIDTH = 7; // cache address wihth
 parameter CACHE_RAM = 128; // cache ram x 32 (2^ADR_WIDTH)
-input clk, wr1, rst;
-input [ADR_WIDTH-1:0] addr0, addr1;
-input [31:0] data1_i;
-output [31:0] data0, data1_o;
-reg [31:0] data0, data1_o;
+
 //
 // buffer
 reg [31:0] buff [0:CACHE_RAM];
@@ -82,24 +83,26 @@ reg [31:0] buff [0:CACHE_RAM];
 //
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    data1_o <= #1 32'h0;
-  else if (wr1) begin
-    buff[addr1] <= #1 data1_i;
-    data1_o <= #1 data1_i;
-  end else
-    data1_o <= #1 buff[addr1];
+  if (rst) begin
+    data1_o <= 32'h0;
+  end else if (wr1) begin
+    buff[addr1] <= data1_i;
+    data1_o <= data1_i;
+  end else begin
+    data1_o <= buff[addr1];
+  end
 end
 //
 // port 0
 //
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    data0 <= #1 32'h0;
-  else if ((addr0==addr1) & wr1)
-    data0 <= #1 data1_i;
-  else
-    data0 <= #1 buff[addr0];
+  if (rst) begin
+    data0 <= 32'h0;
+  end else if ((addr0==addr1) & wr1) begin
+    data0 <= data1_i;
+  end else begin
+    data0 <= buff[addr0];
+  end
 end
 endmodule
