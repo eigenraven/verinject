@@ -221,17 +221,12 @@
 //
 // read modify write instruction
 //
-module oc8051_acc (clk, rst, 
-                 bit_in, data_in, data2_in, 
-		 data_out,
-		 wr, wr_bit, wr_addr,
-		 p, wr_sfr);
-input clk, rst, wr, wr_bit, bit_in;
-input [1:0] wr_sfr;
-input [7:0] wr_addr, data_in, data2_in;
-output p;
-output [7:0] data_out;
-reg [7:0] data_out;
+module oc8051_acc (input clk, input rst, 
+                 input bit_in, input [7:0] data_in, input [7:0] data2_in, 
+		 output reg [7:0] data_out,
+		 input wr, input wr_bit, input [7:0] wr_addr,
+		 output wire p, input [1:0] wr_sfr);
+
 reg [7:0] acc;
 wire wr_acc, wr2_acc, wr_bit_acc;
 //
@@ -242,7 +237,7 @@ assign wr2_acc    = (wr_sfr==2'b10);
 assign wr_bit_acc = (wr & wr_bit & (wr_addr[7:3]==5'b11100));
 //
 //writing to acc
-always @(wr_sfr or data2_in or wr2_acc or wr_acc or wr_bit_acc or wr_addr[2:0] or data_in or bit_in or data_out)
+always @*
 begin
   if (wr2_acc)
     acc = data2_in;
@@ -260,13 +255,17 @@ begin
       3'b111: acc = {bit_in, data_out[6:0]};
     endcase
   else
+  begin
     acc = data_out;
+  end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst)
-    data_out <= #1 8'h00;
-  else
-    data_out <= #1 acc;
+  begin
+    data_out <= 8'h00;
+  end else begin
+    data_out <= acc;
+  end
 end
 endmodule

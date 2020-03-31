@@ -42,9 +42,11 @@ pub enum TokenKind {
     KPosedge,
     KNegedge,
     KIf,
+    KElse,
     KCase,
     KCasex,
     KCasez,
+    KEndCase,
     KFor,
     // types
     KWire,
@@ -285,7 +287,9 @@ fn keyword_kind(id: &str) -> TokenKind {
         "case" => KCase,
         "casex" => KCasex,
         "casez" => KCasez,
+        "endcase" => KEndCase,
         "if" => KIf,
+        "else" => KElse,
         "for" => KFor,
         //
         "wire" => KWire,

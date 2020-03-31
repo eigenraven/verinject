@@ -3,3 +3,9 @@
 
 1000 runs without waveforms or compression
 ./test.sh  148.76s user 26.11s system 63% cpu 4:35.88 total
+
+
+
+WSL ext4 1000 runs
+115.06user 15.72system 1:41.79elapsed 128%CPU (0avgtext+0avgdata 15460maxresident)k
+8936inputs+392104outputs (38major+5675837minor)pagefaults 0swaps
