@@ -71,7 +71,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -223,15 +223,15 @@
 //
 module oc8051_ram_top (clk, 
                        rst, 
-		       rd_addr, 
-		       rd_data, 
-		       wr_addr, 
-		       bit_addr, 
-		       wr_data, 
-		       wr, 
-		       bit_data_in, 
-		       bit_data_out
-		       );
+                       rd_addr, 
+                       rd_data, 
+                       wr_addr, 
+                       bit_addr, 
+                       wr_data, 
+                       wr, 
+                       bit_data_in, 
+                       bit_data_out
+                       );
 // on-chip ram-size (2**ram_aw bytes)
 parameter ram_aw = 8; // default 256 bytes
 //
@@ -267,14 +267,14 @@ assign rd_en   = (rd_addr_m == wr_addr_m) & wr;
 oc8051_ram_256x8_two_bist oc8051_idata(
                            .clk     ( clk        ),
                            .rst     ( rst        ),
-			   .rd_addr ( rd_addr_m  ),
-			   .rd_data ( rd_data_m  ),
-			   .rd_en   ( !rd_en     ),
-			   .wr_addr ( wr_addr_m  ),
-			   .wr_data ( wr_data_m  ),
-			   .wr_en   ( 1'b1       ),
-			   .wr      ( wr         )
-			   );
+                           .rd_addr ( rd_addr_m  ),
+                           .rd_data ( rd_data_m  ),
+                           .rd_en   ( !rd_en     ),
+                           .wr_addr ( wr_addr_m  ),
+                           .wr_data ( wr_data_m  ),
+                           .wr_en   ( 1'b1       ),
+                           .wr      ( wr         )
+                           );
 always @(posedge clk or posedge rst)
   if (rst) begin
     bit_addr_r <= #1 1'b0;

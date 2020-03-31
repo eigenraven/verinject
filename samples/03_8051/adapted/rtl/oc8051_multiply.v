@@ -1,45 +1,45 @@
 //////////////////////////////////////////////////////////////////////
-//// 								  ////
-//// multiply for 8051 Core 				  	  ////
-//// 								  ////
-//// This file is part of the 8051 cores project 		  ////
-//// http://www.opencores.org/cores/8051/ 			  ////
-//// 								  ////
-//// Description 						  ////
-//// Implementation of multipication used in alu.v 		  ////
-//// 								  ////
-//// To Do: 							  ////
-////  Nothing							  ////
-//// 								  ////
-//// Author(s): 						  ////
-//// - Simon Teran, simont@opencores.org 			  ////
-//// - Marko Mlinar, markom@opencores.org 			  ////
-//// 								  ////
+////                                                                   ////
+//// multiply for 8051 Core                                             ////
+////                                                                   ////
+//// This file is part of the 8051 cores project                   ////
+//// http://www.opencores.org/cores/8051/                           ////
+////                                                                   ////
+//// Description                                                   ////
+//// Implementation of multipication used in alu.v                   ////
+////                                                                   ////
+//// To Do:                                                           ////
+////  Nothing                                                          ////
+////                                                                   ////
+//// Author(s):                                                   ////
+//// - Simon Teran, simont@opencores.org                           ////
+//// - Marko Mlinar, markom@opencores.org                           ////
+////                                                                   ////
 //////////////////////////////////////////////////////////////////////
-//// 								  ////
-//// Copyright (C) 2001 Authors and OPENCORES.ORG 		  ////
-//// 								  ////
-//// This source file may be used and distributed without 	  ////
-//// restriction provided that this copyright statement is not 	  ////
+////                                                                   ////
+//// Copyright (C) 2001 Authors and OPENCORES.ORG                   ////
+////                                                                   ////
+//// This source file may be used and distributed without           ////
+//// restriction provided that this copyright statement is not           ////
 //// removed from the file and that any derivative work contains  ////
 //// the original copyright notice and the associated disclaimer. ////
-//// 								  ////
+////                                                                   ////
 //// This source file is free software; you can redistribute it   ////
 //// and/or modify it under the terms of the GNU Lesser General   ////
 //// Public License as published by the Free Software Foundation; ////
 //// either version 2.1 of the License, or (at your option) any   ////
-//// later version. 						  ////
-//// 								  ////
-//// This source is distributed in the hope that it will be 	  ////
+//// later version.                                                   ////
+////                                                                   ////
+//// This source is distributed in the hope that it will be           ////
 //// useful, but WITHOUT ANY WARRANTY; without even the implied   ////
-//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 	  ////
+//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR           ////
 //// PURPOSE. See the GNU Lesser General Public License for more  ////
-//// details. 							  ////
-//// 								  ////
-//// You should have received a copy of the GNU Lesser General 	  ////
+//// details.                                                           ////
+////                                                                   ////
+//// You should have received a copy of the GNU Lesser General           ////
 //// Public License along with this source; if not, download it   ////
-//// from http://www.opencores.org/lgpl.shtml 			  ////
-//// 								  ////
+//// from http://www.opencores.org/lgpl.shtml                           ////
+////                                                                   ////
 //////////////////////////////////////////////////////////////////////
 //
 // CVS Revision History
@@ -59,7 +59,12 @@
 // synopsys translate_off
 `timescale 1ns/10ps
 // synopsys translate_on
-module oc8051_multiply (clk, rst, enable, src1, src2, des1, des2, desOv);
+module oc8051_multiply (
+  input clk, input rst, input enable,
+  input [7:0] src1, input [7:0] src2,
+  output desOv,
+  output [7:0] des1, output [7:0] des2,
+);
 //
 // this module is part of alu
 // clk          (in)
@@ -71,10 +76,7 @@ module oc8051_multiply (clk, rst, enable, src1, src2, des1, des2, desOv);
 // des2         (out) second result
 // desOv        (out) Overflow output
 //
-input clk, rst, enable;
-input [7:0] src1, src2;
-output desOv;
-output [7:0] des1, des2;
+
 // wires
 wire [15:0] mul_result1, mul_result, shifted;
 // real registers
@@ -92,11 +94,11 @@ assign desOv = | des1;
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    cycle <= #1 2'b0;
-    tmp_mul <= #1 16'b0;
+    cycle <= 2'b0;
+    tmp_mul <= 16'b0;
   end else begin
-    if (enable) cycle <= #1 cycle + 2'b1;
-    tmp_mul <= #1 mul_result;
+    if (enable) begin cycle <= cycle + 2'b1; end
+    tmp_mul <= mul_result;
   end
 end
 endmodule

@@ -1,46 +1,46 @@
 //////////////////////////////////////////////////////////////////////
-//// 								  ////
-//// alu for 8051 Core 						  ////
-//// 								  ////
-//// This file is part of the 8051 cores project 		  ////
-//// http://www.opencores.org/cores/8051/ 			  ////
-//// 								  ////
-//// Description 						  ////
-//// Implementation of aritmetic unit  according to 		  ////
-//// 8051 IP core specification document. Uses divide.v and 	  ////
-//// multiply.v							  ////
-//// 								  ////
-//// To Do: 							  ////
+////                                                                   ////
+//// alu for 8051 Core                                                   ////
+////                                                                   ////
+//// This file is part of the 8051 cores project                   ////
+//// http://www.opencores.org/cores/8051/                           ////
+////                                                                   ////
+//// Description                                                   ////
+//// Implementation of aritmetic unit  according to                   ////
+//// 8051 IP core specification document. Uses divide.v and           ////
+//// multiply.v                                                          ////
+////                                                                   ////
+//// To Do:                                                           ////
 ////  pc signed add                                               ////
-//// 								  ////
-//// Author(s): 						  ////
-//// - Simon Teran, simont@opencores.org 			  ////
-//// 								  ////
+////                                                                   ////
+//// Author(s):                                                   ////
+//// - Simon Teran, simont@opencores.org                           ////
+////                                                                   ////
 //////////////////////////////////////////////////////////////////////
-//// 								  ////
-//// Copyright (C) 2001 Authors and OPENCORES.ORG 		  ////
-//// 								  ////
-//// This source file may be used and distributed without 	  ////
-//// restriction provided that this copyright statement is not 	  ////
+////                                                                   ////
+//// Copyright (C) 2001 Authors and OPENCORES.ORG                   ////
+////                                                                   ////
+//// This source file may be used and distributed without           ////
+//// restriction provided that this copyright statement is not           ////
 //// removed from the file and that any derivative work contains  ////
 //// the original copyright notice and the associated disclaimer. ////
-//// 								  ////
+////                                                                   ////
 //// This source file is free software; you can redistribute it   ////
 //// and/or modify it under the terms of the GNU Lesser General   ////
 //// Public License as published by the Free Software Foundation; ////
 //// either version 2.1 of the License, or (at your option) any   ////
-//// later version. 						  ////
-//// 								  ////
-//// This source is distributed in the hope that it will be 	  ////
+//// later version.                                                   ////
+////                                                                   ////
+//// This source is distributed in the hope that it will be           ////
 //// useful, but WITHOUT ANY WARRANTY; without even the implied   ////
-//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 	  ////
+//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR           ////
 //// PURPOSE. See the GNU Lesser General Public License for more  ////
-//// details. 							  ////
-//// 								  ////
-//// You should have received a copy of the GNU Lesser General 	  ////
+//// details.                                                           ////
+////                                                                   ////
+//// You should have received a copy of the GNU Lesser General           ////
 //// Public License along with this source; if not, download it   ////
-//// from http://www.opencores.org/lgpl.shtml 			  ////
-//// 								  ////
+//// from http://www.opencores.org/lgpl.shtml                           ////
+////                                                                   ////
 //////////////////////////////////////////////////////////////////////
 //
 // CVS Revision History
@@ -55,7 +55,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////

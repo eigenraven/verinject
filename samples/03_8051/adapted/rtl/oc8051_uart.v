@@ -68,7 +68,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -220,32 +220,32 @@
 //
 module oc8051_uart (rst, clk, 
              bit_in, data_in,
-	     wr_addr,
-	     wr, wr_bit,
+             wr_addr,
+             wr, wr_bit,
              rxd, txd,
-	     intr,
+             intr,
              brate2, t1_ow, pres_ow,
-	     rclk, tclk,
+             rclk, tclk,
 //registers
-	     scon, pcon, sbuf);
+             scon, pcon, sbuf);
 input        rst,
              clk,
-	     bit_in,
-	     wr,
-	     rxd,
-	     wr_bit,
-	     t1_ow,
-	     brate2,
-	     pres_ow,
-	     rclk,
-	     tclk;
+             bit_in,
+             wr,
+             rxd,
+             wr_bit,
+             t1_ow,
+             brate2,
+             pres_ow,
+             rclk,
+             tclk;
 input [7:0]  data_in,
-	     wr_addr;
+             wr_addr;
 output       txd,
              intr;
 output [7:0] scon,
              pcon,
-	     sbuf;
+             sbuf;
 reg t1_ow_buf;
 //
 reg [7:0] scon, pcon;
@@ -253,10 +253,10 @@ reg        txd,
            trans,
            receive,
            tx_done,
-	   rx_done,
-	   rxd_r,
-	   shift_tr,
-	   shift_re;
+           rx_done,
+           rxd_r,
+           shift_tr,
+           shift_re;
 reg [1:0]  rx_sam;
 reg [3:0]  tr_count,
            re_count;

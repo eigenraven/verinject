@@ -51,7 +51,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -208,22 +208,22 @@ module oc8051_ram_64x32_dual_bist (
                      clk,
                      rst,
                      
-		     adr0,
-		     dat0_o,
-		     en0,
-		     
-		     adr1,
-		     dat1_i,
-		     dat1_o,
-		     en1,
-		     wr1
-		     );
+                     adr0,
+                     dat0_o,
+                     en0,
+                     
+                     adr1,
+                     dat1_i,
+                     dat1_o,
+                     en1,
+                     wr1
+                     );
 parameter ADR_WIDTH = 6;
 input         clk, 
               wr1, 
-	      rst,
-	      en0,
-	      en1;
+              rst,
+              en0,
+              en1;
 input  [7:0]  dat1_i;
 input  [ADR_WIDTH-1:0]  adr0,
                         adr1;
@@ -234,19 +234,19 @@ reg    [7:0]  rd_data;
     
     
       generic_dpram #(ADR_WIDTH, 32) oc8051_ram1(
-      	.rclk  ( clk            ),
-      	.rrst  ( rst            ),
-      	.rce   ( en0            ),
-      	.oe    ( 1'b1           ),
-      	.raddr ( adr0           ),
-      	.do    ( dat0_o         ),
+              .rclk  ( clk            ),
+              .rrst  ( rst            ),
+              .rce   ( en0            ),
+              .oe    ( 1'b1           ),
+              .raddr ( adr0           ),
+              .do    ( dat0_o         ),
       
-      	.wclk  ( clk            ),
-      	.wrst  ( rst            ),
-      	.wce   ( en1            ),
-      	.we    ( wr1            ),
-      	.waddr ( adr1           ),
-      	.di    ( dat1_i         )
+              .wclk  ( clk            ),
+              .wrst  ( rst            ),
+              .wce   ( en1            ),
+              .we    ( wr1            ),
+              .waddr ( adr1           ),
+              .di    ( dat1_i         )
       );
     
     

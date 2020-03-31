@@ -84,7 +84,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////

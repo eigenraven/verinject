@@ -74,7 +74,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -224,14 +224,11 @@
 //
 // read modify write instruction
 //
-module oc8051_icache (rst, clk, 
-             adr_i, dat_o, stb_i, ack_o, cyc_i,
-             adr_o, dat_i, stb_o, ack_i, cyc_o
-	     );
+module oc8051_icache (
 //
 // rst           (in)  reset - pin
 // clk           (in)  clock - pini
-input rst, clk;
+input rst, input clk,
 //
 // interface to oc8051 cpu
 //
@@ -241,11 +238,10 @@ input rst, clk;
 // ack_o    (out) acknowledge
 // cyc_i    (in)  cycle
 input         stb_i,
-              cyc_i;
-input  [15:0] adr_i;
-output        ack_o;
-output [31:0] dat_o;
-reg    [31:0] dat_o;
+input         cyc_i,
+input  [15:0] adr_i,
+output        ack_o,
+output reg [31:0] dat_o,
 //
 // interface to instruction rom
 //
@@ -254,13 +250,13 @@ reg    [31:0] dat_o;
 // stb_o    (out) strobe
 // ack_i    (in) acknowledge
 // cyc_o    (out)  cycle
-input         ack_i;
-input  [31:0] dat_i;
-output        stb_o, 
-              cyc_o;
-output [15:0] adr_o;
-reg           stb_o,
-              cyc_o;
+input         ack_i,
+input  [31:0] dat_i,
+output  reg   stb_o, 
+output  reg   cyc_o,
+output [15:0] adr_o
+);
+
 parameter ADR_WIDTH = 6; // cache address wihth
 parameter LINE_WIDTH = 2; // line address width (2 => 4x32)
 parameter BL_WIDTH = ADR_WIDTH - LINE_WIDTH; // block address width
@@ -313,24 +309,24 @@ assign adr_o = {mis_adr[15:LINE_WIDTH+2], cyc, 2'b00};
 oc8051_ram_64x32_dual_bist oc8051_cache_ram(
                            .clk     ( clk        ),
                            .rst     ( rst        ),
-			   .adr0    ( adr_i[ADR_WIDTH+1:2] ),
-			   .dat0_o  ( data0      ),
-			   .en0     ( 1'b1       ),
-			   .adr1    ( addr1      ),
-			   .dat1_o  ( data1_o    ),
-			   .dat1_i  ( data1_i    ),
-			   .en1     ( 1'b1       ),
-			   .wr1     ( wr1        )
-			   );
+                           .adr0    ( adr_i[ADR_WIDTH+1:2] ),
+                           .dat0_o  ( data0      ),
+                           .en0     ( 1'b1       ),
+                           .adr1    ( addr1      ),
+                           .dat1_o  ( data1_o    ),
+                           .dat1_i  ( data1_i    ),
+                           .en1     ( 1'b1       ),
+                           .wr1     ( wr1        )
+                           );
 defparam oc8051_cache_ram.ADR_WIDTH = ADR_WIDTH;
-always @(stb_b or data0 or data1 or byte_sel)
+always @*
 begin
   if (stb_b) begin
     case (byte_sel) /* synopsys full_case parallel_case */
-      2'b00  : dat_o = data0;
-      2'b01  : dat_o = {data1[7:0],   data0[31:8]};
-      2'b10  : dat_o = {data1[15:0],  data0[31:16]};
-      2'b11  : dat_o = {8'h00, data1, data0[31:24]};
+      2'b00  : begin dat_o = data0; end
+      2'b01  : begin dat_o = {data1[7:0],   data0[31:8]}; end
+      2'b10  : begin dat_o = {data1[15:0],  data0[31:16]}; end
+      2'b11  : begin dat_o = {8'h00, data1, data0[31:24]}; end
     endcase
   end else begin
     dat_o = 32'h0;
@@ -340,114 +336,120 @@ always @(posedge clk or posedge rst)
 begin
   if (rst)
     begin
-        con0 <= #1 9'h0;
-        con2 <= #1 9'h0;
-        vaild_h <= #1 1'b0;
-	vaild_l <= #1 1'b0;
+      con0 <= 9'h0;
+      con2 <= 9'h0;
+      vaild_h <= 1'b0;
+      vaild_l <= 1'b0;
     end
   else
     begin
-        con0 <= #1 {con_buf[adr_i[ADR_WIDTH+1:LINE_WIDTH+2]]};
-        con2 <= #1 {con_buf[adr_i2]};
-	vaild_l <= #1 valid[adr_i[ADR_WIDTH+1:LINE_WIDTH+2]];
-	vaild_h <= #1 valid[adr_i2];
+      con0 <= {con_buf[adr_i[ADR_WIDTH+1:LINE_WIDTH+2]]};
+      con2 <= {con_buf[adr_i2]};
+      vaild_l <= valid[adr_i[ADR_WIDTH+1:LINE_WIDTH+2]];
+      vaild_h <= valid[adr_i2];
     end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    cadr0 <= #1 8'h00;
-    cadr2 <= #1 8'h00;
+    cadr0 <= 8'h00;
+    cadr2 <= 8'h00;
   end else begin
-    cadr0 <= #1 adr_i[15:ADR_WIDTH+2];
-    cadr2 <= #1 adr_i[15:ADR_WIDTH+2]+ cy1;
+    cadr0 <= adr_i[15:ADR_WIDTH+2];
+    cadr2 <= adr_i[15:ADR_WIDTH+2]+ cy1;
   end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    stb_b <= #1 1'b0;
-    byte_sel <= #1 2'b00;
+    stb_b <= 1'b0;
+    byte_sel <= 2'b00;
   end else begin
-    stb_b <= #1 stb_i;
-    byte_sel <= #1 adr_i[1:0];
+    stb_b <= stb_i;
+    byte_sel <= adr_i[1:0];
   end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst)
     begin
-        cyc    <= #1 2'b00;
-        cyc_o  <= #1 1'b0;
-        stb_o  <= #1 1'b0;
-        data1_i<= #1 32'h0;
-        wr1    <= #1 1'b0;
-        adr_w  <= #1 6'h0;
-        valid  <= #1 16'h0;
+        cyc    <= 2'b00;
+        cyc_o  <= 1'b0;
+        stb_o  <= 1'b0;
+        data1_i<= 32'h0;
+        wr1    <= 1'b0;
+        adr_w  <= 6'h0;
+        valid  <= 16'h0;
     end
   else if (stb_b && !hit && !stb_o && !wr1)
     begin
-        cyc     <= #1 2'b00;
-        cyc_o   <= #1 1'b1;
-        stb_o   <= #1 1'b1;
-        data1_i <= #1 32'h0;
-        wr1     <= #1 1'b0;
+        cyc     <= 2'b00;
+        cyc_o   <= 1'b1;
+        stb_o   <= 1'b1;
+        data1_i <= 32'h0;
+        wr1     <= 1'b0;
     end
   else if (stb_o && ack_i)
     begin
-        data1_i<= #1 dat_i; ///??
-        wr1    <= #1 1'b1;
-        adr_w  <= #1 adr_o[ADR_WIDTH+1:2];
+        data1_i<= dat_i; ///??
+        wr1    <= 1'b1;
+        adr_w  <= adr_o[ADR_WIDTH+1:2];
         if (&cyc)
           begin
-              cyc   <= #1 2'b00;
-              cyc_o <= #1 1'b0;
-              stb_o <= #1 1'b0;
-              valid[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= #1 1'b1;
+              cyc   <= 2'b00;
+              cyc_o <= 1'b0;
+              stb_o <= 1'b0;
+              valid[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= 1'b1;
           end
         else
           begin
-              cyc   <= #1 cyc + 1'b1;
-              cyc_o <= #1 1'b1;
-              stb_o <= #1 1'b1;
-              valid[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= #1 1'b0;
+              cyc   <= cyc + 1'b1;
+              cyc_o <= 1'b1;
+              stb_o <= 1'b1;
+              valid[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= 1'b0;
           end
     end
   else
-    wr1 <= #1 1'b0;
+    wr1 <= 1'b0;
 end
 //rih
 always @(posedge clk)
+begin
   if ( ~(stb_b && !hit && !stb_o && !wr1) & (stb_o && ack_i && cyc) )
-    con_buf[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= #1 mis_adr[15:ADR_WIDTH+2];
-always @(posedge clk or posedge rst)
-begin
-  if (rst)
-    mis_adr <= #1 1'b0;
-  else if (!hit_l)
-    mis_adr <= #1 adr_i;
-  else if (!hit_h)
-    mis_adr <= #1 adr_i+'d2;
-end
-always @(posedge clk or posedge rst)
-begin
-  if (rst)
-    tmp_data1 <= #1 1'b0;
-  else if (!hit_h && wr1 && (cyc==adr_r1))
-//    tmp_data1 <= #1 dat_i[31:16]; //???
-    tmp_data1 <= #1 dat_i[15:0]; //???
-  else if (!hit_l && hit_h && wr1)
-//    tmp_data1 <= #1 data1_o[31:16];
-    tmp_data1 <= #1 data1_o[15:0]; //??
+  begin
+    con_buf[mis_adr[ADR_WIDTH+1:LINE_WIDTH+2]] <= mis_adr[15:ADR_WIDTH+2];
+  end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    wr1_t <= #1 1'b0;
-    stb_it <= #1 1'b0;
+    mis_adr <= 1'b0;
+  end else if (!hit_l) begin
+    mis_adr <= adr_i;
+  end else if (!hit_h) begin
+    mis_adr <= adr_i+'d2;
+  end
+end
+always @(posedge clk or posedge rst)
+begin
+  if (rst) begin
+    tmp_data1 <= 1'b0;
+  end else if (!hit_h && wr1 && (cyc==adr_r1)) begin
+//    tmp_data1 <= dat_i[31:16]; //???
+    tmp_data1 <= dat_i[15:0]; //???
+  end else if (!hit_l && hit_h && wr1) begin
+//    tmp_data1 <= data1_o[31:16];
+    tmp_data1 <= data1_o[15:0]; //??
+  end
+end
+always @(posedge clk or posedge rst)
+begin
+  if (rst) begin
+    wr1_t <= 1'b0;
+    stb_it <= 1'b0;
   end else begin
-    wr1_t <= #1 wr1;
-    stb_it <= #1 stb_i;
+    wr1_t <= wr1;
+    stb_it <= stb_i;
   end
 end
 endmodule

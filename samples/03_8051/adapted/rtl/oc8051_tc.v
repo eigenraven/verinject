@@ -62,7 +62,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -218,32 +218,32 @@
 module oc8051_tc (clk, rst, 
             data_in,
             wr_addr,
-	    wr, wr_bit,
-	    ie0, ie1,
-	    tr0, tr1,
-	    t0, t1,
+            wr, wr_bit,
+            ie0, ie1,
+            tr0, tr1,
+            t0, t1,
             tf0, tf1,
-	    pres_ow,
+            pres_ow,
 //registers
-	    tmod, tl0, th0, tl1, th1);
+            tmod, tl0, th0, tl1, th1);
 input [7:0]  wr_addr,
              data_in;
 input        clk,
              rst,
-	     wr,
-	     wr_bit,
-	     ie0,
-	     ie1,
-	     tr0,
-	     tr1,
-	     t0,
-	     t1,
-	     pres_ow;
+             wr,
+             wr_bit,
+             ie0,
+             ie1,
+             tr0,
+             tr1,
+             t0,
+             t1,
+             pres_ow;
 output [7:0] tmod,
              tl0,
-	     th0,
-	     tl1,
-	     th1;
+             th0,
+             tl1,
+             th1;
 output       tf0,
              tf1;
 reg [7:0] tmod, tl0, th0, tl1, th1;
@@ -295,7 +295,7 @@ begin
       2'b10: begin                       // mode 2
         tf1_0 <= #1 1'b0;
         if (tc0_add) begin
-	  if (tl0 == 8'b1111_1111) begin
+          if (tl0 == 8'b1111_1111) begin
             tf0 <=#1 1'b1;
             tl0 <=#1 th0;
            end
@@ -303,13 +303,13 @@ begin
             tl0 <=#1 tl0 + 8'h1;
             tf0 <= #1 1'b0;
           end
-	end
+        end
       end
       2'b11: begin                       // mode 3
-	 if (tc0_add)
-	   {tf0, tl0} <= #1 {1'b0, tl0} +1'b1;
+         if (tc0_add)
+           {tf0, tl0} <= #1 {1'b0, tl0} +1'b1;
          if (tr1 & pres_ow)
-	   {tf1_0, th0} <= #1 {1'b0, th0} +1'b1;
+           {tf1_0, th0} <= #1 {1'b0, th0} +1'b1;
       end
 /*      default:begin
         tf0 <= #1 1'b0;
@@ -345,7 +345,7 @@ begin
       end
       2'b10: begin                       // mode 2
         if (tc1_add) begin
-	  if (tl1 == 8'b1111_1111) begin
+          if (tl1 == 8'b1111_1111) begin
             tf1_1 <=#1 1'b1;
             tl1 <=#1 th1;
            end
@@ -353,7 +353,7 @@ begin
             tl1 <=#1 tl1 + 8'h1;
             tf1_1 <= #1 1'b0;
           end
-	end
+        end
       end
 /*      default:begin
         tf1_1 <= #1 1'b0;

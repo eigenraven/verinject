@@ -64,7 +64,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -217,33 +217,22 @@
 //synopsys translate_off
 `timescale 1ns/10ps
 //synopsys translate_on
-module oc8051_int (clk, rst, 
-        wr_addr,  
-	data_in, bit_in, 
-	wr, wr_bit,
-//timer interrupts
-        tf0, tf1, t2_int,
-	tr0, tr1,
-//external interrupts
-        ie0, ie1,
-//uart interrupts
-        uart_int,
-//to cpu
-        intr, reti, int_vec, ack,
-//registers
-	ie, tcon, ip);
-input [7:0] wr_addr, data_in;
-input wr, tf0, tf1, t2_int, ie0, ie1, clk, rst, reti, wr_bit, bit_in, ack, uart_int;
-output tr0, tr1, intr;
-output [7:0] int_vec,
-             ie,
-	     tcon,
-	     ip;
-reg [7:0] ip, ie, int_vec;
+module oc8051_int (
+  input clk, input rst,
+  input [7:0] wr_addr, input [7:0] data_in,
+  input wr, input tf0, input tf1, input t2_int, input ie0, input ie1,
+  input reti, input wr_bit, input bit_in, input ack, input uart_int,
+  output tr0, output tr1, output intr,
+  output reg [7:0] int_vec,
+  output reg [7:0] ie,
+  output wire [7:0] tcon,
+  output reg [7:0] ip,
+);
+
 reg [3:0] tcon_s;
 reg tcon_tf1, tcon_tf0, tcon_ie1, tcon_ie0;
 //
-// isrc		processing interrupt sources
+// isrc                processing interrupt sources
 // int_dept
 wire [2:0] isrc_cur;
 reg [2:0] isrc [1:0];
@@ -259,9 +248,9 @@ assign cur_lev = int_lev[int_dept_1];
 // contains witch level of interrupts is running
 //reg [1:0] int_levl, int_levl_w;
 //
-// int_ln	waiting interrupts on level n
-// ip_ln	interrupts on level n
-// int_src	interrupt sources
+// int_ln        waiting interrupts on level n
+// ip_ln        interrupts on level n
+// int_src        interrupt sources
 wire [5:0] int_l0, int_l1;
 wire [5:0] ip_l0, ip_l1;
 wire [5:0] int_src;

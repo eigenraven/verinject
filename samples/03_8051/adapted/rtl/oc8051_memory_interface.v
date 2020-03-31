@@ -86,7 +86,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -302,20 +302,20 @@ module oc8051_memory_interface (clk, rst,
    );
 input         clk,
               rst,
-	      wr_i,
-	      wr_bit_i;
+              wr_i,
+              wr_bit_i;
 input         bit_in,
               sfr_bit,
-	      dack_i;
+              dack_i;
 input [2:0]   mem_act;
 input [7:0]   in_ram,
               sfr,
-	      acc,
-	      sp_w;
+              acc,
+              sp_w;
 input [31:0]  idat_i;
 output        bit_out,
               mem_wait,
-	      reti;
+              reti;
 output [7:0]  iram_out,
               wr_dat;
 reg           bit_out,
@@ -337,7 +337,7 @@ reg [23:0]    idat_ir;
 input         iack_i;
 input [7:0]   des_acc,
               des1,
-	      des2;
+              des2;
 output [15:0] iadr_o;
 wire          ea_rom_sel;
 /////////////////////////////
@@ -372,8 +372,8 @@ reg [7:0]     wr_addr,
 reg [4:0]     rn_r;
 reg [7:0]     ri_r,
               imm_r,
-	      imm2_r,
-	      op1_r;
+              imm2_r,
+              op1_r;
 wire [7:0]    imm,
               imm2;
 /////////////////////////////
@@ -383,32 +383,32 @@ wire [7:0]    imm,
 /////////////////////////////
 input         intr,
               rd,
-	      ea, 
-	      ea_int, 
-	      istb;
+              ea, 
+              ea_int, 
+              istb;
 input  [7:0]  int_v;
 input  [31:0] idat_onchip;
 output        int_ack,
               istb_o;
 output  [7:0] op1_out,
               op3_out,
-	      op2_out;
+              op2_out;
 reg           int_ack_t,
               int_ack,
-	      int_ack_buff;
+              int_ack_buff;
 reg [7:0]     int_vec_buff;
 reg [7:0]     op1_out,
               op2_buff,
-	      op3_buff;
+              op3_buff;
 reg [7:0]     op1_o,
               op2_o,
-	      op3_o;
+              op3_o;
 reg [7:0]     op1_xt, 
               op2_xt, 
-	      op3_xt;
+              op3_xt;
 reg [7:0]     op1,
               op2,
-	      op3;
+              op3;
 wire [7:0]    op2_direct;
 input [2:0]   pc_wr_sel;
 input         pc_wr;
@@ -425,8 +425,8 @@ reg           int_buff,
 ////////////////////////////
 reg           istb_t,
               imem_wait,
-	      dstb_o,
-	      dwe_o;
+              dstb_o,
+              dwe_o;
 reg [7:0]     ddat_o;
 reg [15:0]    iadr_t,
               dadr_ot;

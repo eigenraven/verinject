@@ -56,7 +56,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -206,7 +206,12 @@
 //
 // read modify write instruction
 //
-module oc8051_dptr(clk, rst, addr, data_in, data2_in, wr, wr_sfr, wr_bit, data_hi, data_lo);
+module oc8051_dptr(
+input clk, input rst, input wr, input wr_bit,
+input [1:0] wr_sfr,
+input [7:0] addr, input [7:0] data_in, input [7:0] data2_in,
+output reg [7:0] data_hi, output reg [7:0] data_lo,
+);
 //
 // clk          (in)  clock
 // rst          (in)  reset
@@ -219,26 +224,24 @@ module oc8051_dptr(clk, rst, addr, data_in, data2_in, wr, wr_sfr, wr_bit, data_h
 // data_hi      (out) output (high bits) [oc8051_alu_src3_sel.dptr, oc8051_ext_addr_sel.dptr_hi, oc8051_ram_sel.dptr_hi]
 // data_lo      (out) output (low bits) [oc8051_ext_addr_sel.dptr_lo]
 //
-input clk, rst, wr, wr_bit;
-input [1:0] wr_sfr;
-input [7:0] addr, data_in, data2_in;
-output [7:0] data_hi, data_lo;
-reg [7:0] data_hi, data_lo;
+
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    data_hi <= #1 8'h00;
-    data_lo <= #1 8'h00;
+    data_hi <= 8'h00;
+    data_lo <= 8'h00;
   end else if (wr_sfr==2'b11) begin
 //
 //write from destination 2 and 1
-    data_hi <= #1 data2_in;
-    data_lo <= #1 data_in;
-  end else if ((addr==8'h83) & (wr) & !(wr_bit))
+    data_hi <= data2_in;
+    data_lo <= data_in;
+  end else if ((addr==8'h83) & (wr) & !(wr_bit)) begin
 //
 //case of writing to dptr
-    data_hi <= #1 data_in;
-  else if ((addr==8'h82) & (wr) & !(wr_bit))
-    data_lo <= #1 data_in;
+    data_hi <= data_in;
+  end else if ((addr==8'h82) & (wr) & !(wr_bit)) begin
+    data_lo <= data_in;
+  end
 end
+
 endmodule

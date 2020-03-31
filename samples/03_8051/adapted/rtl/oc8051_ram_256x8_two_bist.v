@@ -51,7 +51,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -207,19 +207,19 @@
 module oc8051_ram_256x8_two_bist (
                      clk,
                      rst,
-		     rd_addr,
-		     rd_data,
-		     rd_en,
-		     wr_addr,
-		     wr_data,
-		     wr_en,
-		     wr
-		     );
+                     rd_addr,
+                     rd_data,
+                     rd_en,
+                     wr_addr,
+                     wr_data,
+                     wr_en,
+                     wr
+                     );
 input         clk, 
               wr, 
-	      rst,
-	      rd_en,
-	      wr_en;
+              rst,
+              rd_en,
+              wr_en;
 input  [7:0]  wr_data;
 input  [7:0]  rd_addr,
               wr_addr;
@@ -228,19 +228,19 @@ output [7:0]  rd_data;
     
     
       generic_dpram #(8, 8) oc8051_ram1(
-      	.rclk  ( clk            ),
-      	.rrst  ( rst            ),
-      	.rce   ( rd_en          ),
-      	.oe    ( 1'b1           ),
-      	.raddr ( rd_addr        ),
-      	.do    ( rd_data        ),
+              .rclk  ( clk            ),
+              .rrst  ( rst            ),
+              .rce   ( rd_en          ),
+              .oe    ( 1'b1           ),
+              .raddr ( rd_addr        ),
+              .do    ( rd_data        ),
       
-      	.wclk  ( clk            ),
-      	.wrst  ( rst            ),
-      	.wce   ( wr_en          ),
-      	.we    ( wr             ),
-      	.waddr ( wr_addr        ),
-      	.di    ( wr_data        )
+              .wclk  ( clk            ),
+              .wrst  ( rst            ),
+              .wce   ( wr_en          ),
+              .we    ( wr             ),
+              .waddr ( wr_addr        ),
+              .di    ( wr_data        )
       );
     
     

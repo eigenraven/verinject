@@ -54,7 +54,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -209,33 +209,33 @@
 //synopsys translate_on
 module oc8051_tc2 (clk, rst,
             wr_addr,
-	    data_in, bit_in,
-	    wr, wr_bit,
-	    t2, t2ex,
+            data_in, bit_in,
+            wr, wr_bit,
+            t2, t2ex,
             rclk, tclk,
-	    brate2, tc2_int,
-	    pres_ow,
+            brate2, tc2_int,
+            pres_ow,
 //registers
-	    t2con, tl2, th2, rcap2l, rcap2h);
+            t2con, tl2, th2, rcap2l, rcap2h);
 input [7:0]  wr_addr,
              data_in;
 input        clk,
              rst,
-	     wr,
-	     wr_bit,
-	     t2,
-	     t2ex,
-	     bit_in,
-	     pres_ow;	//prescalre owerflov
+             wr,
+             wr_bit,
+             t2,
+             t2ex,
+             bit_in,
+             pres_ow;        //prescalre owerflov
 output [7:0] t2con,
              tl2,
-	     th2,
-	     rcap2l,
-	     rcap2h;
+             th2,
+             rcap2l,
+             rcap2h;
 output       tc2_int,
-	     rclk,
-	     tclk,
-	     brate2;
+             rclk,
+             tclk,
+             brate2;
 reg brate2;
 reg [7:0] t2con, tl2, th2, rcap2l, rcap2h;
 reg neg_trans, t2ex_r, t2_r, tc2_event, tf2_set;

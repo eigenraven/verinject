@@ -71,7 +71,7 @@
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
-////  8051 cores Definitions              		          ////
+////  8051 cores Definitions                                        ////
 ////                                                              ////
 ////  This file is part of the 8051 cores project                 ////
 ////  http://www.opencores.org/cores/8051/                        ////
@@ -223,9 +223,9 @@
 //
 module oc8051_acc (input clk, input rst, 
                  input bit_in, input [7:0] data_in, input [7:0] data2_in, 
-		 output reg [7:0] data_out,
-		 input wr, input wr_bit, input [7:0] wr_addr,
-		 output wire p, input [1:0] wr_sfr);
+                 output reg [7:0] data_out,
+                 input wr, input wr_bit, input [7:0] wr_addr,
+                 output wire p, input [1:0] wr_sfr);
 
 reg [7:0] acc;
 wire wr_acc, wr2_acc, wr_bit_acc;
