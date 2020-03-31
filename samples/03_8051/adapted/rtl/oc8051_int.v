@@ -278,22 +278,24 @@ assign intr = |int_vec;
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   ip <=#1 8'b0000_0000;
+   ip <=8'b0000_0000;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'hb7)) begin
-   ip <= #1 data_in;
- end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10111))
-   ip[wr_addr[2:0]] <= #1 bit_in;
+   ip <= data_in;
+ end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10111)) begin
+   ip[wr_addr[2:0]] <= bit_in;
+  end
 end
 //
 // IE
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   ie <=#1 8'b0000_0000;
+   ie <=8'b0000_0000;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'ha8)) begin
-   ie <= #1 data_in;
- end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10101))
-   ie[wr_addr[2:0]] <= #1 bit_in;
+   ie <= data_in;
+ end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10101)) begin
+   ie[wr_addr[2:0]] <= bit_in;
+ end
 end
 //
 // tcon_s
@@ -301,15 +303,15 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tcon_s <=#1 4'b0000;
+   tcon_s <=4'b0000;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h88)) begin
-   tcon_s <= #1 {data_in[6], data_in[4], data_in[2], data_in[0]};
+   tcon_s <= {data_in[6], data_in[4], data_in[2], data_in[0]};
  end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10001)) begin
    case (wr_addr[2:0]) /* synopsys full_case parallel_case */
-     3'b000: tcon_s[0] <= #1 bit_in;
-     3'b010: tcon_s[1] <= #1 bit_in;
-     3'b100: tcon_s[2] <= #1 bit_in;
-     3'b110: tcon_s[3] <= #1 bit_in;
+     3'b000: begin tcon_s[0] <= bit_in; end
+     3'b010: begin tcon_s[1] <= bit_in; end
+     3'b100: begin tcon_s[2] <= bit_in; end
+     3'b110: begin tcon_s[3] <= bit_in; end
    endcase
  end
 end
@@ -319,15 +321,15 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tcon_tf1 <=#1 1'b0;
+   tcon_tf1 <=1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h88)) begin
-   tcon_tf1 <= #1 data_in[7];
+   tcon_tf1 <= data_in[7];
  end else if ((wr) & (wr_bit) & (wr_addr=={5'b10001, 3'b111})) begin
-   tcon_tf1 <= #1 bit_in;
+   tcon_tf1 <= bit_in;
  end else if (!(tf1_buff) & (tf1)) begin
-   tcon_tf1 <= #1 1'b1;
+   tcon_tf1 <= 1'b1;
  end else if (ack & (isrc_cur==3'b100)) begin
-   tcon_tf1 <= #1 1'b0;
+   tcon_tf1 <= 1'b0;
  end
 end
 //
@@ -336,15 +338,15 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tcon_tf0 <=#1 1'b0;
+   tcon_tf0 <=1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h88)) begin
-   tcon_tf0 <= #1 data_in[5];
+   tcon_tf0 <= data_in[5];
  end else if ((wr) & (wr_bit) & (wr_addr=={5'b10001, 3'b101})) begin
-   tcon_tf0 <= #1 bit_in;
+   tcon_tf0 <= bit_in;
  end else if (!(tf0_buff) & (tf0)) begin
-   tcon_tf0 <= #1 1'b1;
+   tcon_tf0 <= 1'b1;
  end else if (ack & (isrc_cur==3'b010)) begin
-   tcon_tf0 <= #1 1'b0;
+   tcon_tf0 <= 1'b0;
  end
 end
 //
@@ -353,17 +355,17 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tcon_ie0 <=#1 1'b0;
+   tcon_ie0 <=1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h88)) begin
-   tcon_ie0 <= #1 data_in[1];
+   tcon_ie0 <= data_in[1];
  end else if ((wr) & (wr_bit) & (wr_addr=={5'b10001, 3'b001})) begin
-   tcon_ie0 <= #1 bit_in;
+   tcon_ie0 <= bit_in;
  end else if (((tcon_s[0]) & (ie0_buff) & !(ie0)) | (!(tcon_s[0]) & !(ie0))) begin
-   tcon_ie0 <= #1 1'b1;
+   tcon_ie0 <= 1'b1;
  end else if (ack & (isrc_cur==3'b001) & (tcon_s[0])) begin
-   tcon_ie0 <= #1 1'b0;
+   tcon_ie0 <= 1'b0;
  end else if (!(tcon_s[0]) & (ie0)) begin
-   tcon_ie0 <= #1 1'b0;
+   tcon_ie0 <= 1'b0;
  end
 end
 //
@@ -372,17 +374,17 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tcon_ie1 <=#1 1'b0;
+   tcon_ie1 <=1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h88)) begin
-   tcon_ie1 <= #1 data_in[3];
+   tcon_ie1 <= data_in[3];
  end else if ((wr) & (wr_bit) & (wr_addr=={5'b10001, 3'b011})) begin
-   tcon_ie1 <= #1 bit_in;
+   tcon_ie1 <= bit_in;
  end else if (((tcon_s[1]) & (ie1_buff) & !(ie1)) | (!(tcon_s[1]) & !(ie1))) begin
-   tcon_ie1 <= #1 1'b1;
+   tcon_ie1 <= 1'b1;
  end else if (ack & (isrc_cur==3'b011) & (tcon_s[1])) begin
-   tcon_ie1 <= #1 1'b0;
+   tcon_ie1 <= 1'b0;
  end else if (!(tcon_s[1]) & (ie1)) begin
-   tcon_ie1 <= #1 1'b0;
+   tcon_ie1 <= 1'b0;
  end
 end
 //
@@ -390,77 +392,79 @@ end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    int_vec <= #1 8'h00;
-    int_dept <= #1 2'b0;
-    isrc[0] <= #1 3'h0;
-    isrc[1] <= #1 3'h0;
-    int_proc <= #1 1'b0;
-    int_lev[0] <= #1 1'b0;
-    int_lev[1] <= #1 1'b0;
+    int_vec <= 8'h00;
+    int_dept <= 2'b0;
+    isrc[0] <= 3'h0;
+    isrc[1] <= 3'h0;
+    int_proc <= 1'b0;
+    int_lev[0] <= 1'b0;
+    int_lev[1] <= 1'b0;
   end else if (reti & int_proc) begin  // return from interrupt
    if (int_dept==2'b01)
-     int_proc <= #1 1'b0;
-   int_dept <= #1 int_dept - 2'b01;
+     int_proc <= 1'b0;
+   int_dept <= int_dept - 2'b01;
   end else if (((ie[7]) & (!cur_lev) || !int_proc) & il1) begin  // interrupt on level 1
-   int_proc <= #1 1'b1;
-   int_lev[int_dept] <= #1 1'b1;
-   int_dept <= #1 int_dept + 2'b01;
+   int_proc <= 1'b1;
+   int_lev[int_dept] <= 1'b1;
+   int_dept <= int_dept + 2'b01;
    if (int_l1[0]) begin
-     int_vec <= #1 8'h03;
-     isrc[int_dept] <= #1 3'b001;
+     int_vec <= 8'h03;
+     isrc[int_dept] <= 3'b001;
    end else if (int_l1[1]) begin
-     int_vec <= #1 8'h0b;
-     isrc[int_dept] <= #1 3'b010;
+     int_vec <= 8'h0b;
+     isrc[int_dept] <= 3'b010;
    end else if (int_l1[2]) begin
-     int_vec <= #1 8'h13;
-     isrc[int_dept] <= #1 3'b011;
+     int_vec <= 8'h13;
+     isrc[int_dept] <= 3'b011;
    end else if (int_l1[3]) begin
-     int_vec <= #1 8'h1b;
-     isrc[int_dept] <= #1 3'b100;
+     int_vec <= 8'h1b;
+     isrc[int_dept] <= 3'b100;
    end else if (int_l1[4]) begin
-     int_vec <= #1 8'h23;
-     isrc[int_dept] <= #1 3'b101;
+     int_vec <= 8'h23;
+     isrc[int_dept] <= 3'b101;
    end else if (int_l1[5]) begin
-     int_vec <= #1 8'h2b;
-     isrc[int_dept] <= #1 3'b110;
+     int_vec <= 8'h2b;
+     isrc[int_dept] <= 3'b110;
    end
  end else if ((ie[7]) & !int_proc & il0) begin  // interrupt on level 0
-   int_proc <= #1 1'b1;
-   int_lev[int_dept] <= #1 1'b0;
-   int_dept <= #1 2'b01;
+   int_proc <= 1'b1;
+   int_lev[int_dept] <= 1'b0;
+   int_dept <= 2'b01;
    if (int_l0[0]) begin
-     int_vec <= #1 8'h03;
-     isrc[int_dept] <= #1 3'b001;
+     int_vec <= 8'h03;
+     isrc[int_dept] <= 3'b001;
    end else if (int_l0[1]) begin
-     int_vec <= #1 8'h0b;
-     isrc[int_dept] <= #1 3'b010;
+     int_vec <= 8'h0b;
+     isrc[int_dept] <= 3'b010;
    end else if (int_l0[2]) begin
-     int_vec <= #1 8'h13;
-     isrc[int_dept] <= #1 3'b011;
+     int_vec <= 8'h13;
+     isrc[int_dept] <= 3'b011;
    end else if (int_l0[3]) begin
-     int_vec <= #1 8'h1b;
-     isrc[int_dept] <= #1 3'b100;
+     int_vec <= 8'h1b;
+     isrc[int_dept] <= 3'b100;
    end else if (int_l0[4]) begin
-     int_vec <= #1 8'h23;
-     isrc[int_dept] <= #1 3'b101;
+     int_vec <= 8'h23;
+     isrc[int_dept] <= 3'b101;
    end else if (int_l0[5]) begin
-     int_vec <= #1 8'h2b;
-     isrc[int_dept] <= #1 3'b110;
+     int_vec <= 8'h2b;
+     isrc[int_dept] <= 3'b110;
    end
  end else begin
-   int_vec <= #1 8'h00;
+   int_vec <= 8'h00;
  end
 end
 always @(posedge clk or posedge rst)
+begin
   if (rst) begin
-    tf0_buff <= #1 1'b0;
-    tf1_buff <= #1 1'b0;
-    ie0_buff <= #1 1'b0;
-    ie1_buff <= #1 1'b0;
+    tf0_buff <= 1'b0;
+    tf1_buff <= 1'b0;
+    ie0_buff <= 1'b0;
+    ie1_buff <= 1'b0;
   end else begin
-    tf0_buff <= #1 tf0;
-    tf1_buff <= #1 tf1;
-    ie0_buff <= #1 ie0;
-    ie1_buff <= #1 ie1;
+    tf0_buff <= tf0;
+    tf1_buff <= tf1;
+    ie0_buff <= ie0;
+    ie1_buff <= ie1;
   end
+end
 endmodule
