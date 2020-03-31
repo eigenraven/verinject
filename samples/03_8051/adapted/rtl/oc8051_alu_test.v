@@ -205,7 +205,14 @@
 //
 // read modify write instruction
 //
-module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, des1, des2, des1_r, desCy, desAc, desOv);
+module oc8051_alu (
+  input clk, input rst,
+  input srcCy, input srcAc, input bit_in,
+  input [3:0] op_code,
+  input [7:0] src1, input [7:0] src2, input [7:0] src3,
+  output reg desCy, output reg desAc, output reg desOv,
+  output reg [7:0] des1, output reg [7:0] des2, output reg [7:0] des1_r
+);
 //
 // op_code      (in)  operation code [oc8051_decoder.alu_op -r]
 // src1         (in)  first operand [oc8051_alu_src1_sel.des]
@@ -221,13 +228,7 @@ module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, de
 // desAc        (out) auxiliary carry output [oc8051_psw.ac_in]
 // desOv        (out) Overflow output [oc8051_psw.ov_in]
 //
-input srcCy, srcAc, bit_in, clk, rst; input [3:0] op_code; input [7:0] src1, src2, src3;
-output desCy, desAc, desOv;
-output [7:0] des1, des2;
-output [7:0] des1_r;
-reg desCy, desAc, desOv;
-reg [7:0] des1, des2;
-reg [7:0] des1_r;
+
 reg idesCy, idesAc, idesOv;
 reg [7:0] ides1, ides2;
 reg [7:0] ides1_r;
@@ -288,7 +289,7 @@ assign sub9 = {1'b1,src1[7]};
 assign suba = {1'b0,src2[7]};
 assign subb = {1'b0,!sub8[3]};
 assign subc = sub9-suba-subb;
-always @(op_code or src1 or src2 or srcCy or srcAc or bit_in or src3 or mulsrc1 or mulsrc2 or mulOv or divsrc1 or divsrc2 or divOv or addc or add8 or add4 or sub4 or sub8 or subc or da_tmp)
+always @*
 begin
   case (op_code)
 //operation add
@@ -340,11 +341,11 @@ begin
       des1=da1[7:0];
       des2=8'h00;
       desCy=da1[8];*/
-      if (srcAc==1'b1 | src1[3:0]>4'b1001) {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]}+ 5'b00110;
-      else {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]};
-      if (srcCy==1'b1 | src1[7:4]>4'b1001)
-        {idesCy, ides1[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp};
-      else {idesCy, ides1[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp};
+      if (srcAc==1'b1 | src1[3:0]>4'b1001) begin {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]}+ 5'b00110; end
+      else begin {da_tmp, ides1[3:0]} = {1'b0, src1[3:0]}; end
+      if begin (srcCy==1'b1 | src1[7:4]>4'b1001)
+        {idesCy, ides1[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp}; end
+      else begin {idesCy, ides1[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp}; end
       ides2 = 8'h00;
       idesAc = 1'b0;
       idesOv = 1'b0;
@@ -476,26 +477,33 @@ begin
     end
   endcase
 end
+
 always @(posedge clk or posedge rst)
+begin
   if (rst) begin
-    ides1_r <= #1 8'h0;
+    ides1_r <= 8'h0;
   end else begin
-    ides1_r <= #1 ides1;
+    ides1_r <= ides1;
   end
+end
+
 always @(posedge clk or posedge rst)
+begin
   if (rst) begin
-    desCy <= #1 1'b0;
-    desAc <= #1 1'b0;
-    desOv <= #1 1'b0;
-    des1 <= #1 8'h00;
-    des2 <= #1 1'h00;
-    des1_r <= #1 1'h00;
+    desCy <= 1'b0;
+    desAc <= 1'b0;
+    desOv <= 1'b0;
+    des1 <= 8'h00;
+    des2 <= 1'h00;
+    des1_r <= 1'h00;
   end else begin
-    desCy <= #1 idesCy;
-    desAc <= #1 idesAc;
-    desOv <= #1 idesOv;
-    des1 <= #1 ides1;
-    des2 <= #1 ides2;
-    des1_r <= #1 ides1_r;
+    desCy <= idesCy;
+    desAc <= idesAc;
+    desOv <= idesOv;
+    des1 <= ides1;
+    des2 <= ides2;
+    des1_r <= ides1_r;
   end
+end
+
 endmodule

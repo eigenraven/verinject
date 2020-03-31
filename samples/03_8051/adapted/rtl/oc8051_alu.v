@@ -232,8 +232,13 @@
 //
 // read modify write instruction
 //
-module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in, 
-                  des1, des2, des_acc, desCy, desAc, desOv, sub_result);
+module oc8051_alu (
+input        clk, input rst, input srcCy, input srcAc, input bit_in,
+input  [3:0] op_code,
+input [7:0] src1, input [7:0] src2, input [7:0] src3,
+output reg       desCy, output reg desAc, output reg desOv,
+output reg [7:0] des1, output reg [7:0] des2, output reg [7:0] des_acc,
+output wire [7:0] sub_result);
 //
 // op_code      (in)  operation code [oc8051_decoder.alu_op -r]
 // src1         (in)  first operand [oc8051_alu_src1_sel.des]
@@ -248,13 +253,6 @@ module oc8051_alu (clk, rst, op_code, src1, src2, src3, srcCy, srcAc, bit_in,
 // desAc        (out) auxiliary carry output [oc8051_psw.ac_in]
 // desOv        (out) Overflow output [oc8051_psw.ov_in]
 //
-input        srcCy, srcAc, bit_in, clk, rst;
-input  [3:0] op_code;
-input  [7:0] src1, src2, src3;
-output       desCy, desAc, desOv;
-output [7:0] des1, des2, des_acc, sub_result;
-reg desCy, desAc, desOv;
-reg [7:0] des1, des2, des_acc;
 //
 //add
 //
@@ -321,9 +319,7 @@ assign sub_result = {subc[0],sub8[2:0],sub4[3:0]};
 /* inc */
 assign inc = {src2, src1} + {15'h0, 1'b1};
 assign dec = {src2, src1} - {15'h0, 1'b1};
-always @(op_code or src1 or src2 or srcCy or srcAc or bit_in or src3 or mulsrc1
-      or mulsrc2 or mulOv or divsrc1 or divsrc2 or divOv or addc or add8 or add4
-      or sub4 or sub8 or subc or da_tmp or inc or dec or sub_result)
+always @*
 begin
   case (op_code) /* synopsys full_case parallel_case */
 //operation add
@@ -373,11 +369,11 @@ begin
     end
 //operation decimal adjustment
     4'b0101: begin
-      if (srcAc==1'b1 | src1[3:0]>4'b1001) {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]}+ 5'b00110;
-      else {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]};
-      if (srcCy | da_tmp | src1[7:4]>4'b1001)
-        {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp};
-      else {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp};
+      if (srcAc==1'b1 | src1[3:0]>4'b1001) begin {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]}+ 5'b00110; end
+      else begin {da_tmp, des_acc[3:0]} = {1'b0, src1[3:0]}; end
+      if (srcCy | da_tmp | src1[7:4]>4'b1001) begin
+        {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]}+ 5'b00110 + {4'b0, da_tmp}; end
+      else begin {da_tmp1, des_acc[7:4]} = {srcCy, src1[7:4]} + {4'b0, da_tmp}; end
       desCy = da_tmp | da_tmp1;
       des1 = src1;
       des2 = 8'h00;

@@ -209,26 +209,24 @@
 //
 // read modify write instruction
 //
-module oc8051_b_register (clk, rst, bit_in, data_in, wr, wr_bit,
-              wr_addr, data_out);
-input clk, rst, wr, wr_bit, bit_in;
-input [7:0] wr_addr, data_in;
-output [7:0] data_out;
-reg [7:0] data_out;
+module oc8051_b_register ( 
+input clk, input rst, input bit_in,
+input [7:0] data_in, input wr, input wr_bit,
+input [7:0] wr_addr, output reg [7:0] data_out);
 //
 //writing to b
 //must check if write high and correct address
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    data_out <= #1 8'h00;
-  else if (wr) begin
+  if (rst) begin
+    data_out <= 8'h00;
+  end else if (wr) begin
     if (!wr_bit) begin
-      if (wr_addr==8'hf0)
-        data_out <= #1 data_in;
+      if (wr_addr==8'hf0) begin
+        data_out <= data_in; end
     end else begin
-      if (wr_addr[7:3]==5'b11110)
-        data_out[wr_addr[2:0]] <= #1 bit_in;
+      if (wr_addr[7:3]==5'b11110) begin
+        data_out[wr_addr[2:0]] <= bit_in; end
     end
   end
 end

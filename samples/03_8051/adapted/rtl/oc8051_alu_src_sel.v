@@ -210,26 +210,20 @@
 //
 // read modify write instruction
 //
-module oc8051_alu_src_sel (clk, rst, rd, sel1, sel2, sel3,
-                     acc, ram, pc, dptr,
-                     op1, op2, op3,
-                     src1, src2, src3);
-input clk, rst, rd, sel3;
-input [1:0] sel2;
-input [2:0] sel1;
-input [7:0] acc, ram;
-input [15:0] dptr;
-input [15:0] pc;
-input [7:0] op1, op2, op3;
-output [7:0] src1, src2, src3;
-reg [7:0] src1, src2, src3;
-reg [7:0] op1_r, op2_r, op3_r;
+module oc8051_alu_src_sel (input clk, input rst, input rd, input [2:0] sel1, input [1:0] sel2, input sel3,
+                     input [7:0] acc, input [7:0] ram, input [15:0] pc, input [15:0] dptr,
+                     input [7:0] op1, input [7:0] op2, input [7:0] op3,
+                     output reg [7:0] src1, output reg [7:0] src2, output reg [7:0] src3);
+
+reg [7:0] op1_r;
+reg [7:0] op2_r;
+reg [7:0] op3_r;
 ///////
 //
 // src1
 //
 ///////
-always @(sel1 or op1_r or op2_r or op3_r or pc or acc or ram)
+always @*
 begin
   case (sel1) /* synopsys full_case parallel_case */
     3'b000: src1 = ram;
@@ -247,13 +241,13 @@ end
 // src2
 //
 ///////
-always @(sel2 or op2_r or acc or ram or op1_r)
+always @*
 begin
   case (sel2) /* synopsys full_case parallel_case */
-    3'b01: src2= acc;
-    3'b10: src2= 8'h00;
-    3'b00: src2= ram;
-    3'b11: src2= op2_r;
+    2'b01: src2= acc;
+    2'b10: src2= 8'h00;
+    2'b00: src2= ram;
+    2'b11: src2= op2_r;
 //    default: src2= 8'h00;
   endcase
 end
@@ -262,7 +256,7 @@ end
 // src3
 //
 ///////
-always @(sel3 or pc[15:8] or dptr[15:8] or op1_r)
+always @*
 begin
   case (sel3) /* synopsys full_case parallel_case */
     1'b0:   src3= dptr[15:8];
@@ -270,14 +264,19 @@ begin
 //    default: src3= 16'h0;
   endcase
 end
+
 always @(posedge clk or posedge rst)
-  if (rst) begin
-    op1_r <= #1 8'h00;
-    op2_r <= #1 8'h00;
-    op3_r <= #1 8'h00;
+begin
+  if (rst)
+  begin
+    op1_r <= 8'h00;
+    op2_r <= 8'h00;
+    op3_r <= 8'h00;
   end else begin
-    op1_r <= #1 op1;
-    op2_r <= #1 op2;
-    op3_r <= #1 op3;
+    op1_r <= op1;
+    op2_r <= op2;
+    op3_r <= op3;
   end
+end
+
 endmodule
