@@ -259,173 +259,129 @@
 //
 // read modify write instruction
 //
-module oc8051_top (wb_rst_i, wb_clk_i,
-//interface to instruction rom
-                wbi_adr_o, 
-                wbi_dat_i, 
-                wbi_stb_o, 
-                wbi_ack_i, 
-                wbi_cyc_o, 
-                wbi_err_i,
-//interface to data ram
-                wbd_dat_i, 
-                wbd_dat_o,
-                wbd_adr_o, 
-                wbd_we_o, 
-                wbd_ack_i,
-                wbd_stb_o, 
-                wbd_cyc_o, 
-                wbd_err_i,
-// interrupt interface
-                int0_i, 
-                int1_i,
-// port interface
-  
-        
-                p0_i,
-                p0_o,
-        
-        
-                p1_i,
-                p1_o,
-        
-        
-                p2_i,
-                p2_o,
-        
-        
-                p3_i,
-                p3_o,
-        
-  
-// serial interface
-        
-                rxd_i, txd_o,
-        
-// counter interface
-        
-                t0_i, t1_i,
-        
-        
-                t2_i, t2ex_i,
-        
-// BIST
-// external access (active low)
-                ea_in
-                );
-input         wb_rst_i,                // reset input
-              wb_clk_i,                // clock input
-              int0_i,                // interrupt 0
-              int1_i,                // interrupt 1
-              ea_in,                // external access
-              wbd_ack_i,        // data acknowalge
-              wbi_ack_i,        // instruction acknowlage
-              wbd_err_i,        // data error
-              wbi_err_i;        // instruction error
-input [7:0]   wbd_dat_i;        // ram data input
-input [31:0]  wbi_dat_i;        // rom data input
-output        wbd_we_o,                // data write enable
-              wbd_stb_o,        // data strobe
-              wbd_cyc_o,        // data cycle
-              wbi_stb_o,        // instruction strobe
-              wbi_cyc_o;        // instruction cycle
-output [7:0]  wbd_dat_o;        // data output
-output [15:0] wbd_adr_o,        // data address
-              wbi_adr_o;        // instruction address
-input  [7:0]  p0_i;                // port 0 input
-output [7:0]  p0_o;                // port 0 output
-input  [7:0]  p1_i;                // port 1 input
-output [7:0]  p1_o;                // port 1 output
-input  [7:0]  p2_i;                // port 2 input
-output [7:0]  p2_o;                // port 2 output
-input  [7:0]  p3_i;                // port 3 input
-output [7:0]  p3_o;                // port 3 output
-input         rxd_i;                // receive
-output        txd_o;                // transnmit
-input         t0_i,                // counter 0 input
-              t1_i;                // counter 1 input
-input         t2_i,                // counter 2 input
-              t2ex_i;                //
-wire [7:0]  dptr_hi,
-            dptr_lo, 
-            ri, 
-            data_out,
-            op1,
-            op2,
-            op3,
-            acc,
-            p0_out,
-            p1_out,
-            p2_out,
-            p3_out,
-            sp,
-            sp_w;
+// wbi_* - interface to instruction rom
+// wbd_* - interface to data ram
+// int* - interrupt interface
+// p* - port interface
+// rxd,txt - serial interface
+// t* - counter interface
+// ea_in external access (active low)
+module oc8051_top (
+input wb_clk_i,  // clock input
+input wb_rst_i,  // reset input
+input int0_i,  // interrupt 0
+input int1_i,  // interrupt 1
+input ea_in,   // external access
+input wbd_ack_i,   // data acknowalge
+input wbi_ack_i,   // instruction acknowlage
+input wbd_err_i,   // data error
+input wbi_err_i,   // instruction error
+input [7:0]   wbd_dat_i,   // ram data input
+input [31:0]  wbi_dat_i,   // rom data input
+output wbd_we_o,  // data write enable
+output wbd_stb_o,   // data strobe
+output wbd_cyc_o,   // data cycle
+output wbi_stb_o,   // instruction strobe
+output wbi_cyc_o,   // instruction cycle
+output [7:0]  wbd_dat_o,   // data output
+output [15:0] wbd_adr_o,   // data address
+output [15:0] wbi_adr_o,   // instruction address
+input  [7:0]  p0_i,  // port 0 input
+output [7:0]  p0_o,  // port 0 output
+input  [7:0]  p1_i,  // port 1 input
+output [7:0]  p1_o,  // port 1 output
+input  [7:0]  p2_i,  // port 2 input
+output [7:0]  p2_o,  // port 2 output
+input  [7:0]  p3_i,  // port 3 input
+output [7:0]  p3_o,  // port 3 output
+input rxd_i,   // receive
+output txd_o,   // transnmit
+input t0_i,  // counter 0 input
+input t1_i,  // counter 1 input
+input t2_i,  // counter 2 input
+input t2ex_i  //
+);
+
+wire [7:0] dptr_hi;
+wire [7:0] dptr_lo; 
+wire [7:0] ri; 
+wire [7:0] data_out;
+wire [7:0] op1;
+wire [7:0] op2;
+wire [7:0] op3;
+wire [7:0] acc;
+wire [7:0] p0_out;
+wire [7:0] p1_out;
+wire [7:0] p2_out;
+wire [7:0] p3_out;
+wire [7:0] sp;
+wire [7:0] sp_w;
 wire [31:0] idat_onchip;
 wire [15:0] pc;
 assign wbd_cyc_o = wbd_stb_o;
 wire        src_sel3;
-wire [1:0]  wr_sfr,
-            src_sel2;
-wire [2:0]  ram_rd_sel,        // ram read
-            ram_wr_sel,        // ram write
-            src_sel1;
-wire [7:0]  ram_data,
-            ram_out,        //data from ram
-            sfr_out,
-            wr_dat,
-            wr_addr,        //ram write addres
-            rd_addr;        //data ram read addres
-wire        sfr_bit;
-wire [1:0]  cy_sel,        //carry select; from decoder to cy_selct1
-            bank_sel;
-wire        rom_addr_sel,        //rom addres select; alu or pc
-            rmw,
-            ea_int;
-wire        reti,
-            intr,
-            int_ack,
-            istb;
+wire [1:0]  wr_sfr;
+wire [1:0] src_sel2;
+wire [2:0]  ram_rd_sel;        // ram read
+wire [2:0] ram_wr_sel;        // ram write
+wire [2:0] src_sel1;
+wire [7:0]  ram_data;
+wire [7:0] ram_out;        //data from ram
+wire [7:0] sfr_out;
+wire [7:0] wr_dat;
+wire [7:0] wr_addr;        //ram write addres
+wire [7:0] rd_addr;        //data ram read addres
+wire sfr_bit;
+wire [1:0]  cy_sel;        //carry select; from decoder to cy_selct1
+wire [1:0] bank_sel;
+wire rom_addr_sel;        //rom addres select; alu or pc
+wire rmw;
+wire ea_int;
+wire reti;
+wire intr;
+wire int_ack;
+wire istb;
 wire [7:0]  int_src;
 wire        mem_wait;
 wire [2:0]  mem_act;
 wire [3:0]  alu_op;        //alu operation (from decoder)
 wire [1:0]  psw_set;    //write to psw or not; from decoder to psw (through register)
-wire [7:0]  src1,        //alu sources 1
-            src2,        //alu sources 2
-            src3,        //alu sources 3
-            des_acc,
-            des1,        //alu destination 1
-            des2;        //alu destinations 2
-wire        desCy,        //carry out
-            desAc,
-            desOv,        //overflow
-            alu_cy,
-            wr,                //write to data ram
-            wr_o;
-wire        rd,                //read program rom
-            pc_wr;
+wire [7:0]  src1;        //alu sources 1
+wire [7:0] src2;        //alu sources 2
+wire [7:0] src3;        //alu sources 3
+wire [7:0] des_acc;
+wire [7:0] des1;        //alu destination 1
+wire [7:0] des2;        //alu destinations 2
+wire        desCy;        //carry out
+wire desAc;
+wire desOv;        //overflow
+wire alu_cy;
+wire wr; //write to data ram
+wire wr_o;
+wire        rd;                //read program rom
+wire pc_wr;
 wire [2:0]  pc_wr_sel;        //program counter write select (from decoder to pc)
-wire [7:0]  op1_n, //from memory_interface to decoder
-            op2_n,
-            op3_n;
+wire [7:0]  op1_n; //from memory_interface to decoder
+wire [7:0] op2_n;
+wire [7:0] op3_n;
 wire [1:0]  comp_sel;        //select source1 and source2 to compare
-wire        eq,                //result (from comp1 to decoder)
-            srcAc,
-            cy,
-            rd_ind,
-            wr_ind,
-            comp_wait;
+wire        eq;                //result (from comp1 to decoder)
+wire srcAc;
+wire cy;
+wire rd_ind;
+wire wr_ind;
+wire comp_wait;
 wire [2:0]  op1_cur;
-wire        bit_addr,        //bit addresable instruction
-            bit_data,        //bit data from ram to ram_select
-            bit_out,        //bit data from ram_select to alu and cy_select
-            bit_addr_o,
-            wait_data;
+wire        bit_addr;        //bit addresable instruction
+wire bit_data;        //bit data from ram to ram_select
+wire bit_out;        //bit data from ram_select to alu and cy_select
+wire bit_addr_o;
+wire wait_data;
 //
 // cpu to cache/wb_interface
-wire        iack_i,
-            istb_o,
-            icyc_o;
+wire iack_i;
+wire istb_o;
+wire icyc_o;
 wire [31:0] idat_i;
 wire [15:0] iadr_o;
 //
@@ -517,8 +473,6 @@ oc8051_comp oc8051_comp1(.sel(comp_sel),
 //program rom
   assign ea_int = 1'b0;
   assign idat_onchip = 32'h0;
-  
-  
 //
 //
 oc8051_cy_select oc8051_cy_select1(.cy_sel(cy_sel), 
@@ -638,28 +592,16 @@ oc8051_sfr oc8051_sfr1(.rst(wb_rst_i),
                        .cy(cy),
 // ports
                        .rmw(rmw),
-  
-        
                        .p0_out(p0_o),
                        .p0_in(p0_i),
-        
-        
                        .p1_out(p1_o),
                        .p1_in(p1_i),
-        
-        
                        .p2_out(p2_o),
                        .p2_in(p2_i),
-        
-        
                        .p3_out(p3_o),
                        .p3_in(p3_i),
-        
-  
 // uart
-        
                        .rxd(rxd_i), .txd(txd_o),
-        
 // int
                        .int_ack(int_ack),
                        .intr(intr),
@@ -668,27 +610,21 @@ oc8051_sfr oc8051_sfr1(.rst(wb_rst_i),
                        .reti(reti),
                        .int_src(int_src),
 // t/c 0,1
-        
                        .t0(t0_i),
                        .t1(t1_i),
-        
 // t/c 2
-        
                        .t2(t2_i),
                        .t2ex(t2ex_i),
-        
 // dptr
                        .dptr_hi(dptr_hi),
                        .dptr_lo(dptr_lo),
                        .wait_data(wait_data)
-                       );
-  
-  
-    assign wbi_adr_o = iadr_o    ;
-    assign idat_i    = wbi_dat_i ;
-    assign wbi_stb_o = 1'b1      ;
-    assign iack_i    = wbi_ack_i ;
-    assign wbi_cyc_o = 1'b1      ;
-  
-  
+);
+
+assign wbi_adr_o = iadr_o    ;
+assign idat_i    = wbi_dat_i ;
+assign wbi_stb_o = 1'b1      ;
+assign iack_i    = wbi_ack_i ;
+assign wbi_cyc_o = 1'b1      ;
+
 endmodule

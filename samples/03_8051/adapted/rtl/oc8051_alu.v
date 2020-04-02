@@ -264,7 +264,6 @@ wire [1:0] add9, adda, addb, addc;
 wire [4:0] sub1, sub2, sub3, sub4;
 wire [3:0] sub5, sub6, sub7, sub8;
 wire [1:0] sub9, suba, subb, subc;
-wire [7:0] sub_result;
 //
 //mul
 //

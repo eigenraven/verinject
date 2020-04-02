@@ -241,146 +241,100 @@
 //
 // read modify write instruction
 //
-module oc8051_sfr (rst, clk,
-       adr0, adr1, dat0, 
-       dat1, dat2, bit_in,
-       des_acc,
-       we, wr_bit,
-       bit_out,
-       wr_sfr, acc, 
-       ram_wr_sel, ram_rd_sel, 
-       sp, sp_w, 
-       bank_sel, 
-       desAc, desOv,
-       srcAc, cy,
-       psw_set, rmw,
-       comp_sel,
-       comp_wait,
-  
-       p0_out,
-       p0_in,
-  
-  
-       p1_out,
-       p1_in,
-  
-  
-       p2_out,
-       p2_in,
-  
-  
-       p3_out,
-       p3_in,
-  
-  
-       rxd, txd,
-  
-       int_ack, intr,
-       int0, int1,
-       int_src,
-       reti,
-  
-       t0, t1,
-  
-  
-       t2, t2ex,
-  
-       dptr_hi, dptr_lo,
-       wait_data);
-input       rst,        // reset - pin
-            clk,        // clock - pin
-            we,                // write enable
-            bit_in,
-            desAc,
-            desOv,
-            rmw;
-input       int_ack,
-            int0,
-            int1,
-            reti,
-            wr_bit;
+module oc8051_sfr (
+input  clk,        // clock - pin
+input  rst,        // reset - pin
+input  we,     // write enable
+input  bit_in,
+input  desAc,
+input  desOv,
+input  rmw,
+input  int_ack,
+input  int0,
+input  int1,
+input  reti,
+input  wr_bit,
 input [1:0] psw_set,
-            wr_sfr,
-            comp_sel;
+input [1:0] wr_sfr,
+input [1:0] comp_sel,
 input [2:0] ram_rd_sel,
-            ram_wr_sel;
+input [2:0] ram_wr_sel,
 input [7:0] adr0,         //address 0 input
-            adr1,         //address 1 input
-            des_acc,
-            dat1,        //data 1 input (des1)
-            dat2;        //data 2 input (des2)
-output       bit_out,
-             intr,
-             srcAc,
-             cy,
-             wait_data,
-             comp_wait;
-output [1:0] bank_sel;
-output [7:0] dat0,        //data output
-             int_src,
-             dptr_hi,
-             dptr_lo,
-             acc;
+input [7:0] adr1,         //address 1 input
+input [7:0] des_acc,
+input [7:0] dat1,        //data 1 input (des1)
+input [7:0] dat2,        //data 2 input (des2)
+output reg bit_out,
+output intr,
+output srcAc,
+output cy,
+output reg wait_data,
+output comp_wait,
+output [1:0] bank_sel,
+output reg [7:0] dat0,        //data output
+output [7:0] int_src,
+output [7:0] dptr_hi,
+output [7:0] dptr_lo,
+output [7:0] acc,
 output [7:0] sp,
-             sp_w;
+output [7:0] sp_w,
 // ports
-input  [7:0] p0_in;
-output [7:0] p0_out;
-wire   [7:0] p0_data;
-input  [7:0] p1_in;
-output [7:0] p1_out;
-wire   [7:0] p1_data;
-input  [7:0] p2_in;
-output [7:0] p2_out;
-wire   [7:0] p2_data;
-input  [7:0] p3_in;
-output [7:0] p3_out;
-wire   [7:0] p3_data;
+input  [7:0] p0_in,
+output [7:0] p0_out,
+input  [7:0] p1_in,
+output [7:0] p1_out,
+input  [7:0] p2_in,
+output [7:0] p2_out,
+input  [7:0] p3_in,
+output [7:0] p3_out,
 // serial interface
-input        rxd;
-output       txd;
+input        rxd,
+output       txd,
 // timer/counter 0,1
-input             t0, t1;
+input             t0, input t1,
 // timer/counter 2
-input             t2, t2ex;
-reg        bit_out, 
-           wait_data;
-reg [7:0]  dat0,
-           adr0_r;
+input             t2, input t2ex
+);
+
+reg [7:0]  adr0_r;
 reg        wr_bit_r;
 reg [2:0]  ram_wr_sel_r;
-wire       p,
-           uart_int,
-           tf0,
-           tf1,
-           tr0,
-           tr1,
-           rclk,
-           tclk,
-           brate2,
-           tc2_int;
-wire [7:0] b_reg, 
-           psw,
+wire   [7:0] p0_data;
+wire   [7:0] p1_data;
+wire   [7:0] p2_data;
+wire   [7:0] p3_data;
+wire       p;
+wire uart_int;
+wire tf0;
+wire tf1;
+wire tr0;
+wire tr1;
+wire rclk;
+wire tclk;
+wire brate2;
+wire tc2_int;
+wire [7:0] b_reg;
+wire [7:0] psw;
   // t/c 2
-           t2con, 
-           tl2, 
-           th2, 
-           rcap2l, 
-           rcap2h,
+wire [7:0] t2con;
+wire [7:0] tl2;
+wire [7:0] th2;
+wire [7:0] rcap2l;
+wire [7:0] rcap2h;
   // t/c 0,1
-           tmod, 
-           tl0, 
-           th0, 
-           tl1,
-           th1,
+wire [7:0] tmod;
+wire [7:0] tl0;
+wire [7:0] th0;
+wire [7:0] tl1;
+wire [7:0] th1;
   // serial interface
-           scon, 
-           pcon, 
-           sbuf,
+wire [7:0] scon;
+wire [7:0] pcon;
+wire [7:0] sbuf;
   //interrupt control
-           ie, 
-           tcon, 
-           ip;
+wire [7:0] ie;
+wire [7:0] tcon;
+wire [7:0] ip;
 reg        pres_ow;
 reg [3:0]  prescaler;
 assign cy = psw[7];
@@ -578,16 +532,19 @@ oc8051_int oc8051_int1 (.clk(clk),
                          .rcap2l(rcap2l), 
                          .rcap2h(rcap2h));
 always @(posedge clk or posedge rst)
+begin
   if (rst) begin
-    adr0_r <= #1 8'h00;
-    ram_wr_sel_r <= #1 3'b000;
-    wr_bit_r <= #1 1'b0;
-//    wait_data <= #1 1'b0;
+    adr0_r <= 8'h00;
+    ram_wr_sel_r <= 3'b000;
+    wr_bit_r <= 1'b0;
+//    wait_data <= 1'b0;
   end else begin
-    adr0_r <= #1 adr0;
-    ram_wr_sel_r <= #1 ram_wr_sel;
-    wr_bit_r <= #1 wr_bit;
+    adr0_r <= adr0;
+    ram_wr_sel_r <= ram_wr_sel;
+    wr_bit_r <= wr_bit;
   end
+end
+
 assign comp_wait = !(
                     ((comp_sel==2'b00) &
                        ((wr_sfr==2'b01) |
@@ -601,16 +558,17 @@ assign comp_wait = !(
                     ((comp_sel==2'b11) &
                        ((adr1[7:3]==adr0[7:3]) & (~&adr1[2:0]) &  we & !wr_bit_r) |
                        ((adr1==adr0) & adr1[7] & we & !wr_bit_r)));
+
 //
 //set output in case of address (byte)
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    dat0 <= #1 8'h00;
-    wait_data <= #1 1'b0;
+    dat0 <= 8'h00;
+    wait_data <= 1'b0;
   end else if ((wr_sfr==2'b11) & (adr0==8'h82)) begin                                //write and read same address
-    dat0 <= #1 des_acc;
-    wait_data <= #1 1'b0;
+    dat0 <= des_acc;
+    wait_data <= 1'b0;
   end else if (
       (
         ((wr_sfr==2'b01) & (adr0==8'he0)) |         //write to acc
@@ -618,103 +576,98 @@ begin
         (adr1[7] & (adr1==adr0) & we & !wr_bit_r) |                        //write and read same address
         (adr1[7] & (adr1[7:3]==adr0[7:3]) & (~&adr0[2:0]) &  we & wr_bit_r) //write bit addressable to read address
       ) & !wait_data) begin
-    wait_data <= #1 1'b1;
+    wait_data <= 1'b1;
   end else if ((
       ((|psw_set) & (adr0==8'hd0)) |
       ((wr_sfr==2'b10) & (adr0==8'he0)) |         //write to acc
       ((wr_sfr==2'b11) & (adr0==8'h83))        //write to dph
       ) & !wait_data) begin
-    wait_data <= #1 1'b1;
+    wait_data <= 1'b1;
   end else begin
     case (adr0) /* synopsys full_case parallel_case */
-      8'he0:                 dat0 <= #1 acc;
-      8'hd0:                 dat0 <= #1 psw;
+      8'he0:   begin      dat0 <= acc; end
+      8'hd0:   begin      dat0 <= psw; end
   
-      8'h80:                 dat0 <= #1 p0_data;
-  
-  
-      8'h90:                 dat0 <= #1 p1_data;
+      8'h80:   begin      dat0 <= p0_data; end
   
   
-      8'ha0:                 dat0 <= #1 p2_data;
+      8'h90:   begin      dat0 <= p1_data; end
   
   
-      8'hb0:                 dat0 <= #1 p3_data;
+      8'ha0:   begin      dat0 <= p2_data; end
   
-      8'h81:                 dat0 <= #1 sp;
-      8'hf0:                 dat0 <= #1 b_reg;
-      8'h83:         dat0 <= #1 dptr_hi;
-      8'h82:         dat0 <= #1 dptr_lo;
-      8'h98:         dat0 <= #1 scon;
-      8'h99:         dat0 <= #1 sbuf;
-      8'h87:         dat0 <= #1 pcon;
-      8'h8c:                 dat0 <= #1 th0;
-      8'h8d:                 dat0 <= #1 th1;
-      8'h8a:                 dat0 <= #1 tl0;
-      8'h8b:                 dat0 <= #1 tl1;
-      8'h89:         dat0 <= #1 tmod;
-      8'hb7:                 dat0 <= #1 ip;
-      8'ha8:                 dat0 <= #1 ie;
-      8'h88:         dat0 <= #1 tcon;
-      8'hcb:         dat0 <= #1 rcap2h;
-      8'hca:         dat0 <= #1 rcap2l;
-      8'hcd:            dat0 <= #1 th2;
-      8'hcc:            dat0 <= #1 tl2;
-      8'hc8:          dat0 <= #1 t2con;
-//      default:                         dat0 <= #1 8'h00;
+  
+      8'hb0:   begin      dat0 <= p3_data; end
+  
+      8'h81:   begin      dat0 <= sp; end
+      8'hf0:   begin      dat0 <= b_reg; end
+      8'h83:   begin      dat0 <= dptr_hi; end
+      8'h82:   begin      dat0 <= dptr_lo; end
+      8'h98:   begin      dat0 <= scon; end
+      8'h99:   begin      dat0 <= sbuf; end
+      8'h87:   begin      dat0 <= pcon; end
+      8'h8c:   begin      dat0 <= th0; end
+      8'h8d:   begin      dat0 <= th1; end
+      8'h8a:   begin      dat0 <= tl0; end
+      8'h8b:   begin      dat0 <= tl1; end
+      8'h89:   begin      dat0 <= tmod; end
+      8'hb7:   begin      dat0 <= ip; end
+      8'ha8:   begin      dat0 <= ie; end
+      8'h88:   begin      dat0 <= tcon; end
+      8'hcb:   begin      dat0 <= rcap2h; end
+      8'hca:   begin      dat0 <= rcap2l; end
+      8'hcd:   begin      dat0 <= th2; end
+      8'hcc:   begin      dat0 <= tl2; end
+      8'hc8:   begin      dat0 <= t2con; end
+//      default:   begin              dat0 <= 8'h00; end
     endcase
-    wait_data <= #1 1'b0;
+    wait_data <= 1'b0;
   end
 end
 //
 //set output in case of address (bit)
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    bit_out <= #1 1'h0;
-  else if (
+  if (rst) begin
+    bit_out <= 1'h0;
+  end else if (
           ((adr1[7:3]==adr0[7:3]) & (~&adr1[2:0]) &  we & !wr_bit_r) |
           ((wr_sfr==2'b01) & (adr0[7:3]==5'b11100))         //write to acc
-          )
-    bit_out <= #1 dat1[adr0[2:0]];
-  else if ((adr1==adr0) & we & wr_bit_r)
-    bit_out <= #1 bit_in;
-  else
+  ) begin
+    bit_out <= dat1[adr0[2:0]];
+  end else if ((adr1==adr0) & we & wr_bit_r) begin
+    bit_out <= bit_in;
+  end else begin
     case (adr0[7:3]) /* synopsys full_case parallel_case */
-      5'b11100:   bit_out <= #1 acc[adr0[2:0]];
-      5'b11010:   bit_out <= #1 psw[adr0[2:0]];
-  
-      5'b10000:    bit_out <= #1 p0_data[adr0[2:0]];
-  
-  
-      5'b10010:    bit_out <= #1 p1_data[adr0[2:0]];
-  
-  
-      5'b10100:    bit_out <= #1 p2_data[adr0[2:0]];
-  
-  
-      5'b10110:    bit_out <= #1 p3_data[adr0[2:0]];
-  
-      5'b11110:     bit_out <= #1 b_reg[adr0[2:0]];
-      5'b10111:    bit_out <= #1 ip[adr0[2:0]];
-      5'b10101:    bit_out <= #1 ie[adr0[2:0]];
-      5'b10001:  bit_out <= #1 tcon[adr0[2:0]];
-      5'b10011:  bit_out <= #1 scon[adr0[2:0]];
-      5'b11001: bit_out <= #1 t2con[adr0[2:0]];
-//      default:             bit_out <= #1 1'b0;
+      5'b11100: begin bit_out <= acc[adr0[2:0]]; end
+      5'b11010: begin bit_out <= psw[adr0[2:0]]; end
+      5'b10000: begin bit_out <= p0_data[adr0[2:0]]; end
+      5'b10010: begin bit_out <= p1_data[adr0[2:0]]; end
+      5'b10100: begin bit_out <= p2_data[adr0[2:0]]; end
+      5'b10110: begin bit_out <= p3_data[adr0[2:0]]; end
+      5'b11110: begin  bit_out <= b_reg[adr0[2:0]]; end
+      5'b10111: begin bit_out <= ip[adr0[2:0]]; end
+      5'b10101: begin bit_out <= ie[adr0[2:0]]; end
+      5'b10001: begin bit_out <= tcon[adr0[2:0]]; end
+      5'b10011: begin bit_out <= scon[adr0[2:0]]; end
+      5'b11001: begin bit_out <= t2con[adr0[2:0]]; end
+//      default:             bit_out <= 1'b0;
     endcase
+  end
 end
+
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    prescaler <= #1 4'h0;
-    pres_ow <= #1 1'b0;
+    prescaler <= 4'h0;
+    pres_ow <= 1'b0;
   end else if (prescaler==4'b1011) begin
-    prescaler <= #1 4'h0;
-    pres_ow <= #1 1'b1;
+    prescaler <= 4'h0;
+    pres_ow <= 1'b1;
   end else begin
-    prescaler <= #1 prescaler + 4'h1;
-    pres_ow <= #1 1'b0;
+    prescaler <= prescaler + 4'h1;
+    pres_ow <= 1'b0;
   end
 end
+
 endmodule

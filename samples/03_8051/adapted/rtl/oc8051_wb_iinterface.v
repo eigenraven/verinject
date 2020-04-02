@@ -66,7 +66,7 @@
 module oc8051_wb_iinterface(
   // rst           (in)  reset - pin
   // clk           (in)  clock - pini
-  input rst, input clk,
+  input clk, input rst,
   //
   // interface to oc8051 cpu
   //

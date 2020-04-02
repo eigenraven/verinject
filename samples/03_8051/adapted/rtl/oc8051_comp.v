@@ -213,7 +213,7 @@ module oc8051_comp (
 input [1:0] sel,
 input b_in, input cy,
 input [7:0] acc, input [7:0] des,
-output eq,
+output eq
 /*comp_wait, */
 );
 

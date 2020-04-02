@@ -206,37 +206,28 @@
 //
 //synopsys translate_off
 //synopsys translate_on
-module oc8051_tc2 (clk, rst,
-            wr_addr,
-            data_in, bit_in,
-            wr, wr_bit,
-            t2, t2ex,
-            rclk, tclk,
-            brate2, tc2_int,
-            pres_ow,
-//registers
-            t2con, tl2, th2, rcap2l, rcap2h);
-input [7:0]  wr_addr,
-             data_in;
-input        clk,
-             rst,
-             wr,
-             wr_bit,
-             t2,
-             t2ex,
-             bit_in,
-             pres_ow;        //prescalre owerflov
-output [7:0] t2con,
-             tl2,
-             th2,
-             rcap2l,
-             rcap2h;
-output       tc2_int,
-             rclk,
-             tclk,
-             brate2;
-reg brate2;
-reg [7:0] t2con, tl2, th2, rcap2l, rcap2h;
+module oc8051_tc2 (
+input clk,
+input rst,
+input [7:0] wr_addr,
+input [7:0] data_in,
+input wr,
+input wr_bit,
+input t2,
+input t2ex,
+input bit_in,
+input pres_ow,        //prescalre owerflov
+output reg [7:0] t2con,
+output reg [7:0] tl2,
+output reg [7:0] th2,
+output reg [7:0] rcap2l,
+output reg [7:0] rcap2h,
+output tc2_int,
+output rclk,
+output tclk,
+output reg brate2
+);
+
 reg neg_trans, t2ex_r, t2_r, tc2_event, tf2_set;
 wire run;
 //
@@ -254,15 +245,15 @@ assign cprl2 = t2con[0];
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    t2con <= #1 8'h00;
+    t2con <= 8'h00;
   end else if ((wr) & !(wr_bit) & (wr_addr==8'hc8)) begin
-    t2con <= #1 data_in;
+    t2con <= data_in;
   end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b11001)) begin
-    t2con[wr_addr[2:0]] <= #1 bit_in;
+    t2con[wr_addr[2:0]] <= bit_in;
   end else if (tf2_set) begin
-    t2con[7] <= #1 1'b1;
+    t2con[7] <= 1'b1;
   end else if (exen2 & neg_trans) begin
-    t2con[6] <= #1 1'b1;
+    t2con[6] <= 1'b1;
   end
 end
 //
@@ -274,73 +265,73 @@ begin
 //
 // reset
 //
-    tl2 <= #1 8'h00;
-    th2 <= #1 8'h00;
-    brate2 <= #1 1'b0;
-    tf2_set <= #1 1'b0;
+    tl2 <= 8'h00;
+    th2 <= 8'h00;
+    brate2 <= 1'b0;
+    tf2_set <= 1'b0;
   end else if ((wr) & !(wr_bit) & (wr_addr==8'hcd)) begin
 //
 // write to timer 2 high
 //
-    th2 <= #1 data_in;
+    th2 <= data_in;
   end else if ((wr) & !(wr_bit) & (wr_addr==8'hcc)) begin
 //
 // write to timer 2 low
 //
-    tl2 <= #1 data_in;
+    tl2 <= data_in;
   end else if (!(rclk | tclk) & !cprl2 & exen2 & neg_trans) begin
 //
 // avto reload mode, exen2=1, 0-1 transition on t2ex pin
 //
-    th2 <= #1 rcap2h;
-    tl2 <= #1 rcap2l;
-    tf2_set <= #1 1'b0;
+    th2 <= rcap2h;
+    tl2 <= rcap2l;
+    tf2_set <= 1'b0;
   end else if (run) begin
     if (rclk | tclk) begin
 //
 // boud rate generator mode
 //
       if (&{th2, tl2}) begin
-        th2 <= #1 rcap2h;
-        tl2 <= #1 rcap2l;
-        brate2 <= #1 1'b1;
+        th2 <= rcap2h;
+        tl2 <= rcap2l;
+        brate2 <= 1'b1;
       end else begin
-        {brate2, th2, tl2}  <= #1 {1'b0, th2, tl2} + 17'h1;
+        {brate2, th2, tl2}  <= {1'b0, th2, tl2} + 17'h1;
       end
-      tf2_set <= #1 1'b0;
+      tf2_set <= 1'b0;
     end else if (cprl2) begin
 //
 // capture mode
 //
-      {tf2_set, th2, tl2}  <= #1 {1'b0, th2, tl2} + 17'h1;
+      {tf2_set, th2, tl2}  <= {1'b0, th2, tl2} + 17'h1;
     end else begin
 //
 // auto reload mode
 //
       if (&{th2, tl2}) begin
-        th2 <= #1 rcap2h;
-        tl2 <= #1 rcap2l;
-        tf2_set <= #1 1'b1;
+        th2 <= rcap2h;
+        tl2 <= rcap2l;
+        tf2_set <= 1'b1;
       end else begin
-        {tf2_set, th2, tl2} <= #1 {1'b0, th2, tl2} + 17'h1;
+        {tf2_set, th2, tl2} <= {1'b0, th2, tl2} + 17'h1;
       end
     end
-  end else tf2_set <= #1 1'b0;
+  end else begin tf2_set <= 1'b0; end
 end
 //
 // rcap2l, rcap2h
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    rcap2l <= #1 8'h00;
-    rcap2h <= #1 8'h00;
+    rcap2l <= 8'h00;
+    rcap2h <= 8'h00;
   end else if ((wr) & !(wr_bit) & (wr_addr==8'hcb)) begin
-    rcap2h <= #1 data_in;
+    rcap2h <= data_in;
   end else if ((wr) & !(wr_bit) & (wr_addr==8'hca)) begin
-    rcap2l <= #1 data_in;
+    rcap2l <= data_in;
   end else if (!(rclk | tclk) & exen2 & cprl2 & neg_trans) begin
-    rcap2l <= #1 tl2;
-    rcap2h <= #1 th2;
+    rcap2l <= tl2;
+    rcap2h <= th2;
   end
 end
 //
@@ -348,17 +339,17 @@ end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    neg_trans <= #1 1'b0;
-    t2ex_r <= #1 1'b0;
+    neg_trans <= 1'b0;
+    t2ex_r <= 1'b0;
   end else if (t2ex) begin
-    neg_trans <= #1 1'b0;
-    t2ex_r <= #1 1'b1;
+    neg_trans <= 1'b0;
+    t2ex_r <= 1'b1;
   end else if (t2ex_r) begin
-    neg_trans <= #1 1'b1;
-    t2ex_r <= #1 1'b0;
+    neg_trans <= 1'b1;
+    t2ex_r <= 1'b0;
   end else begin
-    neg_trans <= #1 1'b0;
-    t2ex_r <= #1 t2ex_r;
+    neg_trans <= 1'b0;
+    t2ex_r <= t2ex_r;
   end
 end
 //
@@ -366,16 +357,16 @@ end
 always @(posedge clk or posedge rst)
 begin
   if (rst) begin
-    tc2_event <= #1 1'b0;
-    t2_r <= #1 1'b0;
+    tc2_event <= 1'b0;
+    t2_r <= 1'b0;
   end else if (t2) begin
-    tc2_event <= #1 1'b0;
-    t2_r <= #1 1'b1;
+    tc2_event <= 1'b0;
+    t2_r <= 1'b1;
   end else if (!t2 & t2_r) begin
-    tc2_event <= #1 1'b1;
-    t2_r <= #1 1'b0;
+    tc2_event <= 1'b1;
+    t2_r <= 1'b0;
   end else begin
-    tc2_event <= #1 1'b0;
+    tc2_event <= 1'b0;
   end
 end
 endmodule

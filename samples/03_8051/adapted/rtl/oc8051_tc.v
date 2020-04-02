@@ -214,39 +214,30 @@
 //
 //synopsys translate_off
 //synopsys translate_on
-module oc8051_tc (clk, rst, 
-            data_in,
-            wr_addr,
-            wr, wr_bit,
-            ie0, ie1,
-            tr0, tr1,
-            t0, t1,
-            tf0, tf1,
-            pres_ow,
-//registers
-            tmod, tl0, th0, tl1, th1);
+module oc8051_tc (
+input clk,
+input rst,
 input [7:0]  wr_addr,
-             data_in;
-input        clk,
-             rst,
-             wr,
-             wr_bit,
-             ie0,
-             ie1,
-             tr0,
-             tr1,
-             t0,
-             t1,
-             pres_ow;
-output [7:0] tmod,
-             tl0,
-             th0,
-             tl1,
-             th1;
-output       tf0,
-             tf1;
-reg [7:0] tmod, tl0, th0, tl1, th1;
-reg tf0, tf1_0, tf1_1, t0_buff, t1_buff;
+input [7:0]  data_in,
+input wr,
+input wr_bit,
+input ie0,
+input ie1,
+input tr0,
+input tr1,
+input t0,
+input t1,
+input pres_ow,
+output reg [7:0] tmod,
+output reg [7:0] tl0,
+output reg [7:0] th0,
+output reg [7:0] tl1,
+output reg [7:0] th1,
+output reg tf0,
+output tf1
+);
+
+reg tf1_0, tf1_1, t0_buff, t1_buff;
 wire tc0_add, tc1_add;
 assign tc0_add = (tr0 & (!tmod[3] | !ie0) & ((!tmod[2] & pres_ow) | (tmod[2] & !t0 & t0_buff)));
 assign tc1_add = (tr1 & (!tmod[7] | !ie1) & ((!tmod[6] & pres_ow) | (tmod[6] & !t1 & t1_buff)));
@@ -257,9 +248,10 @@ assign tf1= tf1_0 | tf1_1;
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tmod <=#1 8'b0000_0000;
- end else if ((wr) & !(wr_bit) & (wr_addr==8'h89))
-    tmod <= #1 data_in;
+   tmod <=8'b0000_0000;
+ end else if ((wr) & !(wr_bit) & (wr_addr==8'h89)) begin
+    tmod <= data_in;
+  end
 end
 //
 // TIMER COUNTER 0
@@ -267,52 +259,52 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tl0 <=#1 8'b0000_0000;
-   th0 <=#1 8'b0000_0000;
-   tf0 <= #1 1'b0;
-   tf1_0 <= #1 1'b0;
+   tl0 <=8'b0000_0000;
+   th0 <=8'b0000_0000;
+   tf0 <= 1'b0;
+   tf1_0 <= 1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h8a)) begin
-   tl0 <= #1 data_in;
-   tf0 <= #1 1'b0;
-   tf1_0 <= #1 1'b0;
+   tl0 <= data_in;
+   tf0 <= 1'b0;
+   tf1_0 <= 1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h8c)) begin
-   th0 <= #1 data_in;
-   tf0 <= #1 1'b0;
-   tf1_0 <= #1 1'b0;
+   th0 <= data_in;
+   tf0 <= 1'b0;
+   tf1_0 <= 1'b0;
  end else begin
      case (tmod[1:0]) /* synopsys full_case parallel_case */
       2'b00: begin                       // mode 0
-        tf1_0 <= #1 1'b0;
+        tf1_0 <= 1'b0;
         if (tc0_add)
-          {tf0, th0,tl0[4:0]} <= #1 {1'b0, th0, tl0[4:0]}+ 1'b1;
+          {tf0, th0,tl0[4:0]} <= {1'b0, th0, tl0[4:0]}+ 1'b1;
       end
       2'b01: begin                       // mode 1
-        tf1_0 <= #1 1'b0;
+        tf1_0 <= 1'b0;
         if (tc0_add)
-          {tf0, th0,tl0} <= #1 {1'b0, th0, tl0}+ 1'b1;
+          {tf0, th0,tl0} <= {1'b0, th0, tl0}+ 1'b1;
       end
       2'b10: begin                       // mode 2
-        tf1_0 <= #1 1'b0;
+        tf1_0 <= 1'b0;
         if (tc0_add) begin
           if (tl0 == 8'b1111_1111) begin
-            tf0 <=#1 1'b1;
-            tl0 <=#1 th0;
+            tf0 <=1'b1;
+            tl0 <=th0;
            end
           else begin
-            tl0 <=#1 tl0 + 8'h1;
-            tf0 <= #1 1'b0;
+            tl0 <=tl0 + 8'h1;
+            tf0 <= 1'b0;
           end
         end
       end
       2'b11: begin                       // mode 3
          if (tc0_add)
-           {tf0, tl0} <= #1 {1'b0, tl0} +1'b1;
+           {tf0, tl0} <= {1'b0, tl0} +1'b1;
          if (tr1 & pres_ow)
-           {tf1_0, th0} <= #1 {1'b0, th0} +1'b1;
+           {tf1_0, th0} <= {1'b0, th0} +1'b1;
       end
 /*      default:begin
-        tf0 <= #1 1'b0;
-        tf1_0 <= #1 1'b0;
+        tf0 <= 1'b0;
+        tf1_0 <= 1'b0;
       end*/
     endcase
  end
@@ -323,49 +315,52 @@ end
 always @(posedge clk or posedge rst)
 begin
  if (rst) begin
-   tl1 <=#1 8'b0000_0000;
-   th1 <=#1 8'b0000_0000;
-   tf1_1 <= #1 1'b0;
+   tl1 <=8'b0000_0000;
+   th1 <=8'b0000_0000;
+   tf1_1 <= 1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h8b)) begin
-   tl1 <= #1 data_in;
-   tf1_1 <= #1 1'b0;
+   tl1 <= data_in;
+   tf1_1 <= 1'b0;
  end else if ((wr) & !(wr_bit) & (wr_addr==8'h8d)) begin
-   th1 <= #1 data_in;
-   tf1_1 <= #1 1'b0;
+   th1 <= data_in;
+   tf1_1 <= 1'b0;
  end else begin
      case (tmod[5:4]) /* synopsys full_case parallel_case */
       2'b00: begin                       // mode 0
         if (tc1_add)
-          {tf1_1, th1,tl1[4:0]} <= #1 {1'b0, th1, tl1[4:0]}+ 1'b1;
+          {tf1_1, th1,tl1[4:0]} <= {1'b0, th1, tl1[4:0]}+ 1'b1;
       end
       2'b01: begin                       // mode 1
         if (tc1_add)
-          {tf1_1, th1,tl1} <= #1 {1'b0, th1, tl1}+ 1'b1;
+          {tf1_1, th1,tl1} <= {1'b0, th1, tl1}+ 1'b1;
       end
       2'b10: begin                       // mode 2
         if (tc1_add) begin
           if (tl1 == 8'b1111_1111) begin
-            tf1_1 <=#1 1'b1;
-            tl1 <=#1 th1;
+            tf1_1 <=1'b1;
+            tl1 <=th1;
            end
           else begin
-            tl1 <=#1 tl1 + 8'h1;
-            tf1_1 <= #1 1'b0;
+            tl1 <=tl1 + 8'h1;
+            tf1_1 <= 1'b0;
           end
         end
       end
 /*      default:begin
-        tf1_1 <= #1 1'b0;
+        tf1_1 <= 1'b0;
       end*/
     endcase
  end
 end
 always @(posedge clk or posedge rst)
+begin
   if (rst) begin
-    t0_buff <= #1 1'b0;
-    t1_buff <= #1 1'b0;
+    t0_buff <= 1'b0;
+    t1_buff <= 1'b0;
   end else begin
-    t0_buff <= #1 t0;
-    t1_buff <= #1 t1;
+    t0_buff <= t0;
+    t1_buff <= t1;
   end
+end
+
 endmodule
