@@ -205,31 +205,19 @@
 // duble port ram
 //
 module oc8051_ram_64x32_dual_bist (
-                     clk,
-                     rst,
-                     
-                     adr0,
-                     dat0_o,
-                     en0,
-                     
-                     adr1,
-                     dat1_i,
-                     dat1_o,
-                     en1,
-                     wr1
-                     );
+    input         clk, 
+    input         wr1, 
+    input         rst,
+    input         en0,
+    input         en1,
+    input  [7:0]  dat1_i,
+    input  [ADR_WIDTH-1:0]  adr0,
+    input  [ADR_WIDTH-1:0]  adr1,
+    output [7:0]  dat0_o,
+    output [7:0]  dat1_o
+);
 parameter ADR_WIDTH = 6;
-input         clk, 
-              wr1, 
-              rst,
-              en0,
-              en1;
-input  [7:0]  dat1_i;
-input  [ADR_WIDTH-1:0]  adr0,
-                        adr1;
-output [7:0]  dat0_o,
-              dat1_o;
-reg    [7:0]  rd_data;
+
   
     
     

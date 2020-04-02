@@ -205,44 +205,32 @@
 // two port ram
 //
 module oc8051_ram_256x8_two_bist (
-                     clk,
-                     rst,
-                     rd_addr,
-                     rd_data,
-                     rd_en,
-                     wr_addr,
-                     wr_data,
-                     wr_en,
-                     wr
-                     );
 input         clk, 
-              wr, 
-              rst,
-              rd_en,
-              wr_en;
-input  [7:0]  wr_data;
+input         wr, 
+input         rst,
+input         rd_en,
+input         wr_en,
+input  [7:0]  wr_data,
 input  [7:0]  rd_addr,
-              wr_addr;
-output [7:0]  rd_data;
-  
-    
-    
-      generic_dpram #(8, 8) oc8051_ram1(
-              .rclk  ( clk            ),
-              .rrst  ( rst            ),
-              .rce   ( rd_en          ),
-              .oe    ( 1'b1           ),
-              .raddr ( rd_addr        ),
-              .do    ( rd_data        ),
-      
-              .wclk  ( clk            ),
-              .wrst  ( rst            ),
-              .wce   ( wr_en          ),
-              .we    ( wr             ),
-              .waddr ( wr_addr        ),
-              .di    ( wr_data        )
-      );
-    
+input  [7:0]  wr_addr,
+output [7:0]  rd_data
+);
+
+generic_dpram #(8, 8) oc8051_ram1(
+    .rclk  ( clk            ),
+    .rrst  ( rst            ),
+    .rce   ( rd_en          ),
+    .oe    ( 1'b1           ),
+    .raddr ( rd_addr        ),
+    .do    ( rd_data        ),
+
+    .wclk  ( clk            ),
+    .wrst  ( rst            ),
+    .wce   ( wr_en          ),
+    .we    ( wr             ),
+    .waddr ( wr_addr        ),
+    .di    ( wr_data        )
+);
     
   //OC8051_RAM_GENERIC
       //OC8051_RAM_VIRTUALSILICON  
