@@ -215,8 +215,20 @@
 //
 // read modify write instruction
 //
-module oc8051_psw (clk, rst, wr_addr, data_in, wr, wr_bit, data_out, p,
-                cy_in, ac_in, ov_in, set, bank_sel);
+module oc8051_psw (
+input clk, 
+input rst, 
+input wr, 
+input p, 
+input cy_in, 
+input ac_in, 
+input ov_in, 
+input wr_bit,
+input [1:0] set,
+input [7:0] wr_addr, input [7:0] data_in,
+output [1:0] bank_sel,
+output [7:0] data_out
+);
 //
 // clk          (in)  clock
 // rst          (in)  reset
@@ -230,11 +242,6 @@ module oc8051_psw (clk, rst, wr_addr, data_in, wr, wr_bit, data_out, p,
 // ov_in        (in)  overflov input [oc8051_alu.desOv]
 // set          (in)  set psw (write to caryy, carry and overflov or carry, owerflov and ac) [oc8051_decoder.psw_set -r]
 //
-input clk, rst, wr, p, cy_in, ac_in, ov_in, wr_bit;
-input [1:0] set;
-input [7:0] wr_addr, data_in;
-output [1:0] bank_sel;
-output [7:0] data_out;
 reg [7:1] data;
 wire wr_psw;
 assign wr_psw = (wr & (wr_addr==8'hd0) && !wr_bit);
@@ -245,35 +252,36 @@ assign data_out = {data[7:1], p};
 always @(posedge clk or posedge rst)
 begin
   if (rst)
-    data <= #1 8'h00;
+  begin
+    data <= 8'h00;
 //
 // write to psw (byte addressable)
-  else begin
-    if (wr & (wr_bit==1'b0) & (wr_addr==8'hd0))
-      data[7:1] <= #1 data_in[7:1];
+  end else begin
+    if (wr & (wr_bit==1'b0) & (wr_addr==8'hd0)) begin
+      data[7:1] <= data_in[7:1];
 //
 // write to psw (bit addressable)
-    else if (wr & wr_bit & (wr_addr[7:3]==5'b11010))
-      data[wr_addr[2:0]] <= #1 cy_in;
-    else begin
+    end else if (wr & wr_bit & (wr_addr[7:3]==5'b11010)) begin
+      data[wr_addr[2:0]] <= cy_in;
+    end else begin
       case (set) /* synopsys full_case parallel_case */
         2'b01: begin
 //
 //write carry
-          data[7] <= #1 cy_in;
+          data[7] <= cy_in;
         end
         2'b10: begin
 //
 //write carry and overflov
-          data[7] <= #1 cy_in;
-          data[2] <= #1 ov_in;
+          data[7] <= cy_in;
+          data[2] <= ov_in;
         end
         2'b11:begin
 //
 //write carry, overflov and ac
-          data[7] <= #1 cy_in;
-          data[6] <= #1 ac_in;
-          data[2] <= #1 ov_in;
+          data[7] <= cy_in;
+          data[6] <= ac_in;
+          data[2] <= ov_in;
         end
       endcase
     end
