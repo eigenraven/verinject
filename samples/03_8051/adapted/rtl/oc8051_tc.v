@@ -213,7 +213,6 @@
 // read modify write instruction
 //
 //synopsys translate_off
-`timescale 1ns/10ps
 //synopsys translate_on
 module oc8051_tc (clk, rst, 
             data_in,

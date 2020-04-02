@@ -55,7 +55,6 @@
 //
 //
 // synopsys translate_off
-`timescale 1ns/10ps
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -209,12 +208,13 @@
 //
 // read modify write instruction
 //
-module oc8051_sp (clk, rst, ram_rd_sel, ram_wr_sel, wr_addr, wr, wr_bit, data_in, sp_out, sp_w);
-input clk, rst, wr, wr_bit;
-input [2:0] ram_rd_sel, ram_wr_sel;
-input [7:0] data_in, wr_addr;
-output [7:0] sp_out, sp_w;
-reg [7:0] sp_out, sp_w;
+module oc8051_sp (
+  input clk, input rst, input wr, input wr_bit,
+  input [2:0] ram_rd_sel, input [2:0] ram_wr_sel,
+  input [7:0] data_in, input [7:0] wr_addr,
+  output reg [7:0] sp_out, output reg [7:0] sp_w
+);
+
 reg pop;
 wire write;
 wire [7:0] sp_t;
@@ -223,33 +223,39 @@ assign write = ((wr_addr==8'h81) & (wr) & !(wr_bit));
 assign sp_t= write ? data_in : sp;
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    sp <= #1 8'b0000_0111;
-  else if (write)
-    sp <= #1 data_in;
-  else
-    sp <= #1 sp_out;
+  if (rst) begin
+    sp <= 8'b0000_0111;
+  end else if (write) begin
+    sp <= data_in;
+  end else begin
+    sp <= sp_out;
+  end
 end
-always @(sp or ram_wr_sel)
+always @*
 begin
 //
 // push
-  if (ram_wr_sel==3'b011) sp_w = sp + 8'h01;
-  else sp_w = sp;
+  if (ram_wr_sel==3'b011) begin sp_w = sp + 8'h01; end
+  else begin sp_w = sp; end
 end
-always @(sp_t or ram_wr_sel or pop or write)
+
+always @*
 begin
 //
 // push
-  if (write) sp_out = sp_t;
-  else if (ram_wr_sel==3'b011) sp_out = sp_t + 8'h01;
-  else sp_out = sp_t - {7'b0, pop};
+  if (write) begin sp_out = sp_t; end
+  else if (ram_wr_sel==3'b011) begin sp_out = sp_t + 8'h01; end
+  else begin sp_out = sp_t - {7'b0, pop}; end
 end
+
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
-    pop <= #1 1'b0;
-  else if (ram_rd_sel==3'b011) pop <= #1 1'b1;
-  else pop <= #1 1'b0;
+  if (rst) begin
+    pop <= 1'b0;
+  end else if (ram_rd_sel==3'b011) begin
+    pop <= 1'b1;
+  end else begin
+    pop <= 1'b0;
+  end
 end
 endmodule

@@ -52,7 +52,6 @@
 //
 //
 // synopsys translate_off
-`timescale 1ns/10ps
 // synopsys translate_on
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -210,7 +209,7 @@ module oc8051_dptr(
 input clk, input rst, input wr, input wr_bit,
 input [1:0] wr_sfr,
 input [7:0] addr, input [7:0] data_in, input [7:0] data2_in,
-output reg [7:0] data_hi, output reg [7:0] data_lo,
+output reg [7:0] data_hi, output reg [7:0] data_lo
 );
 //
 // clk          (in)  clock

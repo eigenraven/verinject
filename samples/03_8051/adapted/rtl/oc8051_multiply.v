@@ -57,13 +57,12 @@
 // changed to four cycle multiplication, to save resources and
 // increase speed
 // synopsys translate_off
-`timescale 1ns/10ps
 // synopsys translate_on
 module oc8051_multiply (
   input clk, input rst, input enable,
   input [7:0] src1, input [7:0] src2,
   output desOv,
-  output [7:0] des1, output [7:0] des2,
+  output [7:0] des1, output [7:0] des2
 );
 //
 // this module is part of alu

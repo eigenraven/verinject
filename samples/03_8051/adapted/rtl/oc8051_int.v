@@ -215,7 +215,6 @@
 // read modify write instruction
 //
 //synopsys translate_off
-`timescale 1ns/10ps
 //synopsys translate_on
 module oc8051_int (
   input clk, input rst,
@@ -226,7 +225,7 @@ module oc8051_int (
   output reg [7:0] int_vec,
   output reg [7:0] ie,
   output wire [7:0] tcon,
-  output reg [7:0] ip,
+  output reg [7:0] ip
 );
 
 reg [3:0] tcon_s;

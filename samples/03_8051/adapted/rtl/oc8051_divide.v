@@ -50,7 +50,6 @@
 //
 //
 // synopsys translate_off
-`timescale 1ns/10ps
 // synopsys translate_on
 module oc8051_divide (
   input clk, input rst, input enable,
