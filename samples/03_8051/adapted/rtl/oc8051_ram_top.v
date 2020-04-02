@@ -228,7 +228,7 @@ module oc8051_ram_top (
   output [7:0] rd_data
 );
 // on-chip ram-size (2**ram_aw bytes)
-parameter ram_aw = 8; // default 256 bytes
+localparam ram_aw = 8; // default 256 bytes
 //
 // clk          (in)  clock
 // rd_addr      (in)  read addres [oc8051_ram_rd_sel.out]

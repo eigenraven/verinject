@@ -215,7 +215,7 @@ input  [7:0]  wr_addr,
 output [7:0]  rd_data
 );
 
-generic_dpram #(8, 8) oc8051_ram1(
+generic_dpram_8_8 oc8051_ram1(
     .rclk  ( clk            ),
     .rrst  ( rst            ),
     .rce   ( rd_en          ),

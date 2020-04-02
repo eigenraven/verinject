@@ -215,26 +215,26 @@ module oc8051_ram_64x32_dual_bist (
     output [7:0]  dat0_o,
     output [7:0]  dat1_o
 );
-parameter ADR_WIDTH = 6;
+localparam ADR_WIDTH = 6;
 
   
     
     
-      generic_dpram #(ADR_WIDTH, 32) oc8051_ram1(
-              .rclk  ( clk            ),
-              .rrst  ( rst            ),
-              .rce   ( en0            ),
-              .oe    ( 1'b1           ),
-              .raddr ( adr0           ),
-              .do    ( dat0_o         ),
-      
-              .wclk  ( clk            ),
-              .wrst  ( rst            ),
-              .wce   ( en1            ),
-              .we    ( wr1            ),
-              .waddr ( adr1           ),
-              .di    ( dat1_i         )
-      );
+generic_dpram_6_32 oc8051_ram1(
+        .rclk  ( clk            ),
+        .rrst  ( rst            ),
+        .rce   ( en0            ),
+        .oe    ( 1'b1           ),
+        .raddr ( adr0           ),
+        .do    ( dat0_o         ),
+
+        .wclk  ( clk            ),
+        .wrst  ( rst            ),
+        .wce   ( en1            ),
+        .we    ( wr1            ),
+        .waddr ( adr1           ),
+        .di    ( dat1_i         )
+);
     
     
   //OC8051_RAM_GENERIC

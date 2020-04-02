@@ -45,7 +45,7 @@
 //
 // $Log: not supported by cvs2svn $
 // Revision 1.2  2002/10/24 13:37:43  simont
-// add parameters
+// add localparams
 //
 // Revision 1.1  2002/10/23 16:58:21  simont
 // initial import
@@ -71,8 +71,8 @@ output reg [31:0] data0, output reg [31:0] data1_o
 // data1_o      (out) data output port 1
 // wr1          (in)  write port 1
 //
-parameter ADR_WIDTH = 7; // cache address wihth
-parameter CACHE_RAM = 128; // cache ram x 32 (2^ADR_WIDTH)
+localparam ADR_WIDTH = 7; // cache address wihth
+localparam CACHE_RAM = 128; // cache ram x 32 (2^ADR_WIDTH)
 
 //
 // buffer

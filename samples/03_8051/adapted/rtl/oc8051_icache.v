@@ -63,7 +63,7 @@
 // replace some modules
 //
 // Revision 1.2  2002/10/24 13:34:02  simont
-// add parameters for instruction cache
+// add localparams for instruction cache
 //
 // Revision 1.1  2002/10/23 16:55:36  simont
 // fix bugs in instruction interface
@@ -256,11 +256,11 @@ output  reg   cyc_o,
 output [15:0] adr_o
 );
 
-parameter ADR_WIDTH = 6; // cache address wihth
-parameter LINE_WIDTH = 2; // line address width (2 => 4x32)
-parameter BL_WIDTH = ADR_WIDTH - LINE_WIDTH; // block address width
-parameter BL_NUM = 15; // number of blocks (2^BL_WIDTH-1)
-parameter CACHE_RAM = 64; // cache ram x 32 (2^ADR_WIDTH)
+localparam ADR_WIDTH = 6; // cache address wihth
+localparam LINE_WIDTH = 2; // line address width (2 => 4x32)
+localparam BL_WIDTH = ADR_WIDTH - LINE_WIDTH; // block address width
+localparam BL_NUM = 15; // number of blocks (2^BL_WIDTH-1)
+localparam CACHE_RAM = 64; // cache ram x 32 (2^ADR_WIDTH)
 //
 // internal buffers adn wires
 //
