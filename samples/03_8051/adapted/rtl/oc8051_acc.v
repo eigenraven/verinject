@@ -238,11 +238,11 @@ assign wr_bit_acc = (wr & wr_bit & (wr_addr[7:3]==5'b11100));
 //writing to acc
 always @*
 begin
-  if (wr2_acc)
-    acc = data2_in;
-  else if (wr_acc)
-    acc = data_in;
-  else if (wr_bit_acc)
+  if (wr2_acc) begin
+    acc = data2_in;$display("acc-wr2");
+  end else if (wr_acc) begin
+    acc = data_in;$display("acc-wr1 %x", data_in);
+  end else if (wr_bit_acc) begin $display("acc-wra");
     case (wr_addr[2:0]) /* synopsys full_case parallel_case */
       3'b000: acc = {data_out[7:1], bit_in};
       3'b001: acc = {data_out[7:2], bit_in, data_out[0]};
@@ -253,11 +253,11 @@ begin
       3'b110: acc = {data_out[7],   bit_in, data_out[5:0]};
       3'b111: acc = {bit_in, data_out[6:0]};
     endcase
-  else
-  begin
+  end else begin
     acc = data_out;
   end
 end
+
 always @(posedge clk or posedge rst)
 begin
   if (rst)
@@ -267,4 +267,5 @@ begin
     data_out <= acc;
   end
 end
+
 endmodule

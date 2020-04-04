@@ -132,6 +132,16 @@ localparam dw = 8; // number of bits in data-bus
 
 reg [dw-1 :0] mem [(1<<aw) -1:0]; // instantiate memory
 
+integer ii;
+initial
+begin
+	ii = 0;
+	for (ii = 0; ii < (1<<aw) -1; ii = ii + 1)
+	begin
+		mem[ii] = 0;
+	end
+end
+
 // read operation
 
 /*

@@ -1,0 +1,11 @@
+.ORG 0
+CLR A
+MOV R0, #2
+MOV R1, #3
+ADD A, R0
+ADD A, R1
+MOV P0, A
+MOV P1, #0x21
+MOV P2, #0x37
+
+.WORD 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
