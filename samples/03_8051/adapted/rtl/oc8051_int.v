@@ -233,16 +233,20 @@ reg tcon_tf1, tcon_tf0, tcon_ie1, tcon_ie0;
 //
 // isrc                processing interrupt sources
 // int_dept
-wire [2:0] isrc_cur;
+reg [2:0] isrc_cur;
 reg [2:0] isrc [1:0];
 reg [1:0] int_dept;
-wire [1:0] int_dept_1;
+reg [1:0] int_dept_1;
 reg int_proc;
 reg [1:0] int_lev [1:0];
-wire cur_lev;
-assign isrc_cur = int_proc ? isrc[int_dept_1] : 2'h0;
-assign int_dept_1 = int_dept - 2'b01;
-assign cur_lev = int_lev[int_dept_1];
+reg cur_lev;
+
+always @*
+begin
+  isrc_cur = int_proc ? isrc[int_dept_1] : 2'h0;
+  int_dept_1 = int_dept - 2'b01;
+  cur_lev = int_lev[int_dept_1];
+end
 //
 // contains witch level of interrupts is running
 //reg [1:0] int_levl, int_levl_w;

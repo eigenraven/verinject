@@ -347,8 +347,8 @@ wire [7:0]    op2_direct;
 //pc            program counter register, save current value
 reg [15:0]    pc_buf;
 wire [15:0]   alu;
-reg           int_buff,
-              int_buff1; // interrupt buffer: used to prevent interrupting in the middle of executin instructions
+reg           int_buff;
+reg           int_buff1; // interrupt buffer: used to prevent interrupting in the middle of executin instructions
 //
 //
 ////////////////////////////
@@ -855,16 +855,17 @@ begin
 end
 always @(posedge clk or posedge rst)
 begin
-  if (rst) int_ack_buff <= 1'b0;
-  else int_ack_buff <= int_ack_t;
+  if (rst) begin int_ack_buff <= 1'b0; end
+  else begin int_ack_buff <= int_ack_t; end
 end
 always @(posedge clk or posedge rst)
 begin
   if (rst) int_ack <= 1'b0;
   else begin
     if ((int_ack_buff) & !(int_ack_t))
+    begin
       int_ack <= 1'b1;
-    else int_ack <= 1'b0;
+    end else begin int_ack <= 1'b0; end
   end
 end
 //

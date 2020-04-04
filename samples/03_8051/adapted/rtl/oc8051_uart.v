@@ -269,15 +269,15 @@ assign ri  = scon[0];
 
 always @(posedge clk or posedge rst)
 begin
-  if (rst)
+  if (rst) begin
     scon <= 8'b0000_0000;
-  else if ((wr) & !(wr_bit) & (wr_addr==8'h98))
+  end else if ((wr) & !(wr_bit) & (wr_addr==8'h98)) begin
     scon <= data_in;
-  else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10011))
+  end else if ((wr) & (wr_bit) & (wr_addr[7:3]==5'b10011)) begin
     scon[wr_addr[2:0]] <= bit_in;
-  else if (tx_done)
+  end else if (tx_done) begin
     scon[1] <= 1'b1;
-  else if (!rx_done) begin
+  end else if (!rx_done) begin
     if (scon[7:6]==2'b00) begin
       scon[0] <= 1'b1;
     end else if ((sbuf_rxd_tmp[11]) | !(scon[5])) begin
@@ -364,7 +364,9 @@ begin
 end
 //
 //
-reg sc_clk_tr, smod_clk_tr;
+reg sc_clk_tr;
+reg smod_clk_tr;
+
 always @*
 begin
   if (scon[7:6]==8'b10) begin //mode 2

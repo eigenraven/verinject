@@ -405,8 +405,13 @@ pub trait RtlTransform {
             self.push_tokens(vtoks, params);
             toks = self.push_while(next_toks, TK::Whitespace, params);
         }
+        toks = self.push_while(toks, TK::Whitespace, params);
         if !toks.is_empty() {
-            self.on_expression_read_toks(toks, params)?;
+            if toks[0].kind == TK::AssignConc {
+                self.on_expression_read_toks(toks, params)?;
+            } else {
+                self.push_tokens(toks, params);
+            }
         }
         Ok(())
     }
