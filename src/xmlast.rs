@@ -237,10 +237,17 @@ fn modules_dfs(root: &Element, cell: &Element, meta: &mut XmlMetadata, number: i
             .children()
             .find(|p| p.name() == "files")
             .ok_or_else(|| xerror("Missing <files>"))?;
+        let xmodnode = root
+            .children()
+            .find(|p| p.name() == "netlist")
+            .ok_or_else(|| xerror("Missing <netlist>"))?
+            .children()
+            .find(|p| p.name() == "module" && p.attr("origName") == Some(mname))
+            .ok_or_else(|| xerror("Module names mismatch"))?;
         let mfile = {
-            let mfl = cell
+            let mfl = xmodnode
                 .attr("fl")
-                .ok_or_else(|| xerror("Missing cells/cell:fl"))?;
+                .ok_or_else(|| xerror("Missing netlist/module:fl"))?;
             let mfstr = mfl
                 .split_at(mfl.find(|c: char| c.is_ascii_digit()).unwrap())
                 .0;

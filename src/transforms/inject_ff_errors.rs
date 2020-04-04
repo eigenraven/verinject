@@ -432,7 +432,13 @@ impl RtlTransform for FFErrorInjectionTransform {
                     .xml_module
                     .variables
                     .get(varname.as_ref())
-                    .expect("AST/Source mismatch");
+                    .ok_or_else(|| {
+                        format!(
+                            "AST/Source mismatch in module `{}`: can't find var `{}`",
+                            &params.xml_module.name,
+                            &varname.as_ref()
+                        )
+                    })?;
                 if xvar.borrow().usage == XmlVarUsage::Clocked {
                     continue;
                 }

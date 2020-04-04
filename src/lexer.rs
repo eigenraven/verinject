@@ -55,6 +55,8 @@ pub enum TokenKind {
     KOutput,
     KInOut,
     KRef,
+    KLocalparam,
+    KParameter,
     // modports
     KModport,
     // assertions
@@ -299,6 +301,8 @@ fn keyword_kind(id: &str) -> TokenKind {
         "output" => KOutput,
         "inout" => KInOut,
         "ref" => KRef,
+        "localparam" => KLocalparam,
+        "parameter" => KParameter,
         //
         "modport" => KModport,
         //

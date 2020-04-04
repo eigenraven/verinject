@@ -179,6 +179,12 @@ pub trait RtlTransform {
             if toks.is_empty() {
                 break;
             }
+            // Skip over parameter declarations
+            if toks[0].kind == TK::KLocalparam || toks[0].kind == TK::KParameter {
+                toks = self.push_until(toks, TK::Semicolon, params);
+                toks = self.push_while(toks, TK::Semicolon, params);
+                continue;
+            }
             // detect module instantiations
             if toks
                 .iter()
