@@ -311,7 +311,9 @@ impl FFErrorInjectionTransform {
                     let rdent = self.mem_read_numbers.get_mut(&xvar.name).unwrap();
                     let rdnum = *rdent as u32;
                     *rdent += 1;
-                    assert!(rdnum < xvar.read_count);
+                    if rdnum >= xvar.read_count {
+                        panic!("Too many source reads detected for `{}` in module `{}` compared to XML", &xvar.name, &params.xml_module.name);
+                    }
                     self.push_at_last_stmt(
                         Token::inject(format!(
                             r#"
@@ -369,7 +371,16 @@ impl RtlTransform for FFErrorInjectionTransform {
             .output
             .push(Token::inject(modified_modname(&id.instance)));
         if instance {
-            let m = params.xml_meta.modules.get(&id.instance as &str).unwrap();
+            let m = params
+                .xml_meta
+                .modules
+                .get(&id.instance as &str)
+                .ok_or_else(|| {
+                    format!(
+                        "Can't find module `{}` while processing module `{}`",
+                        &id.instance, &params.xml_module.name
+                    )
+                })?;
             let m = m.borrow();
             self.next_dfs_order = self.dfs_order + m.bits_used;
         }

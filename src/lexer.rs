@@ -32,6 +32,7 @@ pub enum TokenKind {
     AssignSeq,
     AssignConc,
     // block headers (always, etc.)
+    KPreprocessor,
     KInitial,
     KAlways,
     KAlwaysComb,
@@ -51,6 +52,7 @@ pub enum TokenKind {
     // types
     KWire,
     KLogic(bool), // also reg, arg: is logic(true) or reg(false)
+    KInteger,
     KInput,
     KOutput,
     KInOut,
@@ -202,7 +204,7 @@ fn l_string<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         return Ok(None);
     }
     let len = src.chars().skip(1).take_while(|c| *c != '"').count();
-    let sstr = &src[0..=len+1];
+    let sstr = &src[0..=len + 1];
     let location = state.loc;
     state.loc.index += len + 2;
     state.loc.column += len + 2;
@@ -230,6 +232,21 @@ fn l_identifier_or_keyword<'s>(state: &mut LexerState<'s>) -> LexResult<'s> {
         state.remaining_source = &src[1 + len..];
         return Ok(Some(Token {
             kind: TokenKind::Identifier,
+            location: Some(location),
+            instance: Cow::from(id),
+        }));
+    }
+    if src.starts_with('`') {
+        // preprocessor
+        let len = src.chars().take_while(|c| *c != '\n' && *c != '\r').count();
+        let id = &src[0..len];
+        let location = state.loc;
+        state.loc.index += len;
+        state.loc.column = 0;
+        state.loc.line += 1;
+        state.remaining_source = &src[len..];
+        return Ok(Some(Token {
+            kind: TokenKind::KPreprocessor,
             location: Some(location),
             instance: Cow::from(id),
         }));
@@ -297,6 +314,7 @@ fn keyword_kind(id: &str) -> TokenKind {
         "wire" => KWire,
         "reg" => KLogic(false),
         "logic" => KLogic(true),
+        "integer" => KInteger,
         "input" => KInput,
         "output" => KOutput,
         "inout" => KInOut,

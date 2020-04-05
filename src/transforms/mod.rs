@@ -185,6 +185,10 @@ pub trait RtlTransform {
                 toks = self.push_while(toks, TK::Semicolon, params);
                 continue;
             }
+            if toks[0].kind == TK::KPreprocessor {
+                toks = self.push_while(toks, TK::KPreprocessor, params);
+                continue;
+            }
             // detect module instantiations
             if toks
                 .iter()
@@ -219,14 +223,20 @@ pub trait RtlTransform {
                 continue;
             }
             // variable declarations
-            if [TK::KWire, TK::KLogic(false), TK::KLogic(true)]
+            if [TK::KWire, TK::KLogic(false), TK::KLogic(true), TK::KInteger]
                 .iter()
                 .any(|k| toks[0].kind == *k)
             {
                 let (atoks, sc, next_toks) = Self::token_split(toks, TK::Semicolon).unwrap();
-                self.parse_var_decl(atoks, params)?;
-                params.output.push(sc.clone());
-                toks = next_toks;
+                if toks[0].kind == TK::KInteger {
+                    self.push_tokens(atoks, params);
+                    params.output.push(sc.clone());
+                    toks = next_toks;
+                } else {
+                    self.parse_var_decl(atoks, params)?;
+                    params.output.push(sc.clone());
+                    toks = next_toks;
+                }
                 self.on_post_statement(params)?;
                 if append_end {
                     append_end = false;
@@ -290,7 +300,15 @@ pub trait RtlTransform {
                     append_end = true;
                 } else {
                     params.output.push(toks[0].clone());
-                    toks = &toks[1..];
+                    toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                    if toks[0].kind == TK::Colon {
+                        // block name
+                        params.output.push(toks[0].clone());
+                        toks = self.push_while(&toks[1..], TK::Whitespace, params);
+                        assert_eq!(toks[0].kind, TK::Identifier);
+                        params.output.push(toks[0].clone());
+                        toks = &toks[1..];
+                    }
                 }
                 self.on_always_begin(usage, params)?;
                 self.on_post_statement(params)?;
