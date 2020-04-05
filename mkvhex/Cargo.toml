@@ -1,8 +1,5 @@
-[workspace]
-members = [".", "mkvhex"]
-
 [package]
-name = "verinject"
+name = "mkvhex"
 version = "0.1.0"
 authors = ["Jakub Szewczyk <kubasz51@gmail.com>"]
 edition = "2018"
@@ -10,4 +7,3 @@ license = "Apache-2.0"
 
 [dependencies]
 structopt = "0.3"
-minidom = "0.11"
