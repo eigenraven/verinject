@@ -912,6 +912,7 @@ begin
   end else if (pc_wr_r2) begin
     pc <= pc_buf;
   end else if (rd & !int_ack_t) begin
+    //$display("adding to pc: pos%d len%d pc%d", op_pos, op_length, pc);
     pc <= pc_buf - 16'h8 + {13'h0, op_pos} + {14'h0, op_length};
   end
 end

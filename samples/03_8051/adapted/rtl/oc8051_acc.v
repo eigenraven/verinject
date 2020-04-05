@@ -239,10 +239,10 @@ assign wr_bit_acc = (wr & wr_bit & (wr_addr[7:3]==5'b11100));
 always @*
 begin
   if (wr2_acc) begin
-    acc = data2_in;$display("acc-wr2");
+    acc = data2_in;
   end else if (wr_acc) begin
-    acc = data_in;$display("acc-wr1 %x", data_in);
-  end else if (wr_bit_acc) begin $display("acc-wra");
+    acc = data_in;
+  end else if (wr_bit_acc) begin
     case (wr_addr[2:0]) /* synopsys full_case parallel_case */
       3'b000: acc = {data_out[7:1], bit_in};
       3'b001: acc = {data_out[7:2], bit_in, data_out[0]};

@@ -1,5 +1,6 @@
 #!/bin/sh
 
+make asm/hello.bin || exit 1
 rm -f wave_iotest.vcd
 rm -f runner_iotest.vvp
 export IVERILOG_DUMPER=lxt

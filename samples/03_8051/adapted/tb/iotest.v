@@ -37,14 +37,15 @@ reg wbi_err_i = 0;
 reg [7:0] wbd_dat_i = 0;
 reg [31:0] wbi_dat_i = 0;
 
-reg [7:0] imem [63:0];
+reg [7:0] imem [0:302];
 
-initial $readmemh("asm/hello.bin", imem);
+initial $readmemh("asm/fib.in", imem, 0, 302);
 
 always @*
 begin
-    if (wbi_adr_o < 64) begin
+    if (wbi_adr_o < 303) begin
         wbi_dat_i = {imem[wbi_adr_o+3],imem[wbi_adr_o+2],imem[wbi_adr_o+1],imem[wbi_adr_o]};
+        //wbi_dat_i = {imem[wbi_adr_o],imem[wbi_adr_o+1],imem[wbi_adr_o+2],imem[wbi_adr_o+3]};
     end else begin
         wbi_dat_i = 32'h0;
     end
@@ -61,6 +62,9 @@ begin
     if (wbd_we_o)
     begin
         $display("Write to %x: %x", wbd_adr_o, wbd_dat_o);
+    end else if (wbd_cyc_o)
+    begin
+        $display("Read from %x", wbd_adr_o);
     end
 end
 
@@ -126,7 +130,7 @@ begin
     clk = 0;
     rst = 1;
     #100 rst=0;
-    #10000 $finish();
+    #1000000 $finish();
 end
 
 endmodule
