@@ -475,7 +475,7 @@ impl RtlTransform for FFErrorInjectionTransform {
         params: &mut ParserParams<'_, 's>,
     ) -> Result<(), String> {
         params.output.push(Token::inject(format!(
-            " #(.VERINJECT_DSTART({dstart})) ",
+            " #(.VERINJECT_DSTART({dstart} + VERINJECT_DSTART)) ",
             dstart = self.dfs_order
         )));
         self.dfs_order = self.next_dfs_order;
@@ -487,7 +487,7 @@ impl RtlTransform for FFErrorInjectionTransform {
         params: &mut ParserParams<'_, 's>,
     ) -> Result<(), String> {
         params.output.push(Token::inject(format!(
-            ", .VERINJECT_DSTART({dstart})",
+            ", .VERINJECT_DSTART({dstart} + VERINJECT_DSTART)",
             dstart = self.dfs_order
         )));
         self.dfs_order = self.next_dfs_order;

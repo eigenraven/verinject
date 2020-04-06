@@ -104,6 +104,7 @@ begin : fault_memory_fifo
   if (injection_writing)
   begin
     active_injections[injection_wptr_r] = verinject__injector_state;
+    $display("writing injection");
   end
   // update registers
   injection_wptr_r <= injection_wptr_nxt;

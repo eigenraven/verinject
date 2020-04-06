@@ -38,6 +38,7 @@ for line in sys.stdin:
     line = line.rstrip()
     if not line.startswith("verinject: at"):
         print(line)
+        sys.stdout.flush()
         continue
     bit = int(line.split()[-1])
     r = next(x for x in ranges if x["start"] <= bit <= x["end"])
@@ -53,3 +54,4 @@ for line in sys.stdin:
         print(f"{line} ({r['path']}[{wpos}])")
     else:
         print("%s (%s[%d])" % (line, r["path"], bit-r["start"]))
+    sys.stdout.flush()

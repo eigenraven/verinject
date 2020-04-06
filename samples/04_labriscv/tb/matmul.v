@@ -72,7 +72,23 @@ begin : detect_reg_PROC
 end // detect_reg_PROC
 
 wire [31:0] verinject__injector_state;
-assign verinject__injector_state = 32'hFFFF_FFFF;
+
+wire rst_n;
+assign rst_n = !rst;
+
+wire [47:0] cycle_number;
+verinject_file_tester u_injector(
+  .clock(clk),
+  .reset_n(rst_n),
+  .verinject__injector_state(verinject__injector_state),
+  .cycle_number(cycle_number)
+);
+
+verinject_sim_monitor u_inject_monitor(
+  .clock(clk),
+  .verinject__injector_state(verinject__injector_state),
+  .cycle_number(cycle_number)
+);
 
 /*
 cpu u_cpu(
@@ -134,7 +150,6 @@ cpu__injected u_cpu( .verinject__injector_state(verinject__injector_state),
  );
 
 reg     halted;
-integer timer = 0;
 
 /// Testbench intialization
 initial
@@ -161,18 +176,25 @@ end
 initial forever
 begin
     #4 clk = !clk;
-    timer = timer + 1;
 end
 
+always @*
+begin
+    if (cycle_number > 2500)
+    begin
+        $display("timeout");
+        $finish();
+    end
+end
 
 integer mi;
 reg [31:0] mel = 0;
 /// LED logging
 always @(leds)
 begin
-    if (timer > 1)
+    if (cycle_number > 1)
     begin
-        $display("LEDs change @t=%d : %d", timer, leds);
+        $display("LEDs change @t=%d : %d", cycle_number, leds);
         if (leds == 3)
         begin
             $display("Matrix:");
@@ -191,8 +213,8 @@ begin
 end
 always @(ssd_a)
 begin
-    if (timer > 1)
-        $display("SSD change @t=%d : %d", timer, ssd_a);
+    if (cycle_number > 1)
+        $display("SSD change @t=%d : %d", cycle_number, ssd_a);
 end
 
 endmodule
