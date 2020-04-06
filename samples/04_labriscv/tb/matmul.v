@@ -71,7 +71,13 @@ begin : detect_reg_PROC
     end
 end // detect_reg_PROC
 
+wire [31:0] verinject__injector_state;
+assign verinject__injector_state = 32'hFFFF_FFFF;
+
+/*
 cpu u_cpu(
+*/
+cpu__injected u_cpu( .verinject__injector_state(verinject__injector_state),
   .clk              (clk            ), // external clock source
   .reset            (rst          ), // async reset input
  
@@ -151,14 +157,6 @@ begin
     #100000 $finish();
 end
 
-always @(posedge clk)
-begin
-    /*if (timer >= 5700)
-    begin
-        $finish();
-    end*/
-end
-
 /// Clock simulation
 initial forever
 begin
@@ -187,6 +185,7 @@ begin
                 $write("%08x,", mel);
             end
             $display("");
+            #2 $finish();
         end
     end
 end

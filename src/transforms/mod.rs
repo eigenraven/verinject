@@ -315,19 +315,30 @@ pub trait RtlTransform {
                 continue;
             }
             // keywords
-            if [
-                TK::KBegin,
-                TK::KEnd,
-                TK::KEndInterface,
-                TK::KEndModule,
-                TK::Semicolon,
-            ]
-            .iter()
-            .any(|k| toks[0].kind == *k)
+            if [TK::KBegin, TK::Semicolon]
+                .iter()
+                .any(|k| toks[0].kind == *k)
             {
                 params.output.push(toks[0].clone());
                 toks = &toks[1..];
                 self.on_post_statement(params)?;
+                if append_end {
+                    append_end = false;
+                    params.output.push(Token::inject("\nend\n".to_owned()));
+                }
+                continue;
+            }
+            if [TK::KEnd, TK::KElse, TK::KEndInterface, TK::KEndModule]
+                .iter()
+                .any(|k| toks[0].kind == *k)
+            {
+                self.on_post_statement(params)?;
+                if append_end {
+                    append_end = false;
+                    params.output.push(Token::inject("\nend\n".to_owned()));
+                }
+                params.output.push(toks[0].clone());
+                toks = &toks[1..];
                 continue;
             }
             toks = self.parse_generic_statement(toks, params)?;
