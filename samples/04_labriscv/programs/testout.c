@@ -4,16 +4,16 @@ __attribute__((always_inline)) inline void write_led_port(int value)
     __asm__ volatile(
         "csrw 0x7C1, %0"
         :
-        : "rK"(value)
+        : "r"(value)
         : "memory");
 }
 
 void _start()
 {
-    write_led_port(0);
-    write_led_port(1);
-    write_led_port(2);
-    write_led_port(3);
+    for (int i = 0; i < 16; i++)
+    {
+        write_led_port(i);
+    }
     while (1)
     {
         __asm__ __volatile__(""

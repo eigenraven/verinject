@@ -33,14 +33,6 @@ SECTIONS {
        *(.srodata*)       /* .srodata* sections (constants, strings, etc.) */
        . = ALIGN(4);
        _etext = .;        /* define a global symbol for the end of code */
-     } >ROM
-
-     /* used by the startup to initialize data */
-     _sidata = .;
-
-     /* Initialized data sections goes into RAM, load LMA copy after code */
-     .data : AT ( _sidata )
-     {
        . = ALIGN(4);
        _sdata = .;        /* create a global symbol at data start */
        *(.data)           /* .data sections */
@@ -48,7 +40,16 @@ SECTIONS {
 
        . = ALIGN(4);
        _edata = .;        /* define a global symbol at data end */
-     } >RAM
+     } >ROM
+
+     /* used by the startup to initialize data */
+     _sidata = .;
+
+     /* Initialized data sections goes into RAM, load LMA copy after code */
+     /*.data : AT ( _sidata )
+     {
+       
+     } >RAM*/
 
      /* Uninitialized data section */
      . = ALIGN(4);

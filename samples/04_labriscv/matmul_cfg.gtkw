@@ -1,0 +1,176 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Mon Apr  6 11:53:06 2020
+[*]
+[dumpfile] "/home/kubasz/uoe/4verinject/samples/04_labriscv/wave_matmul.vcd"
+[dumpfile_mtime] "Mon Apr  6 11:52:30 2020"
+[dumpfile_size] 4097181
+[savefile] "/home/kubasz/uoe/4verinject/samples/04_labriscv/matmul_cfg.gtkw"
+[timestart] 103700
+[size] 2556 1401
+[pos] -1 -1
+*-14.000000 200340 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.u_cpu.
+[sst_width] 203
+[signals_width] 314
+[sst_expanded] 1
+[sst_vpaned_height] 422
+@28
+tb.clk[0]
+tb.cpu_commit[0]
+tb.cpu_running[0]
+tb.dbg_halt_core[0]
+tb.dbg_run_core[0]
+tb.halt_detect_r[0]
+tb.halted[0]
+@22
+tb.leds[3:0]
+tb.msec_elapsed[31:0]
+tb.px_address[15:0]
+tb.px_read_data[23:0]
+@28
+tb.px_ready[0]
+tb.px_request[0]
+tb.px_write[0]
+@22
+tb.px_write_data[23:0]
+@28
+tb.rst[0]
+tb.run_cmd_mode[1:0]
+tb.run_detect_r[0]
+@22
+tb.ssd_a[7:0]
+@28
+tb.step_ack[0]
+tb.step_cycle[0]
+tb.step_detect_r[0]
+tb.step_instr[0]
+tb.sw_a[1:0]
+@22
+tb.timer[31:0]
+@28
+tb.zybo_buttons[3:1]
+tb.u_cpu.bpu_flush[0]
+tb.u_cpu.bpu_pred_state[1:0]
+tb.u_cpu.bpu_pred_taken[0]
+@22
+tb.u_cpu.bpu_pred_target[31:0]
+@28
+tb.u_cpu.bpu_pred_type[2:0]
+tb.u_cpu.bpu_predicted[0]
+tb.u_cpu.clk[0]
+tb.u_cpu.commit_ebreak[0]
+tb.u_cpu.commit_ecall[0]
+tb.u_cpu.commit_evt[0]
+tb.u_cpu.cpu_commit[0]
+tb.u_cpu.cpu_running[0]
+@22
+tb.u_cpu.csr_addr[11:0]
+@28
+tb.u_cpu.csr_commit_op[0]
+tb.u_cpu.csr_mem_stall[0]
+tb.u_cpu.csr_opc[2:0]
+@22
+tb.u_cpu.csr_rdata[31:0]
+@28
+tb.u_cpu.csr_valid_op[0]
+@22
+tb.u_cpu.csr_wdata[31:0]
+@28
+tb.u_cpu.dbg_halt_core[0]
+tb.u_cpu.dbg_run_core[0]
+@22
+tb.u_cpu.exe_iccm_addr[12:2]
+@28
+tb.u_cpu.exe_iccm_load[0]
+tb.u_cpu.exu_accept[0]
+@22
+tb.u_cpu.fch_iccm_dout[31:0]
+@28
+tb.u_cpu.fch_index[2:0]
+@22
+tb.u_cpu.fch_inst[31:0]
+tb.u_cpu.fch_pc[31:0]
+@28
+tb.u_cpu.fch_valid[0]
+tb.u_cpu.hlnk_in_accept[0]
+@22
+tb.u_cpu.hlnk_in_data[31:0]
+@28
+tb.u_cpu.hlnk_in_valid[0]
+tb.u_cpu.hlnk_out_accept[0]
+@22
+tb.u_cpu.hlnk_out_data[31:0]
+@28
+tb.u_cpu.hlnk_out_valid[0]
+@22
+tb.u_cpu.msec_elapsed[31:0]
+tb.u_cpu.px_address[15:0]
+tb.u_cpu.px_read_data[23:0]
+@28
+tb.u_cpu.px_ready[0]
+tb.u_cpu.px_request[0]
+tb.u_cpu.px_write[0]
+@22
+tb.u_cpu.px_write_data[23:0]
+@28
+tb.u_cpu.reset[0]
+tb.u_cpu.run_cmd_mode[1:0]
+tb.u_cpu.run_cmd_val[0]
+tb.u_cpu.step_ack[0]
+tb.u_cpu.step_cycle[0]
+tb.u_cpu.step_instr[0]
+tb.u_cpu.wrb_branch_type[2:0]
+tb.u_cpu.wrb_direction[0]
+tb.u_cpu.wrb_index[2:0]
+tb.u_cpu.wrb_mispred_dir[0]
+tb.u_cpu.wrb_mispred_tgt[0]
+tb.u_cpu.wrb_mispred_typ[0]
+@22
+tb.u_cpu.wrb_pc[31:0]
+@28
+tb.u_cpu.wrb_pred_state[1:0]
+tb.u_cpu.wrb_restart[0]
+@22
+tb.u_cpu.wrb_restart_pc[31:0]
+tb.u_cpu.wrb_target[31:0]
+@28
+tb.u_cpu.wrb_update_bpu[0]
+tb.u_cpu.wrb_was_pred[0]
+tb.u_cpu.zybo_buttons[3:1]
+@22
+tb.u_cpu.zybo_leds[3:0]
+tb.u_cpu.zybo_ssd[7:0]
+@28
+tb.u_cpu.zybo_switches[1:0]
+@23
+tb.u_cpu.u_control_unit.csr_addr[11:0]
+@28
+tb.u_cpu.u_control_unit.csr_commit_op[0]
+@22
+tb.u_cpu.u_control_unit.csr_data_nxt[31:0]
+@28
+tb.u_cpu.u_control_unit.csr_dbg_only[0]
+tb.u_cpu.u_control_unit.csr_have_priv[0]
+tb.u_cpu.u_control_unit.csr_mem_stall[0]
+tb.u_cpu.u_control_unit.csr_opc[2:0]
+tb.u_cpu.u_control_unit.csr_priv[1:0]
+tb.u_cpu.u_control_unit.csr_r_perm[0]
+@22
+tb.u_cpu.u_control_unit.csr_rdata[31:0]
+@28
+tb.u_cpu.u_control_unit.csr_valid_op[0]
+tb.u_cpu.u_control_unit.csr_w_perm[0]
+@22
+tb.u_cpu.u_control_unit.csr_wdata[31:0]
+@28
+tb.u_cpu.u_control_unit.csr_write_enb[0]
+@22
+tb.u_cpu.u_control_unit.zybo_leds[3:0]
+@28
+tb.u_cpu.u_control_unit.zybo_leds_cg0[0]
+@22
+tb.u_cpu.u_control_unit.zybo_leds_r[3:0]
+[pattern_trace] 1
+[pattern_trace] 0

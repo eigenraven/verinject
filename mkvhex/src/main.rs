@@ -1,3 +1,4 @@
+use std::fmt::Write as FmtWrite;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -23,14 +24,24 @@ pub struct Options {
         default_value = "64"
     )]
     height: i32,
-    #[structopt(name = "Print extra information", short = "v", long = "verbose")]
-    verbose: bool,
+    #[structopt(name = "Swap endianness", short = "e", long = "endian")]
+    endian: bool,
 }
 
 impl Options {
     fn read_cmd() -> Self {
         Self::from_args()
     }
+}
+
+fn str_endian_swap(s: &str) -> String {
+    let mut o = String::with_capacity(s.len());
+    let sb = s.as_bytes();
+    for i in (0..s.len() - 1).step_by(2).rev() {
+        o.push(sb[i] as char);
+        o.push(sb[i + 1] as char);
+    }
+    o
 }
 
 fn main() {
@@ -42,23 +53,31 @@ fn main() {
     let colwidth = opts.width / 4;
     let mut lines = 0;
     let mut columns = 0;
+    let mut line = String::with_capacity(colwidth as usize + 2);
     for byte in inread.bytes() {
-        write!(&mut outwrite, "{:02x}", byte.expect("Error reading input"))
+        write!(&mut line, "{:02x}", byte.expect("Error reading input"))
             .expect("Error writing output");
         columns += 2;
         if columns >= colwidth {
             lines += 1;
             columns = 0;
-            writeln!(&mut outwrite).expect("Error writing output");
+            if opts.endian {
+                line = str_endian_swap(&line);
+            }
+            writeln!(&mut outwrite, "{}", &line).expect("Error writing output");
+            line.clear();
         }
     }
     while columns > 0 && columns < colwidth {
-        write!(&mut outwrite, "00").expect("Error writing output");
+        write!(&mut line, "00").expect("Error writing output");
         columns += 2;
     }
     if columns > 0 {
         lines += 1;
-        writeln!(&mut outwrite).expect("Error writing output");
+        if opts.endian {
+            line = str_endian_swap(&line);
+        }
+        writeln!(&mut outwrite, "{}", &line).expect("Error writing output");
     }
     let zeropad = "0".repeat(colwidth as usize);
     for _ in 0..(opts.height - lines) {
