@@ -61,7 +61,7 @@ with args.mapfile as f:
         rg["mlen"] = rg["mmax"] - rg["mmin"] + 1
         ranges.append(rg)
         if signal_allowed(rg['path']):
-            rend = min(rg['end'], rg['start'] + 32*128)
+            rend = min(rg['end'], rg['start'] + 8624)
             allowed_nums.extend(range(rg['start'], rend))
 
 # Generation

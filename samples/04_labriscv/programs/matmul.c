@@ -39,14 +39,14 @@ __attribute__((section(".text.startup")))
 __attribute__((naked)) void _start()
 {
     __asm__ volatile(
-        "li sp, 0x2900"
+        "li sp, 0x2300"
         :
         :
         : "memory");
     write_led_port(1);
     volatile int *matR = (int *)((void *)0x2000);
-    int mat1[36];
-    int mat2[36];
+    int* mat1 = (int *)((void *)0x2090);
+    int* mat2 = (int *)((void *)0x2120);
     init_mats(mat1, mat2);
     write_led_port(2);
     use_value(0); // prevents reordering

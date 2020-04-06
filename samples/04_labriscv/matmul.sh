@@ -10,11 +10,29 @@ iverilog '-DHEX_FILE="programs/matmul.hex"' -g2005 -s tb tb/matmul.v -y hdl -y i
   -y ../../verilog/gen -I hdl -o runner_matmul.vvp \
   || exit 1
 echo Test run...
-echo Test run > all_runs.log
-# --exclude cpu.u_fetch_unit.iccm cpu.u_fetch_unit.u_branch_predictor.u_branch_cache.bc_ram
-./vj-gentrace --seed 3 --cycles 4900 --faults 200 ./injected/cpu.map --include xreg > verinject_trace.txt || exit 1
+./vj-gentrace --seed 0 --cycles 2430 --faults 200 ./injected/cpu.map --exclude cpu.u_fetch_unit.iccm cpu.u_exec_unit.u_dccm_ram.dccm_b u_branch_predictor > verinject_trace.txt || exit 1
 ./runner_matmul.vvp 2>/dev/null > cur_run.log </dev/null || exit 1
-diff <(tail -n 1 cur_run.log) reference_out.txt
-echo $?
+../../vj-filter ./injected/cpu.map < cur_run.log
+diff --color=always <(tail -n 1 cur_run.log) reference_out.txt && echo No difference
+# $? = 1 if different, 0 if equal
 echo Done test run
+
+echo Starting main runs
 export IVERILOG_DUMPER=none
+STARTRUN=1
+MAXRUNS=1000
+printf "" > all_runs.log
+echo > all_detailed.log
+
+for RUN in $(seq $STARTRUN $MAXRUNS)
+do
+    echo Run $RUN/$MAXRUNS
+    echo Seed $RUN >> all_runs.log
+    echo Seed $RUN >> all_detailed.log
+    # --exclude cpu.u_fetch_unit.iccm cpu.u_exec_unit.u_dccm_ram.dccm_b u_branch_predictor
+    ./vj-gentrace --seed $RUN --cycles 2430 --faults 1 ./injected/cpu.map --include xreg > verinject_trace.txt || exit 1
+    ./runner_matmul.vvp 2>/dev/null > cur_run.log </dev/null || exit 1
+    # add 0 if no difference, 1 if different
+    ../../vj-filter ./injected/cpu.map < cur_run.log >> all_detailed.log
+    diff <(tail -n 1 cur_run.log) reference_out.txt >/dev/null && echo 0 >> all_runs.log || echo 1 >> all_runs.log
+done
